@@ -1,10 +1,15 @@
 """
-vsc.fancylogger must be removed:
-  it's currently provided by vsc-base, wherever it is used, vsc-base is present
+vsc.fancylogger has been deprecated since forever,
+vsc.utils.fancylogger should be used instead.
+
+This module provides a migration path away from vsc.fancylogger:
+  vsc.fancylogger currently provided by vsc-base, wherever it is used, vsc-base is present
   we start with tracking actual leftover usage
   any code that uses it, should receives updates to use vsc.utils.fancylogger
   in the 1.0.1 release, this file should not be shipped anymore
     (and only requires an update of vsc-install)
+
+At least 'import vsc' can be used now without triggering an import of fancylogger
 """
 
 # it's ok if this fails with only vsc-install installed.
