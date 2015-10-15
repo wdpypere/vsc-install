@@ -739,3 +739,9 @@ def getDetailsLogLevels(fancy=True):
         level_name = logging.getLevelName(getattr(logger, 'level', logging.NOTSET))
         res.append((name, level_name))
     return res
+
+
+# Deprecation tracker to syslog
+logToDevLog(True)
+getLogger().error("LEGACYVSCFANCYLOGGER from %s %s", __name__, globals().get('__file__','<nofile>'))
+logToDevLog(False)
