@@ -107,6 +107,12 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
+VERSION = '1.0.0'
+
+# list of non-vsc packages that need python- prefix for correct rpm dependencies
+# vsc packages should be handled with clusterbuildrpm
+PREFIX_PYTHON_BDIST_RPM = ('setuptools',)
+
 
 def find_extra_sdist_files():
     """Looks for files to append to the FileList that is used by the egg_info."""
@@ -422,7 +428,7 @@ SHARED_TARGET = {
     },
     'cmdclass': {'test': VscTestCommand},
     'test_suite': DEFAULT_TEST_SUITE,
-    'install_requires' : ['setuptools'],
+    'setup_requires' : ['setuptools', 'vsc-install >= %s' % VERSION],
 }
 
 
@@ -442,13 +448,14 @@ def cleanup(prefix=''):
         if os.path.isfile(ffn):
             os.remove(ffn)
 
-def sanitize(v):
+def sanitize(requires):
     """Transforms v into a sensible string for use in setup.cfg."""
-    if isinstance(v, str):
-        return v
+    if isinstance(requires, basestring):
+        if requires in PREFIX_PYTHON_BDIST_RPM:
+            requires = 'python-%s' % requires
+        return requires
 
-    if isinstance(v, list):
-        return ",".join(v)
+    return ",".join([sanitize(r) for r in requires])
 
 
 def parse_target(target):
@@ -486,25 +493,39 @@ def build_setup_cfg_for_bdist_rpm(target):
     @param target: specifies the options to be passed to setup()
     """
 
+    if target.pop('makesetupcfg', True):
+        log.info('makesetupcfg set to True, (re)creating setup.cfg')
+    else:
+        log.info('makesetupcfg set to False, not (re)creating setup.cfg')
+        return
+
     try:
         setup_cfg = open('setup.cfg', 'w')  # and truncate
     except (IOError, OSError), err:
         print "Cannot create setup.cfg for target %s: %s" % (target['name'], err)
         sys.exit(1)
 
-    s = ["[bdist_rpm]"]
+    txt = ["[bdist_rpm]"]
     if 'install_requires' in target:
-        s += ["requires = %s" % (sanitize(target['install_requires']))]
+        txt.extend(["requires = %s" % (sanitize(target['install_requires']))])
 
     if 'provides' in target:
-        s += ["provides = %s" % (sanitize((target['provides'])))]
+        txt.extend(["provides = %s" % (sanitize(target['provides']))])
         target.pop('provides')
 
-    setup_cfg.write("\n".join(s) + "\n")
+    if 'setup_requires' in target:
+        txt.extend(["build_requires = %s" % (sanitize(target['setup_requires']))])
+
+    setup_cfg.write("\n".join(txt+['']))
     setup_cfg.close()
 
 
 def action_target(target, setupfn=setup, extra_sdist=[], urltemplate=None):
+    """
+    Additional target attributes
+        makesetupcfg: boolean, default True, to generate the setup.cfg (set to False if a manual setup.cfg is provided)
+        provides: list of rpm provides for setup.cfg
+    """
     # EXTRA_SDIST_FILES.extend(extra_sdist)
 
     do_cleanup = True
@@ -538,11 +559,13 @@ if __name__ == '__main__':
     """
     PACKAGE = {
         'name': 'vsc-install',
-        'version': '1.0.0',
+        'version': VERSION,
         'author': [sdw, ag, jt],
         'maintainer': [sdw, ag, jt],
         'packages': ['vsc', 'vsc.install'],
         'zip_safe': True,
+        'install_requires': ['setuptools'],
+        'setup_requires': ['setuptools'],
     }
 
     action_target(PACKAGE, urltemplate=URL_GH_HPCUGENT)
