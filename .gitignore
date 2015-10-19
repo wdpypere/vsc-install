@@ -2,6 +2,9 @@
 *.swp
 *~
 
+# can be ignored for vsc-install
+setup.cfg
+
 # Packages
 *.egg
 *.egg-info
