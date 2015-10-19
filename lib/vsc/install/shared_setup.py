@@ -196,7 +196,10 @@ class vsc_build_py(build_py):
 
 
 class vsc_bdist_rpm(bdist_rpm):
-    """Custom class to build the RPM, since the __init__.py cannot be included for the packages that have namespace spread across all of the machine."""
+    """
+    Custom class to build the RPM, since the __init__.py cannot be included for the packages
+    that have namespace spread across all of the machine.
+    """
     def run(self):
         log.error("vsc_bdist_rpm = %s" % (self.__dict__))
         SHARED_TARGET['cmdclass']['egg_info'] = vsc_bdist_rpm_egg_info  # changed to allow removal of files
@@ -328,12 +331,12 @@ class VscTestCommand(TestCommand):
 
     def reload_modules(self, namespace):
         """
-        Cleanup and restore namespace becasue we use 
+        Cleanup and restore namespace becasue we use
         vsc namespace tools very early.
         So we need to make sure they are picked up from the paths as specified
         in setup_sys_path, not to mix with installed and already loaded modules
         """
-        
+
         def candidate(modulename):
             """Select candidate modules to reload"""
             return modulename in (namespace,) or modulename.startswith(namespace+'.')
@@ -448,14 +451,25 @@ def cleanup(prefix=''):
         if os.path.isfile(ffn):
             os.remove(ffn)
 
-def sanitize(requires):
-    """Transforms v into a sensible string for use in setup.cfg."""
-    if isinstance(requires, basestring):
-        if requires in PREFIX_PYTHON_BDIST_RPM:
-            requires = 'python-%s' % requires
-        return requires
+def sanitize(name):
+    """
+    Transforms name into a sensible string for use in setup.cfg.
 
-    return ",".join([sanitize(r) for r in requires])
+    python- is prefixed in case of
+        enviroment variable VSC_INSTALL_PYTHON is set to 1 and either
+            name is in hardcoded list PREFIX_PYTHON_BDIST_RPM
+            name starts with 'vsc'
+    """
+    if isinstance(name, basestring):
+        p_p = (os.environ.get('VSC_RPM_PYTHON', False) and
+               ((name in PREFIX_PYTHON_BDIST_RPM)
+                or name.startswith('vsc')))
+        if p_p:
+            name = 'python-%s' % name
+
+        return name
+
+    return ",".join([sanitize(r) for r in name])
 
 
 def parse_target(target):
@@ -486,7 +500,10 @@ def parse_target(target):
 def build_setup_cfg_for_bdist_rpm(target):
     """Generates a setup.cfg on a per-target basis.
 
-    Stores the 'install-requires' in the [bdist_rpm] section
+    Create [bdist_rpm] section with
+        install_requires => requires
+        provides => provides
+        setup_requires => build_requires
 
     @type target: dict
 
