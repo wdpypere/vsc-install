@@ -1,0 +1,1 @@
+lib/vsc/install/shared_setup.py
