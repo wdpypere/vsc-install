@@ -107,7 +107,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '1.0.0'
+VERSION = '0.9.0'
 
 # list of non-vsc packages that need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
