@@ -103,6 +103,7 @@ EXTRA_SDIST_FILES = ['setup.py']
 
 # Put unittests under this directory
 DEFAULT_TEST_SUITE = 'test'
+DEFAULT_LIB_DIR = 'lib'
 
 URL_GH_HPCUGENT = 'https://github.com/hpcugent/%(name)s'
 URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
@@ -116,6 +117,7 @@ VERSION = '0.9.1'
 PREFIX_PYTHON_BDIST_RPM = ('setuptools',)
 
 
+
 # determine the base directory of the repository
 # we will assume that the tests are called from
 # a 'setup.py' like file in the basedirectory
@@ -123,7 +125,7 @@ PREFIX_PYTHON_BDIST_RPM = ('setuptools',)
 _setup_py = os.path.abspath(sys.argv[0])
 REPO_BASE_DIR = os.path.dirname(_setup_py)
 log.info('run_tests from base dir %s (using executable %s)' % (REPO_BASE_DIR, _setup_py))
-REPO_LIB_DIR = os.path.join(REPO_BASE_DIR, 'lib')
+REPO_LIB_DIR = os.path.join(REPO_BASE_DIR, DEFAULT_LIB_DIR)
 
 
 def find_extra_sdist_files():
@@ -139,17 +141,17 @@ def find_extra_sdist_files():
     return filelist
 
 
-def remove_extra_bdist_rpm_files(nss=None):
-    """For list of namespaces nss, make the function to exclude all files from rpm"""
+def remove_extra_bdist_rpm_files(pkgs=None):
+    """For list of packages pkgs, make the function to exclude all files from rpm"""
 
-    if nss is None:
-        nss = getattr(__builtin__, '__target').get('excluded_ns_rpm', [])
+    if pkgs is None:
+        pkgs = getattr(__builtin__, '__target').get('excluded_pkgs_rpm', [])
 
     res = []
-    fin = files_in_namespaces()
+    fin = files_in_packages()
 
-    for ns in nss:
-        res.extend(fin.get(ns, []))
+    for pkg in pkgs:
+        res.extend(fin.get(pkg, []))
     log.info('removing files from rpm: %s' % res)
 
     return res
@@ -171,7 +173,7 @@ class vsc_egg_info(egg_info):
 class vsc_bdist_rpm_egg_info(vsc_egg_info):
     """Class to determine the source files that should be present in an (S)RPM.
 
-    All __init__.py files that augment namespace packages should be installed by the
+    All __init__.py files that augment package packages should be installed by the
     dependent package, so we need not install it here.
     """
 
@@ -216,7 +218,7 @@ class vsc_build_py(build_py):
 class vsc_bdist_rpm(orig_bdist_rpm):
     """
     Custom class to build the RPM, since the __init__.py cannot be included for the packages
-    that have namespace spread across all of the machine.
+    that have package spread across all of the machine.
     """
     def run(self):
         log.error("vsc_bdist_rpm = %s" % (self.__dict__))
@@ -338,17 +340,17 @@ class VscTestCommand(TestCommand):
 
         return cleanup
 
-    def reload_modules(self, namespace):
+    def reload_modules(self, package):
         """
-        Cleanup and restore namespace becasue we use
-        vsc namespace tools very early.
+        Cleanup and restore package because we use
+        vsc package tools very early.
         So we need to make sure they are picked up from the paths as specified
         in setup_sys_path, not to mix with installed and already loaded modules
         """
 
         def candidate(modulename):
             """Select candidate modules to reload"""
-            return modulename in (namespace,) or modulename.startswith(namespace+'.')
+            return modulename in (package,) or modulename.startswith(package+'.')
 
         loaded_modules = filter(candidate, sys.modules.keys())
         reload_modules = []
@@ -415,7 +417,7 @@ class VscTestCommand(TestCommand):
         if RELOAD_VSC_MODS:
             self.reload_modules('vsc')
 
-        # e.g. common names like test can have existing namespaces
+        # e.g. common names like test can have existing packages
         if not DEFAULT_TEST_SUITE in sys.modules:
             __import__(DEFAULT_TEST_SUITE)
         self.reload_modules(DEFAULT_TEST_SUITE)
@@ -429,33 +431,33 @@ class VscTestCommand(TestCommand):
         return res
 
 
-def files_in_namespaces():
+def files_in_packages():
     """
     Gather all __init__ files provided by the lib/ subdir
         filenames are relative to the REPO_BASE_DIR
-    Return dict with key the namespace and value all files in the namespace directory
+    Return dict with key the package and value all files in the package directory
     """
-    files_in_ns = {}
+    res = {}
     offset = len(REPO_LIB_DIR.split(os.path.sep))
     for root, _, files in os.walk(REPO_LIB_DIR):
-        namespace='.'.join(root.split(os.path.sep)[offset:])
+        package='.'.join(root.split(os.path.sep)[offset:])
         if '__init__.py' in files:
-            files_in_ns[namespace] = [os.path.relpath(os.path.join(root, f),start=REPO_BASE_DIR) for f in files]
+            res[package] = [os.path.relpath(os.path.join(root, f),start=REPO_BASE_DIR) for f in files]
 
-    return files_in_ns
+    return res
 
 
 def generate_packages(extra=None, exclude=None):
     """
     Walk through lib subdirectory (if any)
-        gather all __init__ and build up provided namespace
+        gather all __init__ and build up provided package
 
     extras is a list of packages added to the discovered ones
     exclude is list of regex patterns to filter the packages
         (discovered and extras)
 
     """
-    res = files_in_namespaces().keys()
+    res = files_in_packages().keys()
     if extra:
         res.extend(etxra)
     if exclude:
@@ -470,7 +472,7 @@ def generate_packages(extra=None, exclude=None):
 SHARED_TARGET = {
     'url': '',
     'download_url': '',
-    'package_dir': {'': 'lib'},
+    'package_dir': {'': DEFAULT_LIB_DIR},
     'cmdclass': {
         "install_scripts": vsc_install_scripts,
         "egg_info": vsc_egg_info,
@@ -485,7 +487,7 @@ SHARED_TARGET = {
 
 def cleanup(prefix=''):
     """Remove all build cruft."""
-    dirs = [prefix + 'build'] + glob.glob(prefix + 'lib/*.egg-info')
+    dirs = [prefix + 'build'] + glob.glob('%s%s/*.egg-info' % (prefix, DEFAULT_LIB_DIR))
     for d in dirs:
         if os.path.isdir(d):
             log.warn("cleanup %s" % d)
@@ -590,14 +592,14 @@ def prepare_rpm(target):
     """
     Make some preparations required for proepr rpm creation
         exclude files provided by packages that are shared
-            excluded_ns_rpm: is a list of namespaces, default to ['vsc']
+            excluded_pkgs_rpm: is a list of packages, default to ['vsc']
             set it to None when defining own function
         generate the setup.cfg
     """
 
-    nss = target.pop('excluded_ns_rpm', ['vsc'])
-    if nss is not None:
-        getattr(__builtin__, '__target')['excluded_ns_rpm'] = nss
+    pkgs = target.pop('excluded_pkgs_rpm', ['vsc'])
+    if pkgs is not None:
+        getattr(__builtin__, '__target')['excluded_pkgs_rpm'] = pkgs
 
     build_setup_cfg_for_bdist_rpm(target)
 
@@ -646,7 +648,7 @@ if __name__ == '__main__':
         'zip_safe': True,
         'install_requires': ['setuptools'],
         'setup_requires': ['setuptools'],
-        'excluded_ns_rpm': [], # vsc-install ships default removed ns vsc
+        'excluded_pkg_rpm': [], # vsc-install ships vsc package (the vsc package is removed by default)
     }
 
     action_target(PACKAGE, urltemplate=URL_GH_HPCUGENT)
