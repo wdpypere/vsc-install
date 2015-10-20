@@ -110,7 +110,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.1'
+VERSION = '0.9.2'
 
 # list of non-vsc packages that need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
@@ -648,7 +648,7 @@ if __name__ == '__main__':
         'zip_safe': True,
         'install_requires': ['setuptools'],
         'setup_requires': ['setuptools'],
-        'excluded_pkg_rpm': [], # vsc-install ships vsc package (the vsc package is removed by default)
+        'excluded_pkgs_rpm': [], # vsc-install ships vsc package (the vsc package is removed by default)
     }
 
     action_target(PACKAGE, urltemplate=URL_GH_HPCUGENT)
