@@ -40,13 +40,12 @@ import re
 import setuptools.command.test
 
 from distutils import log  # also for setuptools
-from distutils.command.bdist_rpm import bdist_rpm as orig_bdist_rpm
 from distutils.dir_util import remove_tree
 
 from setuptools.command.test import test as TestCommand
 from setuptools.command.test import ScanningLoader
 from setuptools import setup
-from setuptools.command.bdist_rpm import bdist_rpm
+from setuptools.command.bdist_rpm import bdist_rpm as orig_bdist_rpm
 from setuptools.command.build_py import build_py
 from setuptools.command.egg_info import egg_info
 from setuptools.command.install_scripts import install_scripts
@@ -68,6 +67,9 @@ except ImportError:
 # stored in __builtin__ because the (Vsc)TestCommand.run_tests
 # reloads and cleans up the modules
 import __builtin__
+if not hasattr(__builtin__,'__target'):
+    setattr(__builtin__, '__target', {})
+
 if not hasattr(__builtin__,'__test_filter'):
     setattr(__builtin__, '__test_filter',  {
         'module': None,
@@ -107,11 +109,21 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.0'
+VERSION = '0.9.1'
 
 # list of non-vsc packages that need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
 PREFIX_PYTHON_BDIST_RPM = ('setuptools',)
+
+
+# determine the base directory of the repository
+# we will assume that the tests are called from
+# a 'setup.py' like file in the basedirectory
+# (but could be called anything, as long as it is in the basedir)
+_setup_py = os.path.abspath(sys.argv[0])
+REPO_BASE_DIR = os.path.dirname(_setup_py)
+log.info('run_tests from base dir %s (using executable %s)' % (REPO_BASE_DIR, _setup_py))
+REPO_LIB_DIR = os.path.join(REPO_BASE_DIR, 'lib')
 
 
 def find_extra_sdist_files():
@@ -127,14 +139,20 @@ def find_extra_sdist_files():
     return filelist
 
 
-def remove_extra_bdist_rpm_files():
-    """Provides a list of files that should be removed from the source file list when making an RPM.
+def remove_extra_bdist_rpm_files(nss=None):
+    """For list of namespaces nss, make the function to exclude all files from rpm"""
 
-    This function should be overridden if necessary in the setup.py
+    if nss is None:
+        nss = getattr(__builtin__, '__target').get('excluded_ns_rpm', [])
 
-    @returns: empty list
-    """
-    return []
+    res = []
+    fin = files_in_namespaces()
+
+    for ns in nss:
+        res.extend(fin.get(ns, []))
+    log.info('removing files from rpm: %s' % res)
+
+    return res
 
 
 class vsc_egg_info(egg_info):
@@ -149,8 +167,7 @@ class vsc_egg_info(egg_info):
         egg_info.find_sources(self)
         self.filelist.extend(find_extra_sdist_files())
 
-# TODO: this should be in the setup.py, here we should have a placeholder, so we need not change this for every
-# package we deploy
+
 class vsc_bdist_rpm_egg_info(vsc_egg_info):
     """Class to determine the source files that should be present in an (S)RPM.
 
@@ -163,7 +180,8 @@ class vsc_bdist_rpm_egg_info(vsc_egg_info):
         vsc_egg_info.find_sources(self)
         for fn in remove_extra_bdist_rpm_files():
             log.debug("removing %s from source list" % (fn))
-            self.filelist.files.remove(fn)
+            if fn in self.filelist.files:
+                self.filelist.files.remove(fn)
 
 
 class vsc_install_scripts(install_scripts):
@@ -195,7 +213,7 @@ class vsc_build_py(build_py):
         return result
 
 
-class vsc_bdist_rpm(bdist_rpm):
+class vsc_bdist_rpm(orig_bdist_rpm):
     """
     Custom class to build the RPM, since the __init__.py cannot be included for the packages
     that have namespace spread across all of the machine.
@@ -298,32 +316,23 @@ class VscTestCommand(TestCommand):
         """
         cleanup = []
 
-        # determine the base directory of the repository
-        # we will assume that the tests are called from
-        # a 'setup.py' like file in the basedirectory
-        # (but could be called anything, as long as it is in the basedir)
-        setup_py = os.path.abspath(sys.argv[0])
-        log.info('run_tests from %s' % setup_py)
-        base_dir = os.path.dirname(setup_py)
-
         # make a lib dir to trick setup.py to package this properly
         # and git ignore empty dirs, so recreate it if necessary
-        lib_dir = os.path.join(base_dir, 'lib')
-        if not os.path.exists(lib_dir):
-            os.mkdir(lib_dir)
-            cleanup.append(lib_dir)
+        if not os.path.exists(REPO_LIB_DIR):
+            os.mkdir(REPO_LIB_DIR)
+            cleanup.append(REPO_LIB_DIR)
 
-        test_dir = os.path.join(base_dir, DEFAULT_TEST_SUITE)
+        test_dir = os.path.join(REPO_BASE_DIR, DEFAULT_TEST_SUITE)
         if os.path.isdir(test_dir):
             sys.path.insert(0, test_dir)
         else:
-            raise Exception("Can't find location of testsuite directory %s in %s" % (DEFAULT_TEST_SUITE, base_dir))
+            raise Exception("Can't find location of testsuite directory %s in %s" % (DEFAULT_TEST_SUITE, REPO_BASE_DIR))
 
-        # insert base_dir, so import DEFAULT_TEST_SUITE works (and nothing else gets picked up)
-        sys.path.insert(0, base_dir)
+        # insert REPO_BASE_DIR, so import DEFAULT_TEST_SUITE works (and nothing else gets picked up)
+        sys.path.insert(0, REPO_BASE_DIR)
 
         # make sure we can import the script as a module
-        scripts_dir = os.path.join(base_dir, 'bin')
+        scripts_dir = os.path.join(REPO_BASE_DIR, 'bin')
         if os.path.isdir(scripts_dir):
             sys.path.insert(0, scripts_dir)
 
@@ -419,6 +428,44 @@ class VscTestCommand(TestCommand):
 
         return res
 
+
+def files_in_namespaces():
+    """
+    Gather all __init__ files provided by the lib/ subdir
+        filenames are relative to the REPO_BASE_DIR
+    Return dict with key the namespace and value all files in the namespace directory
+    """
+    files_in_ns = {}
+    offset = len(REPO_LIB_DIR.split(os.path.sep))
+    for root, _, files in os.walk(REPO_LIB_DIR):
+        namespace='.'.join(root.split(os.path.sep)[offset:])
+        if '__init__.py' in files:
+            files_in_ns[namespace] = [os.path.relpath(os.path.join(root, f),start=REPO_BASE_DIR) for f in files]
+
+    return files_in_ns
+
+
+def generate_packages(extra=None, exclude=None):
+    """
+    Walk through lib subdirectory (if any)
+        gather all __init__ and build up provided namespace
+
+    extras is a list of packages added to the discovered ones
+    exclude is list of regex patterns to filter the packages
+        (discovered and extras)
+
+    """
+    res = files_in_namespaces().keys()
+    if extra:
+        res.extend(etxra)
+    if exclude:
+        for pat in exclude:
+            reg = re.compile(pat)
+            res= [ ns for ns in res if not reg.search(ns)]
+    log.info('generated packages list: %s' % res)
+    return res
+
+
 # shared target config
 SHARED_TARGET = {
     'url': '',
@@ -428,10 +475,11 @@ SHARED_TARGET = {
         "install_scripts": vsc_install_scripts,
         "egg_info": vsc_egg_info,
         "bdist_rpm": vsc_bdist_rpm,
+        "test": VscTestCommand,
     },
-    'cmdclass': {'test': VscTestCommand},
     'test_suite': DEFAULT_TEST_SUITE,
     'setup_requires' : ['setuptools', 'vsc-install >= %s' % VERSION],
+    'packages': generate_packages(),
 }
 
 
@@ -450,6 +498,7 @@ def cleanup(prefix=''):
         ffn = prefix + fn
         if os.path.isfile(ffn):
             os.remove(ffn)
+
 
 def sanitize(name):
     """
@@ -537,14 +586,28 @@ def build_setup_cfg_for_bdist_rpm(target):
     setup_cfg.close()
 
 
+def prepare_rpm(target):
+    """
+    Make some preparations required for proepr rpm creation
+        exclude files provided by packages that are shared
+            excluded_ns_rpm: is a list of namespaces, default to ['vsc']
+            set it to None when defining own function
+        generate the setup.cfg
+    """
+
+    nss = target.pop('excluded_ns_rpm', ['vsc'])
+    if nss is not None:
+        getattr(__builtin__, '__target')['excluded_ns_rpm'] = nss
+
+    build_setup_cfg_for_bdist_rpm(target)
+
+
 def action_target(target, setupfn=setup, extra_sdist=[], urltemplate=None):
     """
     Additional target attributes
         makesetupcfg: boolean, default True, to generate the setup.cfg (set to False if a manual setup.cfg is provided)
         provides: list of rpm provides for setup.cfg
     """
-    # EXTRA_SDIST_FILES.extend(extra_sdist)
-
     do_cleanup = True
     try:
         # very primitive check for install --skip-build
@@ -565,10 +628,11 @@ def action_target(target, setupfn=setup, extra_sdist=[], urltemplate=None):
         if 'github' in urltemplate:
             target['download_url'] = "%s/tarball/master" % target['url']
 
-    build_setup_cfg_for_bdist_rpm(target)
+    prepare_rpm(target)
     x = parse_target(target)
 
     setupfn(**x)
+
 
 if __name__ == '__main__':
     """
@@ -579,10 +643,10 @@ if __name__ == '__main__':
         'version': VERSION,
         'author': [sdw, ag, jt],
         'maintainer': [sdw, ag, jt],
-        'packages': ['vsc', 'vsc.install'],
         'zip_safe': True,
         'install_requires': ['setuptools'],
         'setup_requires': ['setuptools'],
+        'excluded_ns_rpm': [], # vsc-install ships default removed ns vsc
     }
 
     action_target(PACKAGE, urltemplate=URL_GH_HPCUGENT)
