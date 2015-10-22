@@ -36,6 +36,7 @@ import os
 import shutil
 import sys
 import re
+import inspect
 
 import setuptools.command.test
 
@@ -110,13 +111,11 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.2'
+VERSION = '0.9.3'
 
 # list of non-vsc packages that need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
 PREFIX_PYTHON_BDIST_RPM = ('setuptools',)
-
-
 
 # determine the base directory of the repository
 # we will assume that the tests are called from
@@ -126,6 +125,16 @@ _setup_py = os.path.abspath(sys.argv[0])
 REPO_BASE_DIR = os.path.dirname(_setup_py)
 log.info('run_tests from base dir %s (using executable %s)' % (REPO_BASE_DIR, _setup_py))
 REPO_LIB_DIR = os.path.join(REPO_BASE_DIR, DEFAULT_LIB_DIR)
+
+# to be inserted in sdist version of shared_setup
+NEW_SHARED_SETUP_HEADER_TEMPLATE = """
+# Inserted %s
+# Based on shared_setup version %s
+import os
+import sys
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '%s'))
+
+"""
 
 
 def find_extra_sdist_files():
@@ -156,6 +165,88 @@ def remove_extra_bdist_rpm_files(pkgs=None):
 
     return res
 
+class vsc_sdist(sdist):
+    """
+    Upon sdist, add this vsc.install.shared_setup to the sdist
+    and modifed the shipped setup.py to be able to use this
+    """
+    def _mod_setup_py(self, base_dir, external_dir, new_shared_setup):
+        """Modify the setup.py in the distribution directory"""
+
+        # re-copy setup.py, to avoid hardlinks (code from setupstools)
+        dest = os.path.join(base_dir, 'setup.py')
+        log.error('recopying dest %s if hardlinked' % dest)
+        if hasattr(os, 'link') and os.path.exists(dest):
+            # unlink and re-copy, since it might be hard-linked, and
+            # we don't want to change the source version
+            os.unlink(dest)
+            self.copy_file('setup.py', dest)
+
+        fh = open(dest, 'r')
+        code = fh.read()
+        fh.close()
+
+        # look for first line that does someting with vsc.install and shared_setup
+        reg = re.search(r'^.*vsc.install.*shared_setup.*$', code, re.M)
+        if not reg:
+            raise Exception("No vsc.install shared_setup in setup.py?")
+
+        # insert sys.path hack
+        before = reg.start()
+        # no indentation
+        code = code[:before] + NEW_SHARED_SETUP_HEADER_TEMPLATE % (new_shared_setup, VERSION, external_dir) + code[before:]
+
+        # replace 'vsc.install.shared_setup' -> new_shared_setup
+        code = re.sub(r'vsc\.install\.shared_setup', new_shared_setup, code)
+        # replace 'from vsc.install import shared_setup' -> import new_shared_setup as shared_setup
+        code = re.sub(r'from\s+vsc.install\s+import\s+shared_setup', 'import %s as shared_setup', code)
+
+        # write it
+        fh = open(dest, 'w')
+        fh.write(code)
+        fh.close()
+
+    def _add_shared_setup(self, base_dir, external_dir, new_shared_setup):
+        """Create the new shared_setup in distribution directory"""
+
+        ext_dir = os.path.join(base_dir, external_dir)
+        os.mkdir(ext_dir)
+
+        dest = os.path.join(ext_dir, '%s.py' % new_shared_setup)
+        log.error('inserting shared_setup as %s' % dest)
+        try:
+            source_code = inspect.getsource(sys.modules[__name__])
+        except:
+            raise Exception("sdist requires access shared_setup source")
+        try:
+            fh = open(dest, 'w')
+            fh.write(source_code)
+            fh.close()
+        except:
+            raise Exception("Failed to write new_shared_setup source to %s" % dest)
+
+    def make_release_tree(self, base_dir, files):
+        log.error("sdist make_release_tree original base_dir %s files %s" % (base_dir, files))
+        log.error("sdist from shared_setup %s current dir %s" % (__file__, os.getcwd()))
+        if os.path.exists(base_dir):
+            # no autocleanup?
+            # can be a leftover of earlier crash/raised exception
+            raise Exception("base_dir %s present. Please remove it" % base_dir)
+
+        sdist.make_release_tree(self, base_dir, files)
+
+        if __name__ == '__main__':
+            log.error('running shared_setup as main, not adding it to sdist')
+            return
+
+        # use a new name, to avoid confusion with original
+        new_shared_setup = 'shared_setup_dist_only'
+        external_dir = 'external_dist_only'
+        self._mod_setup_py(base_dir, external_dir, new_shared_setup)
+
+        self._add_shared_setup(base_dir, external_dir, new_shared_setup)
+
+        return
 
 class vsc_egg_info(egg_info):
     """Class to determine the set of files that should be included.
@@ -470,18 +561,19 @@ def generate_packages(extra=None, exclude=None):
 
 # shared target config
 SHARED_TARGET = {
-    'url': '',
-    'download_url': '',
-    'package_dir': {'': DEFAULT_LIB_DIR},
     'cmdclass': {
-        "install_scripts": vsc_install_scripts,
-        "egg_info": vsc_egg_info,
         "bdist_rpm": vsc_bdist_rpm,
+        "egg_info": vsc_egg_info,
+        "install_scripts": vsc_install_scripts,
+        "sdist": vsc_sdist,
         "test": VscTestCommand,
     },
-    'test_suite': DEFAULT_TEST_SUITE,
-    'setup_requires' : ['setuptools', 'vsc-install >= %s' % VERSION],
+    'download_url': '',
+    'package_dir': {'': DEFAULT_LIB_DIR},
     'packages': generate_packages(),
+    'setup_requires' : ['setuptools', 'vsc-install >= %s' % VERSION],
+    'test_suite': DEFAULT_TEST_SUITE,
+    'url': '',
 }
 
 
@@ -524,9 +616,18 @@ def sanitize(name):
 
 
 def parse_target(target):
-    """Add some fields"""
+    """
+    Add some fields
+
+    Remove sdist vsc class with '"vsc_sdist": False' in target
+    """
     new_target = {}
     new_target.update(SHARED_TARGET)
+
+    vsc_sdist = target.pop('vsc_sdist', True)
+    if not vsc_sdist:
+        new_target['cmdclass'].pop('sdist')
+
     for k, v in target.items():
         if k in ('author', 'maintainer'):
             if not isinstance(v, list):
@@ -649,6 +750,7 @@ if __name__ == '__main__':
         'install_requires': ['setuptools'],
         'setup_requires': ['setuptools'],
         'excluded_pkgs_rpm': [], # vsc-install ships vsc package (the vsc package is removed by default)
+        'vsc_sdist': False, # This is vsc.install, do not fake shared_setup
     }
 
     action_target(PACKAGE, urltemplate=URL_GH_HPCUGENT)
