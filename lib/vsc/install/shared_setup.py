@@ -173,7 +173,8 @@ class vsc_sdist(sdist):
     def _mod_setup_py(self, base_dir, external_dir, new_shared_setup):
         """Modify the setup.py in the distribution directory"""
 
-        # re-copy setup.py, to avoid hardlinks (code from setupstools)
+        # re-copy setup.py, to avoid hardlinks
+        # (code based on setuptools.command.sdist make_release_tree method)
         dest = os.path.join(base_dir, 'setup.py')
         log.error('recopying dest %s if hardlinked' % dest)
         if hasattr(os, 'link') and os.path.exists(dest):
@@ -216,16 +217,23 @@ class vsc_sdist(sdist):
         log.error('inserting shared_setup as %s' % dest)
         try:
             source_code = inspect.getsource(sys.modules[__name__])
-        except:
-            raise Exception("sdist requires access shared_setup source")
+        except Exception as err: # have no clue what exceptions inspect might throw
+            raise Exception("sdist requires access shared_setup source (%s)" % err)
+
         try:
             fh = open(dest, 'w')
             fh.write(source_code)
             fh.close()
-        except:
-            raise Exception("Failed to write new_shared_setup source to %s" % dest)
+        except IOError as err:
+            raise IOError("Failed to write new_shared_setup source to %s (%s)" % (dest, err))
 
     def make_release_tree(self, base_dir, files):
+        """
+        Create the files in subdir base_dir ready for packaging
+        After the normal make_release_tree ran, we insert shared_setup
+        and modify the to-be-packaged setup.py
+        """
+
         log.error("sdist make_release_tree original base_dir %s files %s" % (base_dir, files))
         log.error("sdist from shared_setup %s current dir %s" % (__file__, os.getcwd()))
         if os.path.exists(base_dir):
@@ -237,16 +245,14 @@ class vsc_sdist(sdist):
 
         if __name__ == '__main__':
             log.error('running shared_setup as main, not adding it to sdist')
-            return
+        else:
+            # use a new name, to avoid confusion with original
+            new_shared_setup = 'shared_setup_dist_only'
+            external_dir = 'external_dist_only'
+            self._mod_setup_py(base_dir, external_dir, new_shared_setup)
 
-        # use a new name, to avoid confusion with original
-        new_shared_setup = 'shared_setup_dist_only'
-        external_dir = 'external_dist_only'
-        self._mod_setup_py(base_dir, external_dir, new_shared_setup)
+            self._add_shared_setup(base_dir, external_dir, new_shared_setup)
 
-        self._add_shared_setup(base_dir, external_dir, new_shared_setup)
-
-        return
 
 class vsc_egg_info(egg_info):
     """Class to determine the set of files that should be included.
@@ -624,9 +630,11 @@ def parse_target(target):
     new_target = {}
     new_target.update(SHARED_TARGET)
 
-    vsc_sdist = target.pop('vsc_sdist', True)
-    if not vsc_sdist:
-        new_target['cmdclass'].pop('sdist')
+    use_vsc_sdist = target.pop('vsc_sdist', True)
+    if not use_vsc_sdist:
+        sdist_cmdclass = new_target['cmdclass'].pop('sdist')
+        if not issubclass(sdist_cmdclass, vsc_sdist):
+            raise Exception("vsc_sdist is is enabled, but the sdist command is not a vsc_sdist (sub)class. Clean up your target.")
 
     for k, v in target.items():
         if k in ('author', 'maintainer'):
