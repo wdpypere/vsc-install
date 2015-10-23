@@ -82,6 +82,8 @@ if not hasattr(__builtin__,'__test_filter'):
 has_setuptools = True
 
 # 0 : WARN (default), 1 : INFO, 2 : DEBUG
+# for some reason, still required to use log.error to get anything outputted to screen
+# so lots of log.error here that is not error-related at all
 log.set_verbosity(2)
 
 # available authors
