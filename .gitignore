@@ -4,6 +4,7 @@
 
 # can be ignored for vsc-install
 setup.cfg
+MANIFEST
 
 # Packages
 *.egg
