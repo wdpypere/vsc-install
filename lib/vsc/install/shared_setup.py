@@ -623,14 +623,43 @@ def sanitize(name):
     return ",".join([sanitize(r) for r in name])
 
 
-def parse_target(target):
+def parse_target(target, urltemplate):
     """
     Add some fields
+        set url / download_url from template
+
+        vsc_long_description: set the long description from the README
 
     Remove sdist vsc class with '"vsc_sdist": False' in target
     """
     new_target = {}
     new_target.update(SHARED_TARGET)
+
+    if urltemplate:
+        target['url'] = urltemplate % target
+        if 'github' in urltemplate:
+            target['download_url'] = "%s/tarball/master" % target['url']
+
+    # Readme are required now
+    readme = os.path.join(REPO_BASE_DIR, 'README.md')
+    if not os.path.exists(readme):
+        raise Exception('README is missing (was looking for %s)' % readme)
+
+    vsc_long_description = target.pop('vsc_long_description', True)
+    if vsc_long_description:
+        if 'long_description' in target:
+            log.error('Going to ignore the provided long_descripton. Set it in the README.md or disable vsc_long_description')
+        readmetxt = open(readme).read()
+        # look for description block, read text until double empty line or new block
+        headers_blocks = re.split(r"^\s*(\S.*?)\s*\n=+\s*\n", readmetxt, re.M)
+        # using a regex here, to allow easy modifications
+        try:
+            descr_index = [i for i, txt in enumerate(headers_blocks) if re.search(r'^Description$', txt)][0]
+            descr = re.split(r'\n\n', headers_blocks[descr_index+1])[0].strip()
+        except IndexError:
+            raise Exception('Could not find a Description block in the README %s to create the long description' % readme)
+        log.error('using long_description %s' % descr)
+        target['long_description'] = descr
 
     use_vsc_sdist = target.pop('vsc_sdist', True)
     if not use_vsc_sdist:
@@ -705,9 +734,8 @@ def prepare_rpm(target):
         exclude files provided by packages that are shared
             excluded_pkgs_rpm: is a list of packages, default to ['vsc']
             set it to None when defining own function
-        generate the setup.cfg
+        generate the setup.cfg using build_setup_cfg_for_bdist_rpm
     """
-
     pkgs = target.pop('excluded_pkgs_rpm', ['vsc'])
     if pkgs is not None:
         getattr(__builtin__, '__target')['excluded_pkgs_rpm'] = pkgs
@@ -736,13 +764,8 @@ def action_target(target, setupfn=setup, extra_sdist=[], urltemplate=None):
     if do_cleanup:
         cleanup()
 
-    if urltemplate:
-        target['url'] = urltemplate % target
-        if 'github' in urltemplate:
-            target['download_url'] = "%s/tarball/master" % target['url']
-
     prepare_rpm(target)
-    x = parse_target(target)
+    x = parse_target(target, urltemplate)
 
     setupfn(**x)
 
