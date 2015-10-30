@@ -127,6 +127,7 @@ _setup_py = os.path.abspath(sys.argv[0])
 REPO_BASE_DIR = os.path.dirname(_setup_py)
 log.info('run_tests from base dir %s (using executable %s)' % (REPO_BASE_DIR, _setup_py))
 REPO_LIB_DIR = os.path.join(REPO_BASE_DIR, DEFAULT_LIB_DIR)
+REPO_SCRIPTS_DIR = os.path.join(REPO_BASE_DIR, 'bin')
 
 # to be inserted in sdist version of shared_setup
 NEW_SHARED_SETUP_HEADER_TEMPLATE = """
@@ -454,9 +455,8 @@ class VscTestCommand(TestCommand):
         sys.path.insert(0, REPO_BASE_DIR)
 
         # make sure we can import the script as a module
-        scripts_dir = os.path.join(REPO_BASE_DIR, 'bin')
-        if os.path.isdir(scripts_dir):
-            sys.path.insert(0, scripts_dir)
+        if os.path.isdir(REPO_SCRIPTS_DIR):
+            sys.path.insert(0, REPO_SCRIPTS_DIR)
 
         return cleanup
 
@@ -634,6 +634,7 @@ def parse_target(target, urltemplate):
         set url / download_url from template
 
         vsc_long_description: set the long description from the README
+        vsc_scripts: generate scripts from bin content
 
     Remove sdist vsc class with '"vsc_sdist": False' in target
     """
@@ -665,6 +666,12 @@ def parse_target(target, urltemplate):
             raise Exception('Could not find a Description block in the README %s to create the long description' % readme)
         log.error('using long_description %s' % descr)
         target['long_description'] = descr
+
+    vsc_scripts = target.pop('vsc_scripts', True)
+    if vsc_scripts and os.path.isdir(REPO_SCRIPTS_DIR):
+        if 'scripts' in target:
+            log.error('Going to ignore specified scripts. use "\'vsc_scripts\': False" if you know what you are doing')
+        target['scripts'] = glob.glob("%s/*" % REPO_SCRIPTS_DIR)
 
     use_vsc_sdist = target.pop('vsc_sdist', True)
     if not use_vsc_sdist:
