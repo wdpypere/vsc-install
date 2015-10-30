@@ -588,7 +588,7 @@ def add_and_remove(alist, extra=None, exclude=None):
     if exclude:
         for pat in exclude:
             reg = re.compile(pat)
-            res= [s for s in alist if not reg.search(s)]
+            alist = [s for s in alist if not reg.search(s)]
     log.info('generated list: %s' % alist)
     return alist
 
