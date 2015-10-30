@@ -642,9 +642,9 @@ def parse_target(target, urltemplate):
     new_target.update(SHARED_TARGET)
 
     if urltemplate:
-        target['url'] = urltemplate % target
+        new_target['url'] = urltemplate % target
         if 'github' in urltemplate:
-            target['download_url'] = "%s/tarball/master" % target['url']
+            new_target['download_url'] = "%s/tarball/master" % new_target['url']
 
     # Readme are required now
     readme = os.path.join(REPO_BASE_DIR, 'README.md')
@@ -657,27 +657,39 @@ def parse_target(target, urltemplate):
             log.error('Going to ignore the provided long_descripton. Set it in the README.md or disable vsc_long_description')
         readmetxt = open(readme).read()
         # look for description block, read text until double empty line or new block
-        headers_blocks = re.split(r"^\s*(\S.*?)\s*\n=+\s*\n", readmetxt, re.M)
+        # allow 'words with === on next line' or comment-like block '# title'
+        headers_blocks = re.split(r"(?:^(?:^\s*(\S.*?)\s*\n=+)|(?:#+\s+(\S.*?))\s*\n)", readmetxt, 0, re.M)
+        # there are 2 matching groups, only one can match and it's hard to make a single readable regex
+        # so one of the 2 groups gives a None
+        headers_blocks = [x for x in headers_blocks if x is not None]
         # using a regex here, to allow easy modifications
         try:
-            descr_index = [i for i, txt in enumerate(headers_blocks) if re.search(r'^Description$', txt)][0]
+            descr_index = [i for i, txt in enumerate(headers_blocks) if re.search(r'^Description$', txt or '')][0]
             descr = re.split(r'\n\n', headers_blocks[descr_index+1])[0].strip()
         except IndexError:
             raise Exception('Could not find a Description block in the README %s to create the long description' % readme)
         log.error('using long_description %s' % descr)
-        target['long_description'] = descr
+        new_target['long_description'] = descr
 
     vsc_scripts = target.pop('vsc_scripts', True)
     if vsc_scripts and os.path.isdir(REPO_SCRIPTS_DIR):
         if 'scripts' in target:
-            log.error('Going to ignore specified scripts. use "\'vsc_scripts\': False" if you know what you are doing')
-        target['scripts'] = glob.glob("%s/*" % REPO_SCRIPTS_DIR)
+            old_scripts = target.pop('scripts', [])
+            log.error(('Going to ignore specified scripts %s'
+                       ' Use "\'vsc_scripts\': False" if you know what you are doing') % old_scripts)
+        new_target['scripts'] = [os.path.relpath(p, REPO_BASE_DIR) for p in glob.glob("%s/*" % REPO_SCRIPTS_DIR)]
+        # primitive gitignore
+        gitignore = os.path.join(REPO_BASE_DIR, '.gitignore')
+        if os.path.isfile(gitignore):
+            patterns = [l.strip().replace('*','.*') for l in open(gitignore).readlines() if l.startswith('*') or l.startswith('bin')]
+            reg = re.compile('^('+'|'.join(patterns)+')$')
+            new_target['scripts'] = [f for f in new_target['scripts'] if not reg.search(f)]
 
     use_vsc_sdist = target.pop('vsc_sdist', True)
     if not use_vsc_sdist:
         sdist_cmdclass = new_target['cmdclass'].pop('sdist')
         if not issubclass(sdist_cmdclass, vsc_sdist):
-            raise Exception("vsc_sdist is is enabled, but the sdist command is not a vsc_sdist (sub)class. Clean up your target.")
+            raise Exception("vsc_sdist is disabled, but the sdist command is not a vsc_sdist (sub)class. Clean up your target.")
 
     for k, v in target.items():
         if k in ('author', 'maintainer'):
