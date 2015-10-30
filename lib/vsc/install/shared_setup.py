@@ -139,24 +139,49 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '%s'))
 
 """
 
+def rel_gitignore(paths):
+    """
+    A list of paths, return list of relative paths to REPO_BASE_DIR,
+    filter with primitive gitignore
+    """
+    res = [os.path.relpath(p, REPO_BASE_DIR) for p in paths]
+
+    # primitive gitignore
+    gitignore = os.path.join(REPO_BASE_DIR, '.gitignore')
+    if os.path.isfile(gitignore):
+        patterns = [l.strip().replace('*','.*') for l in open(gitignore).readlines() if l.startswith('*')]
+        reg = re.compile('^('+'|'.join(patterns)+')$')
+        res = [f for f in res if not reg.search(f)]
+    return res
+
+
 def files_in_packages():
     """
     Gather all __init__ files provided by the lib/ subdir
         filenames are relative to the REPO_BASE_DIR
-    Return dict with key the package and value all files in the package directory
+    Return dict  with key
+        packages: a dict with key the package and value all files in the package directory
+        modules: dict with key non=package module name and value the filename
     """
-    res = {}
+    res = {'packages' : {}, 'modules': {}}
     offset = len(REPO_LIB_DIR.split(os.path.sep))
     for root, _, files in os.walk(REPO_LIB_DIR):
-        package='.'.join(root.split(os.path.sep)[offset:])
+        package = '.'.join(root.split(os.path.sep)[offset:])
         if '__init__.py' in files:
             if package == 'vsc' or package.startswith('vsc.'):
                 init = open(os.path.join(root, '__init__.py')).read()
-                reg = re.search(r'^import\s+pkg_resources\npkg_resources.declare_namespace\(__name__\)$', init, re.M)
-                if not reg:
-                    raise Exception('vsc namespace packages do not allow non-shared namespace in dir %s. Fix with pkg_resources.declare_namespace' % root)
+                if not re.search(r'^import\s+pkg_resources\npkg_resources.declare_namespace\(__name__\)$', init, re.M):
+                    raise Exception(('vsc namespace packages do not allow non-shared namespace in dir %s.'
+                                     'Fix with pkg_resources.declare_namespace') % root)
 
-            res[package] = [os.path.relpath(os.path.join(root, f),start=REPO_BASE_DIR) for f in files]
+            res['packages'][package] = rel_gitignore([os.path.join(root, f) for f in files])
+
+            # this is a package, all .py files are modules
+            for mod_fn in res['packages'][package]:
+                if not mod_fn.endswith('.py') or mod_fn.endswith('__init__.py'):
+                    continue
+                modname = os.path.basename(mod_fn)[:-len('.py')]
+                res['modules']["%s.%s" % (package, modname)] = mod_fn
 
     return res
 
@@ -184,7 +209,7 @@ def remove_extra_bdist_rpm_files(pkgs=None):
 
     res = []
     for pkg in pkgs:
-        res.extend(FILES_IN_PACKAGES.get(pkg, []))
+        res.extend(FILES_IN_PACKAGES['packages'].get(pkg, []))
     log.info('removing files from rpm: %s' % res)
 
     return res
@@ -551,24 +576,56 @@ class VscTestCommand(TestCommand):
         return res
 
 
+def add_and_remove(alist, extra=None, exclude=None):
+    """
+    alist is a list of strings, it possibly is modified
+
+    extras is a list of strings added to alist
+    exclude is list of regex patterns to filter the list of strings
+    """
+    if extra:
+        alist.extend(etxra)
+    if exclude:
+        for pat in exclude:
+            reg = re.compile(pat)
+            res= [s for s in alist if not reg.search(s)]
+    log.info('generated list: %s' % alist)
+    return alist
+
+
 def generate_packages(extra=None, exclude=None):
     """
     Walk through lib subdirectory (if any)
         gather all __init__ and build up provided package
 
-    extras is a list of packages added to the discovered ones
-    exclude is list of regex patterns to filter the packages
-        (discovered and extras)
-
+    Supports extra and/or exclude from add_and_remove
+        extra is a list of packages added to the discovered ones
+        exclude is list of regex patterns to filter the packages
     """
-    res = FILES_IN_PACKAGES.keys()
-    if extra:
-        res.extend(etxra)
-    if exclude:
-        for pat in exclude:
-            reg = re.compile(pat)
-            res= [ ns for ns in res if not reg.search(ns)]
+    res = add_and_remove(FILES_IN_PACKAGES['packages'].keys(), extra=extra, exclude=exclude)
     log.info('generated packages list: %s' % res)
+    return res
+
+
+def generate_modules(extra=None, exclude=None):
+    """
+    Return list of non-package modules
+    Supports extra and/or exclude from add_and_remove
+    """
+    res = add_and_remove(FILES_IN_PACKAGES['modules'].keys(), extra=extra, exclude=exclude)
+    log.info('generated modules list: %s' % res)
+    return res
+
+
+def generate_scripts(extra=None, exclude=None):
+    """Return a list of scripts in REPOS_SCRIPTS_DIR
+    Supports extra and/or exclude from add_and_remove
+    """
+    res = []
+    if os.path.isdir(REPO_SCRIPTS_DIR):
+        res = rel_gitignore(glob.glob("%s/*" % REPO_SCRIPTS_DIR))
+    res = add_and_remove(res, extra=extra, exclude=exclude)
+    log.info('generated scripts list: %s' % res)
     return res
 
 
@@ -672,18 +729,14 @@ def parse_target(target, urltemplate):
         new_target['long_description'] = descr
 
     vsc_scripts = target.pop('vsc_scripts', True)
-    if vsc_scripts and os.path.isdir(REPO_SCRIPTS_DIR):
-        if 'scripts' in target:
-            old_scripts = target.pop('scripts', [])
-            log.error(('Going to ignore specified scripts %s'
-                       ' Use "\'vsc_scripts\': False" if you know what you are doing') % old_scripts)
-        new_target['scripts'] = [os.path.relpath(p, REPO_BASE_DIR) for p in glob.glob("%s/*" % REPO_SCRIPTS_DIR)]
-        # primitive gitignore
-        gitignore = os.path.join(REPO_BASE_DIR, '.gitignore')
-        if os.path.isfile(gitignore):
-            patterns = [l.strip().replace('*','.*') for l in open(gitignore).readlines() if l.startswith('*') or l.startswith('bin')]
-            reg = re.compile('^('+'|'.join(patterns)+')$')
-            new_target['scripts'] = [f for f in new_target['scripts'] if not reg.search(f)]
+    if vsc_scripts:
+        candidates = generate_scripts()
+        if candidates:
+            if 'scripts' in target:
+                old_scripts = target.pop('scripts', [])
+                log.error(('Going to ignore specified scripts %s'
+                           ' Use "\'vsc_scripts\': False" if you know what you are doing') % old_scripts)
+            new_target['scripts'] = candidates
 
     use_vsc_sdist = target.pop('vsc_sdist', True)
     if not use_vsc_sdist:
