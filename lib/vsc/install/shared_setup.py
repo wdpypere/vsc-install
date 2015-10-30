@@ -138,6 +138,29 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '%s'))
 
 """
 
+def files_in_packages():
+    """
+    Gather all __init__ files provided by the lib/ subdir
+        filenames are relative to the REPO_BASE_DIR
+    Return dict with key the package and value all files in the package directory
+    """
+    res = {}
+    offset = len(REPO_LIB_DIR.split(os.path.sep))
+    for root, _, files in os.walk(REPO_LIB_DIR):
+        package='.'.join(root.split(os.path.sep)[offset:])
+        if '__init__.py' in files:
+            if package == 'vsc' or package.startswith('vsc.'):
+                init = open(os.path.join(root, '__init__.py')).read()
+                reg = re.search(r'^import\s+pkg_resources\npkg_resources.declare_namespace\(__name__\)$', init, re.M)
+                if not reg:
+                    raise Exception('vsc namespace packages do not allow non-shared namespace in dir %s. Fix with pkg_resources.declare_namespace' % root)
+
+            res[package] = [os.path.relpath(os.path.join(root, f),start=REPO_BASE_DIR) for f in files]
+
+    return res
+
+FILES_IN_PACKAGES = files_in_packages()
+
 
 def find_extra_sdist_files():
     """Looks for files to append to the FileList that is used by the egg_info."""
@@ -159,10 +182,8 @@ def remove_extra_bdist_rpm_files(pkgs=None):
         pkgs = getattr(__builtin__, '__target').get('excluded_pkgs_rpm', [])
 
     res = []
-    fin = files_in_packages()
-
     for pkg in pkgs:
-        res.extend(fin.get(pkg, []))
+        res.extend(FILES_IN_PACKAGES.get(pkg, []))
     log.info('removing files from rpm: %s' % res)
 
     return res
@@ -530,22 +551,6 @@ class VscTestCommand(TestCommand):
         return res
 
 
-def files_in_packages():
-    """
-    Gather all __init__ files provided by the lib/ subdir
-        filenames are relative to the REPO_BASE_DIR
-    Return dict with key the package and value all files in the package directory
-    """
-    res = {}
-    offset = len(REPO_LIB_DIR.split(os.path.sep))
-    for root, _, files in os.walk(REPO_LIB_DIR):
-        package='.'.join(root.split(os.path.sep)[offset:])
-        if '__init__.py' in files:
-            res[package] = [os.path.relpath(os.path.join(root, f),start=REPO_BASE_DIR) for f in files]
-
-    return res
-
-
 def generate_packages(extra=None, exclude=None):
     """
     Walk through lib subdirectory (if any)
@@ -556,7 +561,7 @@ def generate_packages(extra=None, exclude=None):
         (discovered and extras)
 
     """
-    res = files_in_packages().keys()
+    res = FILES_IN_PACKAGES.keys()
     if extra:
         res.extend(etxra)
     if exclude:
