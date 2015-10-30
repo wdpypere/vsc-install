@@ -715,7 +715,8 @@ def parse_target(target, urltemplate):
         readmetxt = open(readme).read()
         # look for description block, read text until double empty line or new block
         # allow 'words with === on next line' or comment-like block '# title'
-        headers_blocks = re.split(r"(?:^(?:^\s*(\S.*?)\s*\n=+)|(?:#+\s+(\S.*?))\s*\n)", readmetxt, 0, re.M)
+        reg = re.compile(r"(?:^(?:^\s*(\S.*?)\s*\n=+)|(?:#+\s+(\S.*?))\s*\n)", re.M)
+        headers_blocks = reg.split(readmetxt)
         # there are 2 matching groups, only one can match and it's hard to make a single readable regex
         # so one of the 2 groups gives a None
         headers_blocks = [x for x in headers_blocks if x is not None]
