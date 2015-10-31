@@ -268,7 +268,7 @@ class vsc_sdist(sdist):
             # unlink and re-copy, since it might be hard-linked, and
             # we don't want to change the source version
             os.unlink(dest)
-            self.copy_file('setup.py', dest)
+            self.copy_file(os.path.join(REPO_BASE_DIR, 'setup.py'), dest)
 
         fh = open(dest, 'r')
         code = fh.read()
@@ -339,6 +339,10 @@ class vsc_sdist(sdist):
             self._mod_setup_py(base_dir, external_dir, new_shared_setup)
 
             self._add_shared_setup(base_dir, external_dir, new_shared_setup)
+
+        # Add mandatory files
+        for fn in [LICENSE, README]:
+            self.copy_file(os.path.join(REPO_BASE_DIR, fn), os.path.join(base_dir, fn))
 
 
 class vsc_egg_info(egg_info):
@@ -727,6 +731,34 @@ def get_md5sum(filename):
     """Use this function to compute the md5sum in the KNOWN_LICENSES hash"""
     return hashlib.md5(open(filename).read()).hexdigest()
 
+def get_license(license=None):
+    """
+    Determine the license of this project based on LICENSE file
+
+    license argument is the license file to check. if none rpovided, the project LICENSE is used
+    """
+    # LICENSE is required and enforced
+    if license is None:
+        license = os.path.join(REPO_BASE_DIR, LICENSE)
+    if not os.path.exists(license):
+        raise Exception('LICENSE is missing (was looking for %s)' % license)
+
+    license_md5 = get_md5sum(license)
+    log.info('found license %s with md5sum %s' % (license, license_md5))
+    found_lic = False
+    for lic_short, data in KNOWN_LICENSES.items():
+        if license_md5 != data[0]:
+            continue
+
+        found_lic = True
+        break
+
+    if not found_lic:
+        raise Exception('UNKONWN LICENSE %s provided. Should be fixed or added to vsc-install' % license)
+
+    log.info("Found license name %s and classifier %s" , lic_short, data[1])
+    return lic_short, data[1]
+
 
 def parse_target(target, urltemplate):
     """
@@ -754,23 +786,11 @@ def parse_target(target, urltemplate):
     if not os.path.exists(readme):
         raise Exception('README is missing (was looking for %s)' % readme)
 
-    # LICENSE is required and enforced
-    license = os.path.join(REPO_BASE_DIR, LICENSE)
-    if not os.path.exists(license):
-        raise Exception('LICENSE is missing (was looking for %s)' % license)
-
-    license_md5 = get_md5sum(license)
-    log.info('found license %s with md5sum %s' % (license, license_md5))
-    found_lic = False
-    for lic_short, data in KNOWN_LICENSES.items():
-        if license_md5 != data[0]:
-            continue
-        new_target['license'] = lic_short
-        classifiers.append(data[1])
-        found_lic = True
-        break
-    if not found_lic:
-        raise Exception('UNKONWN LICENSE %s provided. Should be fixed or added to vsc-install' % license)
+    # license info
+    lic_name, lic_classifier = get_license()
+    log.info('setting license %s' % lic_name)
+    new_target['license'] = lic_name
+    classifiers.append(lic_classifier)
 
     vsc_description = target.pop('vsc_description', True)
     if vsc_description:
@@ -932,7 +952,6 @@ if __name__ == '__main__':
         'install_requires': ['setuptools'],
         'setup_requires': ['setuptools'],
         'excluded_pkgs_rpm': [], # vsc-install ships vsc package (the vsc package is removed by default)
-        'vsc_sdist': False, # This is vsc.install, do not fake shared_setup
     }
 
     action_target(PACKAGE, urltemplate=URL_GH_HPCUGENT)
