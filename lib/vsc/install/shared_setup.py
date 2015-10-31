@@ -81,10 +81,28 @@ if not hasattr(__builtin__,'__test_filter'):
 # Keep this for legacy reasons, setuptools didn't used to be a requirement
 has_setuptools = True
 
-# 0 : WARN (default), 1 : INFO, 2 : DEBUG
-# for some reason, still required to use log.error to get anything outputted to screen
-# so lots of log.error here that is not error-related at all
-log.set_verbosity(2)
+# redo log info / warn / error
+# don't do it twice
+if log.Log.__name__ != 'NewLog':
+    # make a map between level and names
+    log_levels = dict([(getattr(log,x), x) for x in dir(log) if x == x.upper()])
+
+    OrigLog = log.Log
+
+    class NewLog(OrigLog):
+        def _log(self, level, msg, args):
+            """Prefix the message with human readbale level"""
+            newmsg = "%s: %s" % (log_levels.get(level, 'UNKNOWN'), msg)
+            return OrigLog._log(self, level, newmsg, args)
+
+    log.Log = NewLog
+    log._global_log = NewLog()
+    for lvl in log_levels.values():
+        name = lvl.lower()
+        setattr(log, name, getattr(log._global_log, name))
+
+    log.set_verbosity(log.DEBUG)
+
 
 # available authors
 ag = ('Andy Georges', 'andy.georges@ugent.be')
@@ -225,7 +243,7 @@ class vsc_sdist(sdist):
         # re-copy setup.py, to avoid hardlinks
         # (code based on setuptools.command.sdist make_release_tree method)
         dest = os.path.join(base_dir, 'setup.py')
-        log.error('recopying dest %s if hardlinked' % dest)
+        log.info('recopying dest %s if hardlinked' % dest)
         if hasattr(os, 'link') and os.path.exists(dest):
             # unlink and re-copy, since it might be hard-linked, and
             # we don't want to change the source version
@@ -263,7 +281,7 @@ class vsc_sdist(sdist):
         os.mkdir(ext_dir)
 
         dest = os.path.join(ext_dir, '%s.py' % new_shared_setup)
-        log.error('inserting shared_setup as %s' % dest)
+        log.info('inserting shared_setup as %s' % dest)
         try:
             source_code = inspect.getsource(sys.modules[__name__])
         except Exception as err: # have no clue what exceptions inspect might throw
@@ -283,8 +301,8 @@ class vsc_sdist(sdist):
         and modify the to-be-packaged setup.py
         """
 
-        log.error("sdist make_release_tree original base_dir %s files %s" % (base_dir, files))
-        log.error("sdist from shared_setup %s current dir %s" % (__file__, os.getcwd()))
+        log.info("sdist make_release_tree original base_dir %s files %s" % (base_dir, files))
+        log.info("sdist from shared_setup %s current dir %s" % (__file__, os.getcwd()))
         if os.path.exists(base_dir):
             # no autocleanup?
             # can be a leftover of earlier crash/raised exception
@@ -293,7 +311,7 @@ class vsc_sdist(sdist):
         sdist.make_release_tree(self, base_dir, files)
 
         if __name__ == '__main__':
-            log.error('running shared_setup as main, not adding it to sdist')
+            log.info('running shared_setup as main, not adding it to sdist')
         else:
             # use a new name, to avoid confusion with original
             new_shared_setup = 'shared_setup_dist_only'
@@ -367,7 +385,7 @@ class vsc_bdist_rpm(orig_bdist_rpm):
     that have package spread across all of the machine.
     """
     def run(self):
-        log.error("vsc_bdist_rpm = %s" % (self.__dict__))
+        log.info("vsc_bdist_rpm = %s" % (self.__dict__))
         SHARED_TARGET['cmdclass']['egg_info'] = vsc_bdist_rpm_egg_info  # changed to allow removal of files
         self.run_command('egg_info')  # ensure distro name is up-to-date
         orig_bdist_rpm.run(self)
