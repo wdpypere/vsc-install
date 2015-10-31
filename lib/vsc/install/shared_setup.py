@@ -32,11 +32,13 @@ Shared module for vsc software setup
 @author: Andy Georges (Ghent University)
 """
 import glob
+import hashlib
+import inspect
 import os
 import shutil
 import sys
 import re
-import inspect
+
 
 import setuptools.command.test
 
@@ -156,6 +158,23 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '%s'))
 
 """
+
+# location of README file
+README = 'README.md'
+
+# location of LICENSE file
+LICENSE = 'LICENSE'
+
+# key = short name, value tuple
+#    md5sum of LICENSE file
+#    classifier (see https://pypi.python.org/pypi?%3Aaction=list_classifiers)
+# (L)GPLv2 and (L)GPLv2+ have same text, we assume always to use the + one
+KNOWN_LICENSES = {
+    #'LGPLv2' : ('? same text as LGPLv2+', 'License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)'),
+    'LGPLv2+' : ('5f30f0716dfdd0d91eb439ebec522ec2', 'License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)'),
+    #'GPLv2': ('? same text as GPLv2+', 'License :: OSI Approved :: GNU General Public License v2 (GPLv2)'),
+    #'GPLv2+': ('?', 'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)'),
+}
 
 def rel_gitignore(paths):
     """
@@ -703,12 +722,17 @@ def sanitize(name):
     return ",".join([sanitize(r) for r in name])
 
 
+def get_md5sum(filename):
+    """Use this function to compute the md5sum in the KNOWN_LICENSES hash"""
+    return hashlib.md5(open(filename).read()).hexdigest()
+
+
 def parse_target(target, urltemplate):
     """
     Add some fields
         set url / download_url from template
 
-        vsc_long_description: set the long description from the README
+        vsc_description: set the description and long_description from the README
         vsc_scripts: generate scripts from bin content
 
     Remove sdist vsc class with '"vsc_sdist": False' in target
@@ -716,21 +740,44 @@ def parse_target(target, urltemplate):
     new_target = {}
     new_target.update(SHARED_TARGET)
 
+    # prepare classifiers
+    classifiers = new_target.setdefault('classifiers', [])
+
     if urltemplate:
         new_target['url'] = urltemplate % target
         if 'github' in urltemplate:
             new_target['download_url'] = "%s/tarball/master" % new_target['url']
 
-    # Readme are required now
-    readme = os.path.join(REPO_BASE_DIR, 'README.md')
+    # Readme are required
+    readme = os.path.join(REPO_BASE_DIR, README)
     if not os.path.exists(readme):
         raise Exception('README is missing (was looking for %s)' % readme)
 
-    vsc_long_description = target.pop('vsc_long_description', True)
-    if vsc_long_description:
+    # LICENSE is required and enforced
+    license = os.path.join(REPO_BASE_DIR, LICENSE)
+    if not os.path.exists(license):
+        raise Exception('LICENSE is missing (was looking for %s)' % license)
+
+    license_md5 = get_md5sum(license)
+    log.info('found license %s with md5sum %s' % (license, license_md5))
+    found_lic = False
+    for lic_short, data in KNOWN_LICENSES.items():
+        if license_md5 != data[0]:
+            continue
+        new_target['license'] = lic_short
+        classifiers.append(data[1])
+        found_lic = True
+        break
+    if not found_lic:
+        raise Exception('UNKONWN LICENSE %s provided. Should be fixed or added to vsc-install' % license)
+
+    vsc_description = target.pop('vsc_description', True)
+    if vsc_description:
         if 'long_description' in target:
-            log.error('Going to ignore the provided long_descripton. Set it in the README.md or disable vsc_long_description')
+            log.info(('Going to ignore the provided long_descripton.'
+                       'Set it in the %s or disable vsc_description') % README)
         readmetxt = open(readme).read()
+
         # look for description block, read text until double empty line or new block
         # allow 'words with === on next line' or comment-like block '# title'
         reg = re.compile(r"(?:^(?:^\s*(\S.*?)\s*\n=+)|(?:#+\s+(\S.*?))\s*\n)", re.M)
@@ -742,10 +789,13 @@ def parse_target(target, urltemplate):
         try:
             descr_index = [i for i, txt in enumerate(headers_blocks) if re.search(r'^Description$', txt or '')][0]
             descr = re.split(r'\n\n', headers_blocks[descr_index+1])[0].strip()
+            descr = re.sub(r'[\n\t]', ' ', descr) # replace newlines and tabs in description
+            descr = re.sub(r'\s+', ' ', descr) # squash whitespace
         except IndexError:
             raise Exception('Could not find a Description block in the README %s to create the long description' % readme)
-        log.error('using long_description %s' % descr)
-        new_target['long_description'] = descr
+        log.info('using long_description %s' % descr)
+        new_target['description'] = descr
+        new_target['long_description'] = readmetxt
 
     vsc_scripts = target.pop('vsc_scripts', True)
     if vsc_scripts:
@@ -753,7 +803,7 @@ def parse_target(target, urltemplate):
         if candidates:
             if 'scripts' in target:
                 old_scripts = target.pop('scripts', [])
-                log.error(('Going to ignore specified scripts %s'
+                log.info(('Going to ignore specified scripts %s'
                            ' Use "\'vsc_scripts\': False" if you know what you are doing') % old_scripts)
             new_target['scripts'] = candidates
 
@@ -819,6 +869,9 @@ def build_setup_cfg_for_bdist_rpm(target):
 
     if 'setup_requires' in target:
         txt.extend(["build_requires = %s" % (sanitize(target['setup_requires']))])
+
+    # add metadata
+    txt += ['', '[metadata]', '', 'description-file = %s' % README, '']
 
     setup_cfg.write("\n".join(txt+['']))
     setup_cfg.close()
