@@ -10,7 +10,7 @@ class LicenseTest(TestCase):
         """Test the KNOWN_LICENSES"""
 
         total_licenses = len(KNOWN_LICENSES)
-        self.assertEqual(total_licenses, 1,
+        self.assertEqual(total_licenses, 2,
                          msg='shared_setup has %s licenses' % total_licenses);
 
         md5sums = []
@@ -21,6 +21,7 @@ class LicenseTest(TestCase):
                             msg='license %s is in known_licenses directory'% short)
             md5sum = get_md5sum(fn)
             self.assertEqual(data[0], md5sum,
-                             msg='md5sum from KNOWN_LICENSES matches the one in known_licenses dir for %s' % short )
+                             msg='md5sum from KNOWN_LICENSES %s matches the one in known_licenses dir %s for %s' % 
+                             (data[0], md5sum, short) )
             self.assertFalse(md5sum in md5sums,
                              msg='md5sum for license %s is unique' % md5sum)

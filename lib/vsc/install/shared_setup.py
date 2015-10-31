@@ -168,12 +168,13 @@ LICENSE = 'LICENSE'
 # key = short name, value tuple
 #    md5sum of LICENSE file
 #    classifier (see https://pypi.python.org/pypi?%3Aaction=list_classifiers)
-# (L)GPLv2 and (L)GPLv2+ have same text, we assume always to use the + one
+# LGPLv2+ and LGPLv2 have same text, we assume always to use the + one
+# GPLv2 and GPLv2+ have same text, we assume always to use the regular one
 KNOWN_LICENSES = {
     #'LGPLv2' : ('? same text as LGPLv2+', 'License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)'),
     'LGPLv2+' : ('5f30f0716dfdd0d91eb439ebec522ec2', 'License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)'),
-    #'GPLv2': ('? same text as GPLv2+', 'License :: OSI Approved :: GNU General Public License v2 (GPLv2)'),
-    #'GPLv2+': ('?', 'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)'),
+    'GPLv2': ('b234ee4d69f5fce4486a80fdaf4a4263', 'License :: OSI Approved :: GNU General Public License v2 (GPLv2)'),
+    #'GPLv2+': ('? same text as GPLv2', 'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)'),
 }
 
 def rel_gitignore(paths):
