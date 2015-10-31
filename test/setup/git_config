@@ -1,0 +1,26 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[remote "origin"]
+	url = git@github.com:stdweird/vsc-install.git
+	fetch = +refs/heads/*:refs/remotes/origin/*
+[branch "master"]
+	remote = origin
+	merge = refs/heads/master
+[remote "upstream"]
+	url = https://github.com/hpcugent/vsc-install.git
+	fetch = +refs/heads/*:refs/remotes/upstream/*
+[branch "initial"]
+	merge = refs/heads/initial
+[branch "package_control"]
+	merge = refs/heads/package_control
+[branch "lib_in_egginfo"]
+	merge = refs/heads/lib_in_egginfo
+[branch "sdist_merge_shared_setup"]
+	merge = refs/heads/sdist_merge_shared_setup
+[branch "not_zip_safe"]
+	merge = refs/heads/not_zip_safe
+[branch "more_tests"]
+	merge = refs/heads/more_tests

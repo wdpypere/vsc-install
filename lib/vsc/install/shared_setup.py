@@ -148,6 +148,7 @@ REPO_BASE_DIR = os.path.dirname(_setup_py)
 log.info('run_tests from base dir %s (using executable %s)' % (REPO_BASE_DIR, _setup_py))
 REPO_LIB_DIR = os.path.join(REPO_BASE_DIR, DEFAULT_LIB_DIR)
 REPO_SCRIPTS_DIR = os.path.join(REPO_BASE_DIR, 'bin')
+REPO_TEST_DIR = os.path.join(REPO_BASE_DIR, DEFAULT_TEST_SUITE)
 
 # to be inserted in sdist version of shared_setup
 NEW_SHARED_SETUP_HEADER_TEMPLATE = """
@@ -176,6 +177,47 @@ KNOWN_LICENSES = {
     'GPLv2': ('b234ee4d69f5fce4486a80fdaf4a4263', 'License :: OSI Approved :: GNU General Public License v2 (GPLv2)'),
     #'GPLv2+': ('? same text as GPLv2', 'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)'),
 }
+
+def get_name(filename=None):
+    """
+    Determine name of project
+    """
+
+    if filename is None:
+        git_config = os.path.join(REPO_BASE_DIR, '.git', 'config')
+        pkg_info = os.path.join(REPO_BASE_DIR, 'PKG-INFO')
+        if os.path.isfile(pkg_info):
+            # e.g. from sdist
+            filename = pkg_info
+        elif os.path.isfile(git_config):
+            filename = git_config
+
+    if filename is None:
+        raise Exception('no file to get name from')
+    elif not os.path.isfile(filename):
+        raise Exception('cannot find file %s to get name from' % filename)
+
+    txt = open(filename).read()
+    name = None
+
+    # PKG_INFO
+    reg = re.search(r'^Name:\s*(.*?)\s*$', txt, re.M)
+    if reg:
+        name = reg.group(1)
+        log.info('found name %s based on PKG-INFO like match' % name)
+
+    # git remote url
+    reg = re.search(r'^\s*url\s*=.*/([^/]*?)\.gits*$', txt, re.M)
+    if reg:
+        name = reg.group(1)
+        log.info('found name %s based on .git/config like match' % name)
+
+    if name is None:
+        raise Exception("Cannot determine name from filename %s" % filename)
+    else:
+        log.info('get_name returns %s' % name)
+        return name.strip()
+
 
 def rel_gitignore(paths):
     """
@@ -512,9 +554,8 @@ class VscTestCommand(TestCommand):
             os.mkdir(REPO_LIB_DIR)
             cleanup.append(REPO_LIB_DIR)
 
-        test_dir = os.path.join(REPO_BASE_DIR, DEFAULT_TEST_SUITE)
-        if os.path.isdir(test_dir):
-            sys.path.insert(0, test_dir)
+        if os.path.isdir(REPO_TEST_DIR):
+            sys.path.insert(0, REPO_TEST_DIR)
         else:
             raise Exception("Can't find location of testsuite directory %s in %s" % (DEFAULT_TEST_SUITE, REPO_BASE_DIR))
 
@@ -773,6 +814,10 @@ def parse_target(target, urltemplate):
     new_target = {}
     new_target.update(SHARED_TARGET)
 
+    if not 'name' in target:
+        log.info('No name defined, trying to determine it')
+        target['name'] = get_name()
+
     # prepare classifiers
     classifiers = new_target.setdefault('classifiers', [])
 
@@ -945,7 +990,6 @@ if __name__ == '__main__':
     This main is the setup.py for vsc-install
     """
     PACKAGE = {
-        'name': 'vsc-install',
         'version': VERSION,
         'author': [sdw, ag, jt],
         'maintainer': [sdw, ag, jt],
