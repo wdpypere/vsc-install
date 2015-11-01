@@ -1,0 +1,3 @@
+[remote "upstream"]
+	url = https://github.com/hpcugent/vsc-install.git
+	fetch = +refs/heads/*:refs/remotes/upstream/*

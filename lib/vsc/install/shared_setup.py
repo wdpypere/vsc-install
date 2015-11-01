@@ -178,9 +178,9 @@ KNOWN_LICENSES = {
     #'GPLv2+': ('? same text as GPLv2', 'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)'),
 }
 
-def get_name(filename=None):
+def get_name_url(filename=None):
     """
-    Determine name of project
+    Determine name and url of project
     """
 
     if filename is None:
@@ -198,25 +198,39 @@ def get_name(filename=None):
         raise Exception('cannot find file %s to get name from' % filename)
 
     txt = open(filename).read()
-    name = None
 
-    # PKG_INFO
-    reg = re.search(r'^Name:\s*(.*?)\s*$', txt, re.M)
+    # First ones are from PKG-INFO
+    # second one is .git/config
+
+    # multiline search
+    # github pattern for hpcugent, not fork
+    all_patterns = {
+        'name': [r'^Name:\s*(.*?)\s*$', r'^\s*url\s*=.*/([^/]*?)\.git\s*$'],
+        'url': [r'^Home-page:\s*(.*?)\s*$', r'^\s*url\s*=\s*((?:https|git).*?github.*?[:/]hpcugent/.*?)\.git\s*$'],
+        'download_url' : [r'^Download-URL:\s*(.*?)\s*$']
+    }
+
+    res = {}
+    for name, patterns in all_patterns.items():
+        for pat in patterns:
+            reg = re.search(pat, txt, re.M)
+            if reg:
+                res[name] = reg.group(1)
+                log.info('found match %s %s in %s' % (name, res[name], filename))
+                break
+
+    reg = re.search(r'^git@(.*?):(.*)$', res.get('url', ''))
     if reg:
-        name = reg.group(1)
-        log.info('found name %s based on PKG-INFO like match' % name)
+        res['url'] = "https://%s/%s" % (reg.group(1), reg.group(2))
 
-    # git remote url
-    reg = re.search(r'^\s*url\s*=.*/([^/]*?)\.gits*$', txt, re.M)
-    if reg:
-        name = reg.group(1)
-        log.info('found name %s based on .git/config like match' % name)
+    if not 'download_url' in res and 'github' in res.get('url', ''):
+        res['download_url'] = "%s/tarball/master" % res['url']
 
-    if name is None:
-        raise Exception("Cannot determine name from filename %s" % filename)
+    if len(res) != 3:
+        raise Exception("Cannot determine name, url and downlaod url from filename %s: got %s" % (filename, res))
     else:
-        log.info('get_name returns %s' % name)
-        return name.strip()
+        log.info('get_name_url returns %s' % res)
+        return res
 
 
 def rel_gitignore(paths):
@@ -801,9 +815,10 @@ def get_license(license=None):
     return lic_short, data[1]
 
 
-def parse_target(target, urltemplate):
+def parse_target(target, urltemplate=None):
     """
     Add some fields
+        get name / ur/ download url from project
         set url / download_url from template
 
         vsc_description: set the description and long_description from the README
@@ -816,7 +831,8 @@ def parse_target(target, urltemplate):
 
     if not 'name' in target:
         log.info('No name defined, trying to determine it')
-        target['name'] = get_name()
+        # sets name / url and download_url
+        target.update(get_name_url())
 
     # prepare classifiers
     classifiers = new_target.setdefault('classifiers', [])
@@ -860,8 +876,8 @@ def parse_target(target, urltemplate):
         except IndexError:
             raise Exception('Could not find a Description block in the README %s to create the long description' % readme)
         log.info('using long_description %s' % descr)
-        new_target['description'] = descr
-        new_target['long_description'] = readmetxt
+        new_target['description'] = descr # summary in PKG-INFO
+        new_target['long_description'] = readmetxt # description in PKG-INFO
 
     vsc_scripts = target.pop('vsc_scripts', True)
     if vsc_scripts:
@@ -998,4 +1014,4 @@ if __name__ == '__main__':
         'excluded_pkgs_rpm': [], # vsc-install ships vsc package (the vsc package is removed by default)
     }
 
-    action_target(PACKAGE, urltemplate=URL_GH_HPCUGENT)
+    action_target(PACKAGE)
