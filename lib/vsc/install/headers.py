@@ -170,7 +170,11 @@ def check_header(filename, script=False, write=False):
     """
     Given filename, extract the header, verify it
 
+    if script: treat first line as shebang
     if write: adapt file to new header
+
+    If the header contains line '### External compatible license',
+    one assumes the license is correct and should not be controlled by check_header
 
     Return if header is different from expected or not
     """
@@ -180,6 +184,9 @@ def check_header(filename, script=False, write=False):
     if shebang is not None:
         header_end_pos += 1 + len(shebang) # 1 is from splitted newline
 
+    if re.search(r'^### External compatible license\s*$', header, re.M):
+        log.info('Header is an external compatible license. Not doing anything')
+        return False
 
     # genheader
     name_url = get_name_url()

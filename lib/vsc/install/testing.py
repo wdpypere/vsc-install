@@ -38,6 +38,7 @@ Running python setup.py test will pick this up and do its magic
 @author: Kenneth Hoste (Ghent University)
 """
 import os
+import pprint
 import re
 import sys
 

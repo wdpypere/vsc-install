@@ -125,9 +125,12 @@ class TestHeaders(TestCase):
         vsc.install.shared_setup.get_license = lgpl
 
         # don't actually write, just compare with a .fixed file
+        compares = []
         def compare(filename, content):
             log.info('mocked write does compare for %s ' % filename)
-            new_filename = filename[:-len('check')]+'fixed'
+            name = filename[:-len('.check')]
+            compares.append(name)
+            new_filename = '%s.fixed' % name
             self.assertEqual(content, open(new_filename).read(),
                              msg='new content is as expected for %s' % filename)
 
@@ -138,9 +141,16 @@ class TestHeaders(TestCase):
             't1': (False, True),
             't2': (True, True),
             't3': (True, False),
+            't4-external': (False, False), # external license
         }
 
         for filename in glob.glob(os.path.join(REPO_TEST_DIR, 'headers', "*.check")):
             name = os.path.basename(filename)[:-len('.check')]
             self.assertEqual(check_header(filename, script=expected[name][0], write=True),
                              expected[name][1], msg='checked headers for filename %s' % filename)
+        
+        not_changed = [k for k,v in expected.items() if not v[1]]
+        self.assertEqual(len(compares), len(expected) - len(not_changed),
+                         msg='number of mocked writes/compares as expected')
+        for ext in not_changed:
+            self.assertFalse(ext in compares, msg='not changed %s not compared' % ext)
