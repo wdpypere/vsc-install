@@ -1,6 +1,38 @@
-# license block
+#
+# Copyright 2015-2015 Ghent University
+#
+# This file is part of vsc-install,
+# originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
+# with support of Ghent University (http://ugent.be/hpc),
+# the Flemish Supercomputer Centre (VSC) (https://vscentrum.be/nl/en),
+# the Hercules foundation (http://www.herculesstichting.be/in_English)
+# and the Department of Economy, Science and Innovation (EWI) (http://www.ewi-vlaanderen.be/en).
+#
+# https://github.com/hpcugent/vsc-install
+#
+# vsc-install is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Library General Public License as
+# published by the Free Software Foundation, either version 2 of
+# the License, or (at your option) any later version.
+#
+# vsc-install is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Library General Public License for more details.
+#
+# You should have received a copy of the GNU Library General Public License
+# along with vsc-install. If not, see <http://www.gnu.org/licenses/>.
+#
 """
 Generate and verify headers from scripts and modules
+
+This module has a very primitive main routine:
+    REPO_BASE_DIR=$PWD python -m vsc.install.headers path/to/file [script_or_not]
+
+    Will write the header to the file as it is supposed to be
+    (the optional script or not is a simple 1 or 0).
+
+    REPO_BASE_DIR=$PWD assumes you run this from the base repo
 
 @author: Stijn De Weirdt (Ghent University)
 """
@@ -8,6 +40,7 @@ Generate and verify headers from scripts and modules
 import difflib
 import os
 import re
+import sys
 
 from datetime import date
 from vsc.install.shared_setup import get_license, get_name_url, log
@@ -73,6 +106,7 @@ def get_header(filename, script=False):
 
     shebang = None
     if script:
+        log.info('get_header for script')
         lines = header.split("\n")
         if lines[0].startswith('#!/'):
             shebang = lines[0]
@@ -168,7 +202,7 @@ def check_header(filename, script=False, write=False):
     log.info("Diff header vs gen_header\n" + "".join(nicediff(header, gen_header)))
 
     if write and changed:
-        log.info('write enabled and different header. going to modify file %s' % filename)
+        log.info('write enabled and different header. Going to modify file %s' % filename)
         wholetext = open(filename).read()
         newtext = ''
         if shebang is not None:
@@ -236,3 +270,13 @@ GPLv2_TEMPLATE = """#
 # along with {name}.  If not, see <http://www.gnu.org/licenses/>.
 #
 """
+
+
+if __name__ == '__main__':
+    fn = sys.argv[1]
+    try:
+        is_script = int(sys.argv[2]) == 1
+    except:
+        is_script = False
+    log.info('Going to check_header for file %s (is_script=%s)' % (fn, is_script))
+    check_header(fn, script=is_script, write=True)

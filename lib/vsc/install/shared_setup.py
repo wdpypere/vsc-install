@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 #
-# Copyright 2015-2015 Ghent University
+# Copyright 2011-2015 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -9,7 +8,7 @@
 # the Hercules foundation (http://www.herculesstichting.be/in_English)
 # and the Department of Economy, Science and Innovation (EWI) (http://www.ewi-vlaanderen.be/en).
 #
-# http://github.com/hpcugent/vsc-install
+# https://github.com/hpcugent/vsc-install
 #
 # vsc-install is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Library General Public License as
@@ -139,12 +138,18 @@ VERSION = '0.9.5'
 PREFIX_PYTHON_BDIST_RPM = ('setuptools',)
 
 # determine the base directory of the repository
-# we will assume that the tests are called from
-# a 'setup.py' like file in the basedirectory
-# (but could be called anything, as long as it is in the basedir)
-_setup_py = os.path.abspath(sys.argv[0])
-REPO_BASE_DIR = os.path.dirname(_setup_py)
-log.info('run_tests from base dir %s (using executable %s)' % (REPO_BASE_DIR, _setup_py))
+# set it via REPO_BASE_DIR (mainly to support non-"python setup" usage/hacks)
+_repo_base_dir_env = os.environ.get('REPO_BASE_DIR', None)
+if _repo_base_dir_env:
+    REPO_BASE_DIR=_repo_base_dir_env
+    log.warn('run_tests from base dir set though environment %s' % (REPO_BASE_DIR))
+else:
+    # we will assume that the tests are called from
+    # a 'setup.py' like file in the basedirectory
+    # (but could be called anything, as long as it is in the basedir)
+    _setup_py = os.path.abspath(sys.argv[0])
+    REPO_BASE_DIR = os.path.dirname(_setup_py)
+    log.info('run_tests from base dir %s (using executable %s)' % (REPO_BASE_DIR, _setup_py))
 REPO_LIB_DIR = os.path.join(REPO_BASE_DIR, DEFAULT_LIB_DIR)
 REPO_SCRIPTS_DIR = os.path.join(REPO_BASE_DIR, 'bin')
 REPO_TEST_DIR = os.path.join(REPO_BASE_DIR, DEFAULT_TEST_SUITE)

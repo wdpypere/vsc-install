@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: latin-1 -*-
 #
 # Copyright 2014-2015 Ghent University
 #
@@ -10,7 +8,7 @@
 # the Hercules foundation (http://www.herculesstichting.be/in_English)
 # and the Department of Economy, Science and Innovation (EWI) (http://www.ewi-vlaanderen.be/en).
 #
-# http://github.com/hpcugent/vsc-install
+# https://github.com/hpcugent/vsc-install
 #
 # vsc-install is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Library General Public License as
