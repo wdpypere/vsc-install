@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: latin-1 -*-
 #
-# Copyright 2015-2015 Ghent University
+# Copyright 2014-2015 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -36,23 +36,69 @@ Running python setup.py test will pick this up and do its magic
 @author: Stijn De Weirdt (Ghent University)
 @author: Kenneth Hoste (Ghent University)
 """
+import difflib
 import os
 import re
 import sys
 
 from cStringIO import StringIO
-from unittest import TestCase
+from unittest import TestCase as OrigTestCase
 from vsc.install.shared_setup import generate_packages, generate_scripts, generate_modules
 
 
-class EnhancedTestCase(TestCase):
+class TestCase(OrigTestCase):
     """Enhanced test case, provides extra functionality (e.g. an assertErrorRegex method)."""
 
     LOGCACHE = {}
 
+    ASSERT_MAX_DIFF = 100
+    DIFF_OFFSET = 5 # lines of text around changes
+
+    def assertEqual(self, a, b, msg=None):
+        """Make assertEqual always print useful messages"""
+        try:
+            super(TestCase, self).assertEqual(a, b)
+        except AssertionError as e:
+            if msg is None:
+                msg = str(e)
+            else:
+                msg = "%s: %s" % (msg, e)
+
+            if isinstance(a, basestring):
+                txta = a
+            else:
+                txta = pprint.pformat(a)
+            if isinstance(b, basestring):
+                txtb = b
+            else:
+                txtb = pprint.pformat(b)
+
+            # generate unified diff style output
+            # ndiff has nice indicators what is different, but prints the whole content
+            #    each line that is interesting starts with non-space
+            # unified diff only prints changes and some offset around it
+            diff = list(difflib.ndiff(txta.splitlines(1), txtb.splitlines(1)))
+            different_idx = [idx for idx,line in enumerate(diff) if not line.startswith(' ')]
+            res_idx = []
+            # very bruteforce
+            for didx in different_idx:
+                for idx in range(max(didx-self.DIFF_OFFSET, 0), min(didx+self.DIFF_OFFSET, len(diff)-1)):
+                    if not idx in res_idx:
+                        res_idx.append(idx)
+            res_idx.sort()
+            # insert linenumbers too? what are the linenumbers in ndiff?
+            newdiff = [diff[idx] for idx in res_idx[:self.ASSERT_MAX_DIFF]]
+
+            if len(res_idx) > self.ASSERT_MAX_DIFF:
+                limit = ' (first %s lines)' % self.ASSERT_MAX_DIFF
+            else:
+                limit = ''
+
+            raise AssertionError("%s:\nDIFF%s:\n%s" % (msg, limit, ''.join(newdiff)))
+
     def setUp(self):
         """Prepare test case."""
-        super(EnhancedTestCase, self).setUp()
+        super(TestCase, self).setUp()
         self.orig_sys_stdout = sys.stdout
         self.orig_sys_stderr = sys.stderr
 
@@ -158,7 +204,7 @@ class EnhancedTestCase(TestCase):
         self.mock_stdout(False)
         self.mock_stderr(False)
         self.reset_logcache()
-        super(EnhancedTestCase, self).tearDown()
+        super(TestCase, self).tearDown()
 
 
 class VSCImportTest(TestCase):
