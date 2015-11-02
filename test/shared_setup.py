@@ -2,12 +2,12 @@ import os
 
 from vsc.install.shared_setup import REPO_TEST_DIR, get_name_url
 
-from unittest import TestCase
+from vsc.install.testing import TestCase
 
 class TestSetup(TestCase):
     """Test shared_setup"""
 
-    def test_get_name(self):
+    def test_get_name_url(self):
         """Test naming function"""
         res= {
             'name': 'vsc-install',

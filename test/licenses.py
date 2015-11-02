@@ -1,6 +1,6 @@
 import os
 
-from unittest import TestCase
+from vsc.install.testing import TestCase
 from vsc.install.shared_setup import KNOWN_LICENSES, get_md5sum, get_license, REPO_BASE_DIR
 
 class LicenseTest(TestCase):
