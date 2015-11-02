@@ -5,6 +5,7 @@ Generate and verify headers from scripts and modules
 @author: Stijn De Weirdt (Ghent University)
 """
 
+import difflib
 import os
 import re
 
@@ -12,6 +13,30 @@ from datetime import date
 from vsc.install.shared_setup import get_license, get_name_url, log
 
 HEADER_REGEXP = re.compile(r'\A(.*?)^(?:\'\'\'|"""|### END OF HEADER)', re.M | re.S)
+
+
+def nicediff(txta, txtb, offset=5):
+    """
+    generate unified diff style output
+        ndiff has nice indicators what is different, but prints the whole content
+            each line that is interesting starts with non-space
+        unified diff only prints changes and some offset around it
+
+    return list with diff (one per line) (not a generator like ndiff or unified_diff)
+    """
+    diff = list(difflib.ndiff(txta.splitlines(1), txtb.splitlines(1)))
+    different_idx = [idx for idx,line in enumerate(diff) if not line.startswith(' ')]
+    res_idx = []
+    # very bruteforce
+    for didx in different_idx:
+        for idx in range(max(didx-offset, 0), min(didx+offset, len(diff)-1)):
+            if not idx in res_idx:
+                res_idx.append(idx)
+    res_idx.sort()
+    # insert linenumbers too? what are the linenumbers in ndiff?
+    newdiff = [diff[idx] for idx in res_idx]
+
+    return newdiff
 
 
 # tools to determine current header
@@ -107,7 +132,7 @@ def _write(filename, content):
     fh.close()
 
 
-def fixup_header(filename, script=False, write=False):
+def check_header(filename, script=False, write=False):
     """
     Given filename, extract the header, verify it
 
@@ -138,7 +163,9 @@ def fixup_header(filename, script=False, write=False):
 
     gen_header = gen_license_header(license, **data)
 
-    changed = gen_header != header
+    changed = header != gen_header
+
+    log.info("Diff header vs gen_header\n" + "".join(nicediff(header, gen_header)))
 
     if write and changed:
         log.info('write enabled and different header. going to modify file %s' % filename)

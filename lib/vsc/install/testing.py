@@ -28,6 +28,9 @@
 """
 Shared module for vsc software testing
 
+TestCase: use instead of unittest TestCase
+   from vsc.install.testing import TestCase
+
 VSCImport usage: make a module 00-import.py in the test/ dir that has only the following line
    from vsc.install.testing import VSCImportTest
 
@@ -36,14 +39,15 @@ Running python setup.py test will pick this up and do its magic
 @author: Stijn De Weirdt (Ghent University)
 @author: Kenneth Hoste (Ghent University)
 """
-import difflib
 import os
 import re
 import sys
 
 from cStringIO import StringIO
 from unittest import TestCase as OrigTestCase
-from vsc.install.shared_setup import generate_packages, generate_scripts, generate_modules
+from vsc.install.shared_setup import generate_packages, generate_scripts, generate_modules, \
+    FILES_IN_PACKAGES, REPO_BASE_DIR
+from vsc.install.headers import nicediff, check_header
 
 
 class TestCase(OrigTestCase):
@@ -73,28 +77,13 @@ class TestCase(OrigTestCase):
             else:
                 txtb = pprint.pformat(b)
 
-            # generate unified diff style output
-            # ndiff has nice indicators what is different, but prints the whole content
-            #    each line that is interesting starts with non-space
-            # unified diff only prints changes and some offset around it
-            diff = list(difflib.ndiff(txta.splitlines(1), txtb.splitlines(1)))
-            different_idx = [idx for idx,line in enumerate(diff) if not line.startswith(' ')]
-            res_idx = []
-            # very bruteforce
-            for didx in different_idx:
-                for idx in range(max(didx-self.DIFF_OFFSET, 0), min(didx+self.DIFF_OFFSET, len(diff)-1)):
-                    if not idx in res_idx:
-                        res_idx.append(idx)
-            res_idx.sort()
-            # insert linenumbers too? what are the linenumbers in ndiff?
-            newdiff = [diff[idx] for idx in res_idx[:self.ASSERT_MAX_DIFF]]
-
-            if len(res_idx) > self.ASSERT_MAX_DIFF:
+            diff = nicediff(txta, txtb, offset=self.DIFF_OFFSET)
+            if len(diff) > self.ASSERT_MAX_DIFF:
                 limit = ' (first %s lines)' % self.ASSERT_MAX_DIFF
             else:
                 limit = ''
 
-            raise AssertionError("%s:\nDIFF%s:\n%s" % (msg, limit, ''.join(newdiff)))
+            raise AssertionError("%s:\nDIFF%s:\n%s" % (msg, limit, ''.join(diff[:self.ASSERT_MAX_DIFF])))
 
     def setUp(self):
         """Prepare test case."""
@@ -219,6 +208,8 @@ class VSCImportTest(TestCase):
     EXTRA_SCRIPTS = None # additional scripts to test / try to import
     EXCLUDE_SCRIPTS = None # list of regexp patterns to remove from list of scripts to test
 
+    CHECK_HEADER = True
+
     def _import(self, pkg):
         try:
             __import__(pkg)
@@ -232,6 +223,11 @@ class VSCImportTest(TestCase):
         for pkg in generate_packages(extra=self.EXTRA_PKGS, exclude=self.EXCLUDE_PKGS):
             self._import(pkg)
 
+            if self.CHECK_HEADER:
+                for fn in FILES_IN_PACKAGES['packages'][pkg]:
+                    self.assertFalse(check_header(os.path.join(REPO_BASE_DIR, fn), script=False, write=False),
+                                     msg='check_header of %s' % fn)
+
     def test_import_modules(self):
         """Try to import each module"""
         for modname in generate_modules(extra=self.EXTRA_MODS, exclude=self.EXCLUDE_MODS):
@@ -244,3 +240,7 @@ class VSCImportTest(TestCase):
             if not scr.endswith('.py'):
                 continue
             self._import(os.path.basename(scr)[:-len('.py')])
+
+            if self.CHECK_HEADER:
+                self.assertFalse(check_header(os.path.join(REPO_BASE_DIR, scr), script=True, write=False),
+                                 msg='check_header of %s' % scr)

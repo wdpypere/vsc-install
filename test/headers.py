@@ -4,7 +4,7 @@ import os
 from datetime import date
 import vsc.install.headers
 import vsc.install.shared_setup
-from vsc.install.headers import get_header, gen_license_header, begin_end_from_header, fixup_header
+from vsc.install.headers import get_header, gen_license_header, begin_end_from_header, check_header
 from vsc.install.shared_setup import REPO_TEST_DIR, KNOWN_LICENSES, log
 
 from vsc.install.testing import TestCase
@@ -12,6 +12,7 @@ from vsc.install.testing import TestCase
 orig_this_year = vsc.install.headers._this_year
 orig_write = vsc.install.headers._write
 orig_get_license = vsc.install.shared_setup.get_license
+
 
 class TestHeaders(TestCase):
     """Test vsc.install.headers"""
@@ -106,7 +107,7 @@ class TestHeaders(TestCase):
         self.assertEqual(list(begin_end_from_header("#\n# no Copyright something\n#\n")),
                          [THIS_YEAR, THIS_YEAR], msg='no beginyear found, set thisyear as begin and endyear')
 
-    def test_fixup_header(self):
+    def test_check_header(self):
         """Test begin_end_from_header method
         Compares files with .check against ones with .fixed
         """
@@ -141,5 +142,5 @@ class TestHeaders(TestCase):
 
         for filename in glob.glob(os.path.join(REPO_TEST_DIR, 'headers', "*.check")):
             name = os.path.basename(filename)[:-len('.check')]
-            self.assertEqual(fixup_header(filename, script=expected[name][0], write=True),
-                             expected[name][1], msg='fixed headers for filename %s' % filename)
+            self.assertEqual(check_header(filename, script=expected[name][0], write=True),
+                             expected[name][1], msg='checked headers for filename %s' % filename)
