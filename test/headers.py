@@ -111,13 +111,21 @@ class TestHeaders(TestCase):
         Compares files with .check against ones with .fixed
         """
 
+        THIS_YEAR = 2345
+        def this_year():
+            return THIS_YEAR
+
+        vsc.install.headers._this_year = this_year
+
         # fake this repo as lgpv2+
         def lgpl():
+            log.info('mocked get_license returns LGPLv2+')
             return 'LGPLv2+', ''
         vsc.install.shared_setup.get_license = lgpl
 
         # don't actually write, just compare with a .fixed file
         def compare(filename, content):
+            log.info('mocked write does compare for %s ' % filename)
             new_filename = filename[:-len('check')]+'fixed'
             self.assertEqual(content, open(new_filename).read(),
                              msg='new content is as expected for %s' % filename)

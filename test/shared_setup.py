@@ -14,6 +14,6 @@ class TestSetup(TestCase):
             'url': 'https://github.com/hpcugent/vsc-install',
             'download_url': 'https://github.com/hpcugent/vsc-install/tarball/master',
         }
-        for fn in ['PKG-INFO', 'git_config', 'git_config_1', 'git_config_2']:
+        for fn in ['PKG-INFO', 'git_config', 'git_config_1', 'git_config_2', 'git_config_3']:
             self.assertEqual(get_name_url(os.path.join(REPO_TEST_DIR, 'setup', fn)), res,
                              msg='determined name from %s file' % fn)

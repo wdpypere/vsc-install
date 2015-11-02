@@ -206,7 +206,7 @@ def get_name_url(filename=None):
     # github pattern for hpcugent, not fork
     all_patterns = {
         'name': [r'^Name:\s*(.*?)\s*$', r'^\s*url\s*=.*/([^/]*?)\.git\s*$'],
-        'url': [r'^Home-page:\s*(.*?)\s*$', r'^\s*url\s*=\s*((?:https|git).*?github.*?[:/]hpcugent/.*?)\.git\s*$'],
+        'url': [r'^Home-page:\s*(.*?)\s*$', r'^\s*url\s*=\s*((?:https?:|git[:@]).*?github.*?[:/]hpcugent/.*?)\.git\s*$'],
         'download_url' : [r'^Download-URL:\s*(.*?)\s*$']
     }
 
@@ -219,9 +219,14 @@ def get_name_url(filename=None):
                 log.info('found match %s %s in %s' % (name, res[name], filename))
                 break
 
+    # handle git@server:user/project
     reg = re.search(r'^git@(.*?):(.*)$', res.get('url', ''))
     if reg:
         res['url'] = "https://%s/%s" % (reg.group(1), reg.group(2))
+
+    # handle git://server/user/project
+    if res['url'].startswith('git://'):
+        res['url'] = "https://%s" % res['url'][len('git://'):]
 
     if not 'download_url' in res and 'github' in res.get('url', ''):
         res['download_url'] = "%s/tarball/master" % res['url']
