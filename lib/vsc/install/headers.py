@@ -46,7 +46,7 @@ from datetime import date
 from vsc.install.shared_setup import get_license, get_name_url, log
 
 HEADER_REGEXP = re.compile(r'\A(.*?)^(?:\'\'\'|"""|### END OF HEADER)', re.M | re.S)
-
+ENCODING_REGEXP = re.compile(r'^(\s*#\s*.*?coding[:=]\s*([-\w.]+).*).*$', re.M) # PEP0263, 1st or 2nd line
 
 def nicediff(txta, txtb, offset=5):
     """
@@ -203,6 +203,12 @@ def check_header(filename, script=False, write=False):
     }
 
     gen_header = gen_license_header(license, **data)
+
+    # force encoding?
+    reg_enc = ENCODING_REGEXP.search(header)
+    if reg_enc:
+        enc_line = reg_enc.group(1) + "\n" # matches full line, but not newline
+        gen_header = enc_line + gen_header
 
     changed = header != gen_header
 

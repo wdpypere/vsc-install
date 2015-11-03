@@ -142,6 +142,7 @@ class TestHeaders(TestCase):
             't2': (True, True),
             't3': (True, False),
             't4-external': (False, False), # external license
+            't5': (True, True), # encoding
         }
 
         for filename in glob.glob(os.path.join(REPO_TEST_DIR, 'headers', "*.check")):
