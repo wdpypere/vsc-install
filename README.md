@@ -2,6 +2,29 @@ Description
 ===========
 vsc-install provides shared setuptools functions and classes for python libraries developed by UGent's HPC group
 
+Add tests
+=========
+
+Test are python modules in the `test` directory which have subclass of `TestCase`
+and at least one method that has a name starting with `test_`
+
+You are advised to use
+```python
+from vsc.install.testing import TestCase
+```
+(instead of basic `TestCase` from `unittest`).
+
+Initialise the test directory with
+
+```bash
+mkdir test
+echo '' > test/__init__.py
+echo 'from vsc.install.testing import VSCImportTest' > test/00-import.py
+```
+
+When the tests are run, `test`, `lib` and `bin` (if relevant) are added to `sys.path`,
+so no need to do so in the tets modules.
+
 Run tests
 =========
 
