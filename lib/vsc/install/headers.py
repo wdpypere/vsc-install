@@ -189,7 +189,8 @@ def check_header(filename, script=False, write=False):
         return False
 
     # genheader
-    name_url = get_name_url()
+    # version is irrelevant
+    name_url = get_name_url(version='ALL_VERSIONS')
     license, _ = get_license()
 
     # begin and endyear from copyright rule
@@ -284,6 +285,21 @@ GPLv2_TEMPLATE = """#
 #
 """
 
+ARR_TEMPLATE = """#
+# Copyright {beginyear}-{endyear} Ghent University
+#
+# This file is part of {name},
+# originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
+# with support of Ghent University (http://ugent.be/hpc),
+# the Flemish Supercomputer Centre (VSC) (https://vscentrum.be/nl/en),
+# the Hercules foundation (http://www.herculesstichting.be/in_English)
+# and the Department of Economy, Science and Innovation (EWI) (http://www.ewi-vlaanderen.be/en).
+#
+# {url}
+#
+# All rights reserved.
+#
+"""
 
 if __name__ == '__main__':
     fn = sys.argv[1]

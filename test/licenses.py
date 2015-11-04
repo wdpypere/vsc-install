@@ -10,7 +10,7 @@ class LicenseTest(TestCase):
         """Test the KNOWN_LICENSES"""
 
         total_licenses = len(KNOWN_LICENSES)
-        self.assertEqual(total_licenses, 2,
+        self.assertEqual(total_licenses, 3,
                          msg='shared_setup has %s licenses' % total_licenses);
 
         md5sums = []
@@ -30,5 +30,6 @@ class LicenseTest(TestCase):
             lic_name, classifier = get_license(license=fn)
             self.assertEqual(lic_name, os.path.basename(fn),
                              msg='file %s is license %s' % (fn, lic_name))
-            self.assertTrue(classifier.startswith('License :: OSI Approved :: '),
+            self.assertTrue(classifier.startswith('License :: OSI Approved :: ') or
+                            classifier == 'License :: Other/Proprietary License',
                             msg='classifier as expected for %s' % short)

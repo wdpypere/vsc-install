@@ -180,9 +180,10 @@ KNOWN_LICENSES = {
     'LGPLv2+' : ('5f30f0716dfdd0d91eb439ebec522ec2', 'License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)'),
     'GPLv2': ('b234ee4d69f5fce4486a80fdaf4a4263', 'License :: OSI Approved :: GNU General Public License v2 (GPLv2)'),
     #'GPLv2+': ('? same text as GPLv2', 'License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)'),
+    'ARR': ('4c917d76bb092659fa923f457c72d033', 'License :: Other/Proprietary License'),
 }
 
-def get_name_url(filename=None):
+def get_name_url(filename=None, version=None):
     """
     Determine name and url of project
     """
@@ -232,8 +233,8 @@ def get_name_url(filename=None):
     if res['url'].startswith('git://'):
         res['url'] = "https://%s" % res['url'][len('git://'):]
 
-    if not 'download_url' in res and 'github' in res.get('url', ''):
-        res['download_url'] = "%s/tarball/master" % res['url']
+    if not 'download_url' in res and 'github' in res.get('url', '') and version is not None:
+        res['download_url'] = "%s/archive/%s-%s.tar.gz" % (res['url'], res['name'], version)
 
     if len(res) != 3:
         raise Exception("Cannot determine name, url and downlaod url from filename %s: got %s" % (filename, res))
@@ -827,8 +828,8 @@ def get_license(license=None):
 def parse_target(target, urltemplate=None):
     """
     Add some fields
-        get name / ur/ download url from project
-        set url / download_url from template
+        get name / url / download_url from project
+            deprecated: set url / download_url from urltemplate
 
         vsc_description: set the description and long_description from the README
         vsc_scripts: generate scripts from bin content
@@ -841,7 +842,7 @@ def parse_target(target, urltemplate=None):
     if not 'name' in target:
         log.info('No name defined, trying to determine it')
         # sets name / url and download_url
-        target.update(get_name_url())
+        target.update(get_name_url(version=target['version']))
 
     # prepare classifiers
     classifiers = new_target.setdefault('classifiers', [])
