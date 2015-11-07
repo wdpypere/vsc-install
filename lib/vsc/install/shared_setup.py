@@ -131,7 +131,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.5'
+VERSION = '0.9.6'
 
 # list of non-vsc packages that need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
@@ -418,6 +418,23 @@ class vsc_egg_info(egg_info):
     few extra files we need to add for installation purposes.
     """
 
+    def finalize_options(self, *args, **kwargs):
+        """Handle missing lib dir for scripts-only packages"""
+        # the egginfo data will be deleted as part of the cleanup
+        cleanup = []
+        if not os.path.exists(REPO_LIB_DIR):
+            log.warn('vsc_egg_info create missing %s (will be removed later)' % REPO_LIB_DIR)
+            os.mkdir(REPO_LIB_DIR)
+            cleanup.append(REPO_LIB_DIR)
+
+        res = egg_info.finalize_options(self, *args, **kwargs)
+
+        # cleanup any diretcories created
+        for directory in cleanup:
+            shutil.rmtree(directory)
+
+        return res
+
     def find_sources(self):
         """Default lookup."""
         egg_info.find_sources(self)
@@ -676,7 +693,7 @@ class VscTestCommand(TestCommand):
 
         res = TestCommand.run_tests(self)
 
-        # clenaup any diretcories created
+        # cleanup any diretcories created
         for directory in cleanup:
             shutil.rmtree(directory)
 
