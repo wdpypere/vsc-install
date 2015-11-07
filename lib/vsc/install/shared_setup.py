@@ -210,9 +210,18 @@ def get_name_url(filename=None, version=None):
     # multiline search
     # github pattern for hpcugent, not fork
     all_patterns = {
-        'name': [r'^Name:\s*(.*?)\s*$', r'^\s*url\s*=.*/([^/]*?)\.git\s*$'],
-        'url': [r'^Home-page:\s*(.*?)\s*$', r'^\s*url\s*=\s*((?:https?:|git[:@]).*?github.*?[:/]hpcugent/.*?)\.git\s*$'],
-        'download_url' : [r'^Download-URL:\s*(.*?)\s*$']
+        'name': [
+            r'^Name:\s*(.*?)\s*$',
+            r'^\s*url\s*=.*/([^/]*?)(?:\.git)?\s*$',
+        ],
+        'url': [
+            r'^Home-page:\s*(.*?)\s*$',
+            r'^\s*url\s*=\s*(https?.*?github.*?[:/]hpcugent/.*?)\.git\s*$',
+            r'^\s*url\s*=\s*(git[:@].*?github.*?[:/]hpcugent/.*?)(?:\.git)?\s*$',
+        ],
+        'download_url' : [
+            r'^Download-URL:\s*(.*?)\s*$',
+        ],
     }
 
     res = {}
