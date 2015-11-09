@@ -43,6 +43,7 @@ import setuptools.command.test
 from distutils import log  # also for setuptools
 from distutils.dir_util import remove_tree
 
+from setuptools import Command
 from setuptools.command.test import test as TestCommand
 from setuptools.command.test import ScanningLoader
 from setuptools import setup
@@ -131,7 +132,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.6'
+VERSION = '0.9.7'
 
 # list of non-vsc packages that need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
@@ -163,6 +164,11 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '%s'))
 
 """
+
+
+NEW_SHARED_SETUP = 'shared_setup_dist_only'
+EXTERNAL_DIR = 'external_dist_only'
+
 
 # location of README file
 README = 'README.md'
@@ -332,7 +338,7 @@ class vsc_sdist(sdist):
     Upon sdist, add this vsc.install.shared_setup to the sdist
     and modifed the shipped setup.py to be able to use this
     """
-    def _mod_setup_py(self, base_dir, external_dir, new_shared_setup):
+    def _mod_setup_py(self, base_dir):
         """Modify the setup.py in the distribution directory"""
 
         # re-copy setup.py, to avoid hardlinks
@@ -357,11 +363,11 @@ class vsc_sdist(sdist):
         # insert sys.path hack
         before = reg.start()
         # no indentation
-        code = code[:before] + NEW_SHARED_SETUP_HEADER_TEMPLATE % (new_shared_setup, VERSION, external_dir) + code[before:]
+        code = code[:before] + NEW_SHARED_SETUP_HEADER_TEMPLATE % (NEW_SHARED_SETUP, VERSION, EXTERNAL_DIR) + code[before:]
 
-        # replace 'vsc.install.shared_setup' -> new_shared_setup
-        code = re.sub(r'vsc\.install\.shared_setup', new_shared_setup, code)
-        # replace 'from vsc.install import shared_setup' -> import new_shared_setup as shared_setup
+        # replace 'vsc.install.shared_setup' -> NEW_SHARED_SETUP
+        code = re.sub(r'vsc\.install\.shared_setup', NEW_SHARED_SETUP, code)
+        # replace 'from vsc.install import shared_setup' -> import NEW_SHARED_SETUP as shared_setup
         code = re.sub(r'from\s+vsc.install\s+import\s+shared_setup', 'import %s as shared_setup', code)
 
         # write it
@@ -369,13 +375,13 @@ class vsc_sdist(sdist):
         fh.write(code)
         fh.close()
 
-    def _add_shared_setup(self, base_dir, external_dir, new_shared_setup):
+    def _add_shared_setup(self, base_dir):
         """Create the new shared_setup in distribution directory"""
 
-        ext_dir = os.path.join(base_dir, external_dir)
+        ext_dir = os.path.join(base_dir, EXTERNAL_DIR)
         os.mkdir(ext_dir)
 
-        dest = os.path.join(ext_dir, '%s.py' % new_shared_setup)
+        dest = os.path.join(ext_dir, '%s.py' % NEW_SHARED_SETUP)
         log.info('inserting shared_setup as %s' % dest)
         try:
             source_code = inspect.getsource(sys.modules[__name__])
@@ -387,7 +393,7 @@ class vsc_sdist(sdist):
             fh.write(source_code)
             fh.close()
         except IOError as err:
-            raise IOError("Failed to write new_shared_setup source to %s (%s)" % (dest, err))
+            raise IOError("Failed to write NEW_SHARED_SETUP source to %s (%s)" % (dest, err))
 
     def make_release_tree(self, base_dir, files):
         """
@@ -409,11 +415,9 @@ class vsc_sdist(sdist):
             log.info('running shared_setup as main, not adding it to sdist')
         else:
             # use a new name, to avoid confusion with original
-            new_shared_setup = 'shared_setup_dist_only'
-            external_dir = 'external_dist_only'
-            self._mod_setup_py(base_dir, external_dir, new_shared_setup)
+            self._mod_setup_py(base_dir)
 
-            self._add_shared_setup(base_dir, external_dir, new_shared_setup)
+            self._add_shared_setup(base_dir)
 
         # Add mandatory files
         for fn in [LICENSE, README]:
@@ -761,6 +765,59 @@ def generate_scripts(extra=None, exclude=None):
     log.info('generated scripts list: %s' % res)
     return res
 
+class vsc_release(Command):
+    """Print the steps / commands to take to release"""
+
+    description = "generate the steps to a release"
+
+    user_options = [
+        ('testpypi', 't', 'use testpypi'),
+    ]
+
+    def initialize_options(self):
+        """Nothing yet"""
+        self.testpypi = False
+
+    def finalize_options(self):
+        """Nothing yet"""
+        pass
+
+    def _print(self, cmd):
+        """Print is evil, cmd is list"""
+        print ' '.join(cmd)
+
+    def git_tag(self):
+        """Tag the version in git"""
+        tag = self.distribution.get_fullname()
+        self._print(['git', 'tag', tag])
+        self._print(['git', 'push', 'upstream', 'tag', tag])
+
+    def github_release(self):
+        """Make the github release"""
+        tag = self.distribution.get_fullname()
+        log.error('Make the github release for tag %s' % tag)
+
+    def pypi(self):
+        """Register, sdist and upload to pypi"""
+        test = []
+        if self.testpypi:
+            test.extend(['-r', 'testpypi'])
+        setup = ['python', 'setup.py']
+        self._print(setup + ['register'] + test)
+        self._print(setup + ['sdist'])
+        self._print(setup + ['upload'] + test)
+
+    def run(self):
+        """Print list of thinigs to do"""
+        version = self.distribution.get_version()
+        name = self.distribution.get_name(),
+        fullname = self.distribution.get_fullname()
+
+        log.info("Release commands to perform")
+        self.git_tag()
+        self.github_release()
+        self.pypi()
+
 
 # shared target config
 SHARED_TARGET = {
@@ -770,7 +827,9 @@ SHARED_TARGET = {
         "install_scripts": vsc_install_scripts,
         "sdist": vsc_sdist,
         "test": VscTestCommand,
+        "vsc_release": vsc_release,
     },
+    'command_packages': ['vsc.install.shared_setup', NEW_SHARED_SETUP, 'setuptools.command', 'distutils.command'],
     'download_url': '',
     'package_dir': {'': DEFAULT_LIB_DIR},
     'packages': generate_packages(),
