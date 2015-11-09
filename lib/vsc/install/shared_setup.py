@@ -131,7 +131,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.5'
+VERSION = '0.9.6'
 
 # list of non-vsc packages that need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
@@ -210,9 +210,18 @@ def get_name_url(filename=None, version=None):
     # multiline search
     # github pattern for hpcugent, not fork
     all_patterns = {
-        'name': [r'^Name:\s*(.*?)\s*$', r'^\s*url\s*=.*/([^/]*?)\.git\s*$'],
-        'url': [r'^Home-page:\s*(.*?)\s*$', r'^\s*url\s*=\s*((?:https?:|git[:@]).*?github.*?[:/]hpcugent/.*?)\.git\s*$'],
-        'download_url' : [r'^Download-URL:\s*(.*?)\s*$']
+        'name': [
+            r'^Name:\s*(.*?)\s*$',
+            r'^\s*url\s*=.*/([^/]*?)(?:\.git)?\s*$',
+        ],
+        'url': [
+            r'^Home-page:\s*(.*?)\s*$',
+            r'^\s*url\s*=\s*(https?.*?github.*?[:/]hpcugent/.*?)\.git\s*$',
+            r'^\s*url\s*=\s*(git[:@].*?github.*?[:/]hpcugent/.*?)(?:\.git)?\s*$',
+        ],
+        'download_url' : [
+            r'^Download-URL:\s*(.*?)\s*$',
+        ],
     }
 
     res = {}
@@ -417,6 +426,23 @@ class vsc_egg_info(egg_info):
     This amounts to including the default files, as determined by setuptools, extended with the
     few extra files we need to add for installation purposes.
     """
+
+    def finalize_options(self, *args, **kwargs):
+        """Handle missing lib dir for scripts-only packages"""
+        # the egginfo data will be deleted as part of the cleanup
+        cleanup = []
+        if not os.path.exists(REPO_LIB_DIR):
+            log.warn('vsc_egg_info create missing %s (will be removed later)' % REPO_LIB_DIR)
+            os.mkdir(REPO_LIB_DIR)
+            cleanup.append(REPO_LIB_DIR)
+
+        res = egg_info.finalize_options(self, *args, **kwargs)
+
+        # cleanup any diretcories created
+        for directory in cleanup:
+            shutil.rmtree(directory)
+
+        return res
 
     def find_sources(self):
         """Default lookup."""
@@ -676,7 +702,7 @@ class VscTestCommand(TestCommand):
 
         res = TestCommand.run_tests(self)
 
-        # clenaup any diretcories created
+        # cleanup any diretcories created
         for directory in cleanup:
             shutil.rmtree(directory)
 
