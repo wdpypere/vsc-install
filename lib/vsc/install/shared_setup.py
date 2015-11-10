@@ -189,6 +189,9 @@ KNOWN_LICENSES = {
     'ARR': ('4c917d76bb092659fa923f457c72d033', 'License :: Other/Proprietary License'),
 }
 
+# a whitelist of licenses that allow pushing to pypi during vsc_release
+PYPI_LICENSES = ['LGPLv2+', 'GPLv2']
+
 def get_name_url(filename=None, version=None):
     """
     Determine name and url of project
@@ -789,6 +792,7 @@ class vsc_release(Command):
     def git_tag(self):
         """Tag the version in git"""
         tag = self.distribution.get_fullname()
+        log.info('Create git tag %s' % tag)
         self._print(['git', 'tag', tag])
         self._print(['git', 'push', 'upstream', 'tag', tag])
 
@@ -803,20 +807,25 @@ class vsc_release(Command):
         if self.testpypi:
             test.extend(['-r', 'testpypi'])
         setup = ['python', 'setup.py']
+
+        # do actually do this, use self.run_command()
         self._print(setup + ['register'] + test)
         self._print(setup + ['sdist'])
         self._print(setup + ['upload'] + test)
 
     def run(self):
         """Print list of thinigs to do"""
-        version = self.distribution.get_version()
-        name = self.distribution.get_name(),
         fullname = self.distribution.get_fullname()
 
-        log.info("Release commands to perform")
+        log.info("Release commands to perform for %s" % fullname)
         self.git_tag()
         self.github_release()
-        self.pypi()
+
+        lic = self.distribution.get_license()
+        if lic in PYPI_LICENSES:
+            self.pypi()
+        else:
+            log.info("%s license %s does not allow uploading to pypi" % (fullname, lic))
 
 
 # shared target config
