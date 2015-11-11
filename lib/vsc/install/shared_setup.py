@@ -32,6 +32,7 @@ Shared module for vsc software setup
 import glob
 import hashlib
 import inspect
+import json
 import os
 import shutil
 import sys
@@ -796,10 +797,43 @@ class vsc_release(Command):
         self._print(['git', 'tag', tag])
         self._print(['git', 'push', 'upstream', 'tag', tag])
 
-    def github_release(self):
+    def github_release(self, gh='github.com'):
         """Make the github release"""
         tag = self.distribution.get_fullname()
-        log.error('Make the github release for tag %s' % tag)
+        version = self.distribution.get_version()
+        name = self.distribution.get_name()
+
+        log.info('making github_release for %s on %s' % (tag, gh))
+
+        if gh == 'github.com':
+            api_url = 'api.github.com'
+            tokens = 'tokens'
+            token_suffix = ''
+        else:
+            api_url = "%s/api/v3" % gh
+            # might change with future gh enterprise release?
+            tokens = 'applications'
+            token_suffix = '_%s' % gh.split('.')[-2].upper() # non-country subdomain (e.g. github.ugent.be -> ugent)
+
+        token_var = "GH_OAUTH_TOKEN%s" % token_suffix
+
+        log.info("get token from https://%s/settings/%s, set it in %s environment variable" % (gh, tokens, token_var))
+
+        # https://developer.github.com/v3/repos/releases/#create-a-release
+        api_data = {
+            "tag_name": tag,
+            "target_commitish": "master",
+            "name": tag,
+            "body": "Release %s for %s version %s" % (tag, name, version),
+            "draft": False,
+            "prerelease": False,
+        }
+
+        owner = 'hpcugent'
+        release_url = "https://%s/repos/%s/%s/releases?access_token=$%s" % (api_url, owner, name, token_var)
+
+        self._print(['# Run command below to make release on %s' % gh])
+        self._print(['curl', '--data', "'%s'" % json.dumps(api_data),  release_url])
 
     def pypi(self):
         """Register, sdist and upload to pypi"""
@@ -808,18 +842,26 @@ class vsc_release(Command):
             test.extend(['-r', 'testpypi'])
         setup = ['python', 'setup.py']
 
+        log.info('Register with pypi')
         # do actually do this, use self.run_command()
-        self._print(setup + ['register'] + test)
-        self._print(setup + ['sdist'])
-        self._print(setup + ['upload'] + test)
+        # you can only upload what you just created
+        self._print(['# Run command below to register with pypi (testpypi %s)' % self.testpypi])
+        self._print(setup + ['register'] + test + ['sdist', 'upload'] + test)
 
     def run(self):
         """Print list of thinigs to do"""
         fullname = self.distribution.get_fullname()
 
+        download_url = self.distribution.get_download_url()
+        gh_reg = re.search(r'^.*?://([^/]*github[^/]*)/', download_url)
+
         log.info("Release commands to perform for %s" % fullname)
-        self.git_tag()
-        self.github_release()
+        if gh_reg:
+            # API call below should make the tag too
+            self.github_release(gh=gh_reg.group(1))
+        else:
+            self.git_tag()
+            self.warn("Don't know how to continue with the release for this non-github repository")
 
         lic = self.distribution.get_license()
         if lic in PYPI_LICENSES:
