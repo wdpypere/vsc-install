@@ -92,10 +92,21 @@ if log.Log.__name__ != 'NewLog':
     OrigLog = log.Log
 
     class NewLog(OrigLog):
+
+        def __init__(self, *args, **kwargs):
+            self._orig_log = OrigLog._log
+            # make copy
+            self._log_levels = {}
+            self._log_levels.update(log_levels)
+            OrigLog.__init__(self, *args, **kwargs)
+
         def _log(self, level, msg, args):
-            """Prefix the message with human readbale level"""
-            newmsg = "%s: %s" % (log_levels.get(level, 'UNKNOWN'), msg)
-            return OrigLog._log(self, level, newmsg, args)
+            """Prefix the message with human readable level"""
+            newmsg = "%s: %s" % (self._log_levels.get(level, 'UNKNOWN'), msg)
+            try:
+                return self._orig_log(self, level, newmsg, args)
+            except:
+                print newmsg % args
 
     log.Log = NewLog
     log._global_log = NewLog()
@@ -133,7 +144,9 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.7'
+VERSION = '0.9.8'
+
+log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
 # list of non-vsc packages that need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
@@ -193,7 +206,12 @@ KNOWN_LICENSES = {
 # a whitelist of licenses that allow pushing to pypi during vsc_release
 PYPI_LICENSES = ['LGPLv2+', 'GPLv2']
 
-def get_name_url(filename=None, version=None):
+def release_on_pypi(lic):
+    """Given license lic, can/will we release on PyPI"""
+    return lic in PYPI_LICENSES
+
+
+def get_name_url(filename=None, version=None, license_name=None):
     """
     Determine name and url of project
     """
@@ -252,12 +270,22 @@ def get_name_url(filename=None, version=None):
     if res['url'].startswith('git://'):
         res['url'] = "https://%s" % res['url'][len('git://'):]
 
-    if not 'download_url' in res and 'github' in res.get('url', '') and version is not None:
-        res['download_url'] = "%s/archive/%s-%s.tar.gz" % (res['url'], res['name'], version)
+    if not 'download_url' in res:
+        if release_on_pypi(license_name):
+            # no external download url
+            # force to None
+            res['download_url'] = None
+        elif 'github' in res.get('url', '') and version is not None:
+            res['download_url'] = "%s/archive/%s.tar.gz" % (res['url'], version)
 
     if len(res) != 3:
-        raise Exception("Cannot determine name, url and downlaod url from filename %s: got %s" % (filename, res))
+        raise Exception("Cannot determine name, url and download url from filename %s: got %s" % (filename, res))
     else:
+        for name,value in res.items():
+            if value is None:
+                log.info('Removing None %s' % name)
+                res.pop(name)
+
         log.info('get_name_url returns %s' % res)
         return res
 
@@ -342,11 +370,12 @@ class vsc_sdist(sdist):
     Upon sdist, add this vsc.install.shared_setup to the sdist
     and modifed the shipped setup.py to be able to use this
     """
-    def _mod_setup_py(self, base_dir):
-        """Modify the setup.py in the distribution directory"""
 
-        # re-copy setup.py, to avoid hardlinks
-        # (code based on setuptools.command.sdist make_release_tree method)
+    def _copy_setup_py(self, base_dir):
+        """
+        re-copy setup.py, to avoid soft/hardlinks
+        (code based on setuptools.command.sdist make_release_tree method)
+        """
         dest = os.path.join(base_dir, 'setup.py')
         log.info('recopying dest %s if hardlinked' % dest)
         if hasattr(os, 'link') and os.path.exists(dest):
@@ -355,6 +384,14 @@ class vsc_sdist(sdist):
             os.unlink(dest)
             self.copy_file(os.path.join(REPO_BASE_DIR, 'setup.py'), dest)
 
+    def _mod_setup_py(self, base_dir):
+        """
+        Modify the setup.py in the distribution directory
+        """
+
+        # _copy_setup_py already ran
+
+        dest = os.path.join(base_dir, 'setup.py')
         fh = open(dest, 'r')
         code = fh.read()
         fh.close()
@@ -414,6 +451,9 @@ class vsc_sdist(sdist):
             raise Exception("base_dir %s present. Please remove it" % base_dir)
 
         sdist.make_release_tree(self, base_dir, files)
+
+        # have to make sure setup.py is not a symlink
+        self._copy_setup_py(base_dir)
 
         if __name__ == '__main__':
             log.info('running shared_setup as main, not adding it to sdist')
@@ -799,9 +839,12 @@ class vsc_release(Command):
 
     def github_release(self, gh='github.com'):
         """Make the github release"""
-        tag = self.distribution.get_fullname()
+        fullname = self.distribution.get_fullname()
         version = self.distribution.get_version()
         name = self.distribution.get_name()
+
+        # makes funny download url, but unpacks correctly
+        tag = version
 
         log.info('making github_release for %s on %s' % (tag, gh))
 
@@ -852,8 +895,8 @@ class vsc_release(Command):
         """Print list of thinigs to do"""
         fullname = self.distribution.get_fullname()
 
-        download_url = self.distribution.get_download_url()
-        gh_reg = re.search(r'^.*?://([^/]*github[^/]*)/', download_url)
+        url = self.distribution.get_url()
+        gh_reg = re.search(r'^.*?://([^/]*github[^/]*)/', url)
 
         log.info("Release commands to perform for %s" % fullname)
         if gh_reg:
@@ -864,7 +907,7 @@ class vsc_release(Command):
             self.warn("Don't know how to continue with the release for this non-github repository")
 
         lic = self.distribution.get_license()
-        if lic in PYPI_LICENSES:
+        if release_on_pypi(lic):
             self.pypi()
         else:
             log.info("%s license %s does not allow uploading to pypi" % (fullname, lic))
@@ -975,13 +1018,19 @@ def parse_target(target, urltemplate=None):
     new_target = {}
     new_target.update(SHARED_TARGET)
 
+    # prepare classifiers
+    classifiers = new_target.setdefault('classifiers', [])
+
+    # license info
+    lic_name, lic_classifier = get_license()
+    log.info('setting license %s' % lic_name)
+    new_target['license'] = lic_name
+    classifiers.append(lic_classifier)
+
     if not 'name' in target:
         log.info('No name defined, trying to determine it')
         # sets name / url and download_url
-        target.update(get_name_url(version=target['version']))
-
-    # prepare classifiers
-    classifiers = new_target.setdefault('classifiers', [])
+        target.update(get_name_url(version=target['version'], license_name=lic_name))
 
     if urltemplate:
         new_target['url'] = urltemplate % target
@@ -992,12 +1041,6 @@ def parse_target(target, urltemplate=None):
     readme = os.path.join(REPO_BASE_DIR, README)
     if not os.path.exists(readme):
         raise Exception('README is missing (was looking for %s)' % readme)
-
-    # license info
-    lic_name, lic_classifier = get_license()
-    log.info('setting license %s' % lic_name)
-    new_target['license'] = lic_name
-    classifiers.append(lic_classifier)
 
     vsc_description = target.pop('vsc_description', True)
     if vsc_description:
