@@ -2,11 +2,12 @@ import os
 
 from vsc.install.testing import TestCase
 from vsc.install.shared_setup import KNOWN_LICENSES, get_md5sum, get_license, REPO_BASE_DIR
+from vsc.install.shared_setup import PYPI_LICENSES, release_on_pypi
 
 class LicenseTest(TestCase):
     """License related tests"""
 
-    def test_known_liceses(self):
+    def test_known_licenses(self):
         """Test the KNOWN_LICENSES"""
 
         total_licenses = len(KNOWN_LICENSES)
@@ -33,3 +34,12 @@ class LicenseTest(TestCase):
             self.assertTrue(classifier.startswith('License :: OSI Approved :: ') or
                             classifier == 'License :: Other/Proprietary License',
                             msg='classifier as expected for %s' % short)
+
+    def test_release_on_pypi(self):
+        """Release on pypi or not"""
+
+        self.assertEqual(PYPI_LICENSES, ['LGPLv2+', 'GPLv2'], 'Expected licenses that allow releasing on pypi')
+
+        for short in KNOWN_LICENSES.keys():
+            self.assertEqual(release_on_pypi(short), short in PYPI_LICENSES,
+                             msg='can %s be usd to release on pypi' % short)

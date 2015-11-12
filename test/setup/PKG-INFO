@@ -6,7 +6,7 @@ Home-page: https://github.com/hpcugent/vsc-install
 Author: Stijn De Weirdt;Andy Georges;Jens Timmermans
 Author-email: stijn.deweirdt@ugent.be;andy.georges@ugent.be;jens.timmermans@ugent.be
 License: LGPLv2+
-Download-URL: https://github.com/hpcugent/vsc-install/archive/vsc-install-0.1.2.tar.gz
+Download-URL: https://github.com/hpcugent/vsc-install/archive/0.1.2.tar.gz
 Description: Description
         ===========
         vsc-install provides shared setuptools functions and classes for python libraries developed by UGent's HPC group
