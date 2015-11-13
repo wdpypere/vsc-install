@@ -144,13 +144,13 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.8'
+VERSION = '0.9.9'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
-# list of non-vsc packages that need python- prefix for correct rpm dependencies
+# list of non-vsc packages that do not need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
-PREFIX_PYTHON_BDIST_RPM = ('setuptools',)
+NO_PREFIX_PYTHON_BDIST_RPM = ()
 
 # determine the base directory of the repository
 # set it via REPO_BASE_DIR (mainly to support non-"python setup" usage/hacks)
@@ -956,12 +956,12 @@ def sanitize(name):
 
     python- is prefixed in case of
         enviroment variable VSC_INSTALL_PYTHON is set to 1 and either
-            name is in hardcoded list PREFIX_PYTHON_BDIST_RPM
+            name is not in hardcoded list NO_PREFIX_PYTHON_BDIST_RPM
             name starts with 'vsc'
     """
     if isinstance(name, basestring):
         p_p = (os.environ.get('VSC_RPM_PYTHON', False) and
-               ((name in PREFIX_PYTHON_BDIST_RPM)
+               ((name not in NO_PREFIX_PYTHON_BDIST_RPM)
                 or name.startswith('vsc')))
         if p_p:
             name = 'python-%s' % name
