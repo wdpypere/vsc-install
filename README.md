@@ -73,3 +73,12 @@ Fix failing tests
 * Remove any `build_rpms_settings.sh` leftovers
 * The `TARGET` dict in `setup.py` should be minimal unless you really know what you are doing (i.e. if it is truly different from defaults)
  * Remove `name`, `scripts`, ...
+* `Exception: vsc namespace packages do not allow non-shared namespace`
+ * Add to the `__init__.py`
+ ```python
+ """
+ Allow other packages to extend this namespace, zip safe setuptools style
+ """
+ import pkg_resources
+ pkg_resources.declare_namespace(__name__)
+ ```
