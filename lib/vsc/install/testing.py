@@ -43,6 +43,7 @@ import re
 import sys
 
 from cStringIO import StringIO
+from distutils import log
 from unittest import TestCase as OrigTestCase
 from vsc.install.shared_setup import generate_packages, generate_scripts, generate_modules, \
     FILES_IN_PACKAGES, REPO_BASE_DIR
@@ -212,8 +213,8 @@ class VSCImportTest(TestCase):
     def _import(self, pkg):
         try:
             __import__(pkg)
-        except ImportError:
-            pass
+        except ImportError as e:
+            log.warn('Import of %s failed with %s' % (pkg, e))
 
         self.assertTrue(pkg in sys.modules, msg='import %s was success' % pkg)
 
