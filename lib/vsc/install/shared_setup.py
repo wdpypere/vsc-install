@@ -150,7 +150,7 @@ log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
 # list of non-vsc packages that do not need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
-NO_PREFIX_PYTHON_BDIST_RPM = ()
+NO_PREFIX_PYTHON_BDIST_RPM = []
 
 # determine the base directory of the repository
 # set it via REPO_BASE_DIR (mainly to support non-"python setup" usage/hacks)
