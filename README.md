@@ -14,10 +14,12 @@ from vsc.install.testing import TestCase
 ```
 (instead of basic `TestCase` from `unittest`).
 
+And any `__main__` or `suite()` is not needed (anymore).
+
 Initialise the test directory with
 
 ```bash
-mkdir test
+mkdir -p test
 echo '' > test/__init__.py
 echo 'from vsc.install.testing import VSCImportTest' > test/00-import.py
 ```
@@ -55,3 +57,28 @@ You can try get the actual import error for fixing the issue with
 ```bash
 python -c 'import sys;sys.path.insert(0, "test");import XYZ;'
 ```
+
+Fix failing tests
+=================
+
+* Missing / incorrect `LICENSE`
+ * Copy the appropirate license file under `known_licenses` in the project directory and name the file `LICENSE`
+* Missing `README.md`
+ * Create a `README.md` file with at least a `Description` section
+* Fix license headers as described in https://github.com/hpcugent/vsc-install/blob/master/lib/vsc/install/headers.py
+  ```bash
+  REPO_BASE_DIR=$PWD python -m vsc.install.headers path/to/file [script_or_not]
+  ```
+  Do not forget to check the diff
+* Remove any `build_rpms_settings.sh` leftovers
+* The `TARGET` dict in `setup.py` should be minimal unless you really know what you are doing (i.e. if it is truly different from defaults)
+ * Remove `name`, `scripts`, ...
+* `Exception: vsc namespace packages do not allow non-shared namespace`
+ * Add to the `__init__.py`
+ ```python
+ """
+ Allow other packages to extend this namespace, zip safe setuptools style
+ """
+ import pkg_resources
+ pkg_resources.declare_namespace(__name__)
+ ```
