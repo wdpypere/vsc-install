@@ -144,7 +144,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.9'
+VERSION = '0.9.10'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -663,6 +663,18 @@ class VscTestCommand(TestCommand):
         # make sure we can import the script as a module
         if os.path.isdir(REPO_SCRIPTS_DIR):
             sys.path.insert(0, REPO_SCRIPTS_DIR)
+
+        # insert lib dir
+        sys.path.insert(0, REPO_LIB_DIR)
+
+        # force __path__ of packages in the repo
+        packages = files_in_packages()['packages']
+        for package in packages.keys():
+            try:
+                __import__(package)
+            except ImportError as e:
+                raise ImportError("Failed to import package %s from current repository: %s" % (package, e))
+            sys.modules[package].__path__.insert(0, os.path.dirname(packages[package][0]))
 
         return cleanup
 
