@@ -144,13 +144,19 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.10'
+VERSION = '0.9.11'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
 # list of non-vsc packages that do not need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
-NO_PREFIX_PYTHON_BDIST_RPM = []
+# dependencies starting with python- are also not re-prefixed
+NO_PREFIX_PYTHON_BDIST_RPM = ['pbs_python']
+
+# Hardcode map of python dependency prefix to their rpm python- flavour prefix
+PYTHON_BDIST_RPM_PREFIX_MAP = {
+    'pycrypto': 'python-crypto',
+}
 
 # determine the base directory of the repository
 # set it via REPO_BASE_DIR (mainly to support non-"python setup" usage/hacks)
@@ -409,7 +415,7 @@ class vsc_sdist(sdist):
         # replace 'vsc.install.shared_setup' -> NEW_SHARED_SETUP
         code = re.sub(r'vsc\.install\.shared_setup', NEW_SHARED_SETUP, code)
         # replace 'from vsc.install import shared_setup' -> import NEW_SHARED_SETUP as shared_setup
-        code = re.sub(r'from\s+vsc.install\s+import\s+shared_setup', 'import %s as shared_setup', code)
+        code = re.sub(r'from\s+vsc.install\s+import\s+shared_setup', 'import %s as shared_setup' % NEW_SHARED_SETUP, code)
 
         # write it
         fh = open(dest, 'w')
@@ -966,21 +972,30 @@ def sanitize(name):
     """
     Transforms name into a sensible string for use in setup.cfg.
 
-    python- is prefixed in case of
-        enviroment variable VSC_INSTALL_PYTHON is set to 1 and either
+    enviroment variable VSC_RPM_PYTHON is set to 1 and either
+        name starts with key from PYTHON_BDIST_RPM_PREFIX_MAP
+            new name starts with value
+        python- is prefixed in case of
             name is not in hardcoded list NO_PREFIX_PYTHON_BDIST_RPM
             name starts with 'vsc'
+            and name does not start with python-
     """
     if isinstance(name, basestring):
-        p_p = (os.environ.get('VSC_RPM_PYTHON', False) and
-               ((name not in NO_PREFIX_PYTHON_BDIST_RPM)
-                or name.startswith('vsc')))
-        if p_p:
-            name = 'python-%s' % name
+        if os.environ.get('VSC_RPM_PYTHON', False):
+            # hardcoded prefix map
+            for pydep, rpmname in PYTHON_BDIST_RPM_PREFIX_MAP.items():
+                if name.startswith(pydep):
+                    return rpmname+name[len(pydep):]
+
+            # more sensible map
+            p_p = (not ([x for x in NO_PREFIX_PYTHON_BDIST_RPM if name.startswith(x)] or name.startswith('python-'))
+                   or name.startswith('vsc'))
+            if p_p:
+                name = 'python-%s' % name
 
         return name
-
-    return ",".join([sanitize(r) for r in name])
+    else:
+        return ",".join([sanitize(r) for r in name])
 
 
 def get_md5sum(filename):
