@@ -981,7 +981,8 @@ def sanitize(name):
             and name does not start with python-
     """
     if isinstance(name, basestring):
-        if os.environ.get('VSC_RPM_PYTHON', False):
+
+        if os.environ.get('VSC_RPM_PYTHON', 'NOT_ONE') == '1':
             # hardcoded prefix map
             for pydep, rpmname in PYTHON_BDIST_RPM_PREFIX_MAP.items():
                 if name.startswith(pydep):
@@ -992,7 +993,6 @@ def sanitize(name):
                    or name.startswith('vsc'))
             if p_p:
                 name = 'python-%s' % name
-
         return name
     else:
         return ",".join([sanitize(r) for r in name])
