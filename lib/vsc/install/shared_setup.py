@@ -359,17 +359,20 @@ def find_extra_sdist_files():
 
 
 def remove_extra_bdist_rpm_files(pkgs=None):
-    """For list of packages pkgs, make the function to exclude all files from rpm"""
+    """For list of packages pkgs, make the function to exclude all conflicting files from rpm"""
 
     if pkgs is None:
         pkgs = getattr(__builtin__, '__target').get('excluded_pkgs_rpm', [])
 
     res = []
     for pkg in pkgs:
-        res.extend(FILES_IN_PACKAGES['packages'].get(pkg, []))
+        all_files = FILES_IN_PACKAGES['packages'].get(pkg, [])
+        # only add overlapping files, in this case the __init__ providing/extending the namespace
+        res.extend([f for f in all_files if os.path.basename(f) == '__init__.py'])
     log.info('removing files from rpm: %s' % res)
 
     return res
+
 
 class vsc_sdist(sdist):
     """
