@@ -66,7 +66,8 @@ Fix failing tests
 * Missing `README.md`
  * Create a `README.md` file with at least a `Description` section
 * Fix license headers as described in https://github.com/hpcugent/vsc-install/blob/master/lib/vsc/install/headers.py
-  ```bash
+  ```
+  cd <project dir with .git folder>
   REPO_BASE_DIR=$PWD python -m vsc.install.headers path/to/file [script_or_not]
   ```
   Do not forget to check the diff
