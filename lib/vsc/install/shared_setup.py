@@ -656,17 +656,28 @@ class VscTestCommand(TestCommand):
         self.test_loader = '%s:%s' % (self.TEST_LOADER_CLASS.TEST_LOADER_MODULE, self.TEST_LOADER_CLASS.__name__)
         log.info("test_loader set to %s" % self.test_loader)
 
-    def reload_modules(self, package, remove_only=False):
+    def reload_modules(self, package, remove_only=False, own_modules=False):
         """
         Cleanup and restore package because we use
         vsc package tools very early.
         So we need to make sure they are picked up from the paths as specified
         in setup_sys_path, not to mix with installed and already loaded modules
+
+        If remove_only, only remove, not reload
+
+        If own_modules, only remove modules provided by this "repository"
         """
 
         def candidate(modulename):
             """Select candidate modules to reload"""
-            return modulename in (package,) or modulename.startswith(package+'.')
+            module_in_package = modulename in (package,) or modulename.startswith(package+'.')
+
+            if own_modules:
+                is_own_module = modulename in FILES_IN_PACKAGES['modules']
+            else:
+                is_own_module = True
+
+            return module_in_package and is_own_module
 
         reload_modules = []
         # sort package first
@@ -724,7 +735,7 @@ class VscTestCommand(TestCommand):
         # cleanup children first
         reloaded_modules = []
         for package in pkg_names[::-1]:
-            reloaded_modules.extend(self.reload_modules(package, remove_only=True))
+            reloaded_modules.extend(self.reload_modules(package, remove_only=True, own_modules=True))
 
         # insert in order, parents first
         for package in pkg_names:
