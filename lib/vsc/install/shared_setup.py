@@ -300,6 +300,7 @@ def rel_gitignore(paths):
     """
     A list of paths, return list of relative paths to REPO_BASE_DIR,
     filter with primitive gitignore
+    This raises an error when there is a .git directory but no .gitignore
     """
     res = [os.path.relpath(p, REPO_BASE_DIR) for p in paths]
 
@@ -309,6 +310,8 @@ def rel_gitignore(paths):
         patterns = [l.strip().replace('*','.*') for l in open(gitignore).readlines() if l.startswith('*')]
         reg = re.compile('^('+'|'.join(patterns)+')$')
         res = [f for f in res if not reg.search(f)]
+    elif os.path.isdir(os.path.join(REPO_BASE_DIR, '.git')):
+        raise Exception("No .gitignore in git repo: %s" % REPO_BASE_DIR)
     return res
 
 
