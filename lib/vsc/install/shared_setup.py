@@ -645,6 +645,35 @@ class VscTestCommand(TestCommand):
         self.test_loader = '%s:%s' % (self.TEST_LOADER_CLASS.TEST_LOADER_MODULE, self.TEST_LOADER_CLASS.__name__)
         log.info("test_loader set to %s" % self.test_loader)
 
+    def reload_modules(self, package, remove_only=False):
+        """
+        Cleanup and restore package because we use
+        vsc package tools very early.
+        So we need to make sure they are picked up from the paths as specified
+        in setup_sys_path, not to mix with installed and already loaded modules
+        """
+
+        def candidate(modulename):
+            """Select candidate modules to reload"""
+            return modulename in (package,) or modulename.startswith(package+'.')
+
+        reload_modules = []
+        # sort package first
+        loaded_modules = sorted(filter(candidate, sys.modules.keys()))
+        # remove package last
+        for name in loaded_modules[::-1]:
+            if hasattr(sys.modules[name], '__file__'):
+                # only actual modules, filo ordered
+                reload_modules.insert(0, name)
+            del(sys.modules[name])
+
+        if not remove_only:
+            # reimport
+            for name in reload_modules:
+                __import__(name)
+
+        return reload_modules
+
     def setup_sys_path(self):
         """
         Prepare sys.path to be able to
@@ -673,43 +702,37 @@ class VscTestCommand(TestCommand):
         if os.path.isdir(REPO_SCRIPTS_DIR):
             sys.path.insert(0, REPO_SCRIPTS_DIR)
 
-        # insert lib dir
+        # insert lib dir before newly inserted test/base/scripts
         sys.path.insert(0, REPO_LIB_DIR)
 
-        # force __path__ of packages in the repo
+        # force __path__ of packages in the repo (to deal with namespace extensions)
+
         packages = files_in_packages()['packages']
-        for package in packages.keys():
+        # sort them, parents first
+        pkg_names = sorted(packages.keys())
+        # cleanup children first
+        reloaded_modules = []
+        for package in pkg_names[::-1]:
+            reloaded_modules.extend(self.reload_modules(package, remove_only=True))
+
+        # insert in order, parents first
+        for package in pkg_names:
             try:
                 __import__(package)
+                log.debug('Imported package %s' % package)
             except ImportError as e:
                 raise ImportError("Failed to import package %s from current repository: %s" % (package, e))
             sys.modules[package].__path__.insert(0, os.path.dirname(packages[package][0]))
 
+        # reload the loaded modules with new __path__
+        for module in reloaded_modules:
+            try:
+                __import__(module)
+                log.debug('Imported module %s' % module)
+            except ImportError as e:
+                log.info('Failed to reload module %s, continuing: %s' % (module, e))
+
         return cleanup
-
-    def reload_modules(self, package):
-        """
-        Cleanup and restore package because we use
-        vsc package tools very early.
-        So we need to make sure they are picked up from the paths as specified
-        in setup_sys_path, not to mix with installed and already loaded modules
-        """
-
-        def candidate(modulename):
-            """Select candidate modules to reload"""
-            return modulename in (package,) or modulename.startswith(package+'.')
-
-        loaded_modules = filter(candidate, sys.modules.keys())
-        reload_modules = []
-        for name in loaded_modules:
-            if hasattr(sys.modules[name], '__file__'):
-                # only actual modules
-                reload_modules.append(name)
-            del(sys.modules[name])
-
-        # reimport
-        for name in reload_modules:
-            __import__(name)
 
     def force_xmlrunner(self):
         """

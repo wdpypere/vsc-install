@@ -1,12 +1,5 @@
 import os
 
-#
-# using shared_setup from setup/shared_setup needs to be reloaded
-#
-import sys
-del(sys.modules['vsc.install'])
-del(sys.modules['vsc.install.shared_setup'])
-
 from vsc.install import shared_setup
 from vsc.install.shared_setup import get_name_url, sanitize
 
