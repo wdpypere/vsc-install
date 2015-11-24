@@ -144,7 +144,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.12'
+VERSION = '0.9.13'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -309,7 +309,12 @@ def rel_gitignore(paths):
     if os.path.isfile(gitignore):
         patterns = [l.strip().replace('*','.*') for l in open(gitignore).readlines() if l.startswith('*')]
         reg = re.compile('^('+'|'.join(patterns)+')$')
+        # check if we at least filter out .pyc files, since we're in a python project
+        if not reg.search('bla.pyc'):
+            raise Exception("%s/.gitignore does not contain a line to match *.pyc files" % REPO_BASE_DIR)
+
         res = [f for f in res if not reg.search(f)]
+
     elif os.path.isdir(os.path.join(REPO_BASE_DIR, '.git')):
         raise Exception("No .gitignore in git repo: %s" % REPO_BASE_DIR)
     return res
