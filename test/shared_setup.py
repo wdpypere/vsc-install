@@ -80,6 +80,8 @@ class TestSetup(TestCase):
             rel_gitignore(['testdata'], base_dir=base_dir)
         except Exception as e:
             self.assertTrue('.pyc' in e.message)
+        else:
+            self.assertTrue(False, 'rel_gitignore should have raised an exception, but did not!')
         # it should not fail if base_dir does not contain a .git folder
         base_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
         self.assertEqual(rel_gitignore(['testdata'], base_dir=base_dir), ['../testdata'])
