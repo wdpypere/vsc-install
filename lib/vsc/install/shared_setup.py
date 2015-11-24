@@ -312,20 +312,28 @@ def rel_gitignore(paths):
     return res
 
 
-def files_in_packages():
+def files_in_packages(excluded_pkgs=None):
     """
     Gather all __init__ files provided by the lib/ subdir
         filenames are relative to the REPO_BASE_DIR
+
+    If a directory exists matching a package but with no __init__.py,
+    it is ignored unless the package (not the path!) is in the excluded_pkgs list
+
     Return dict  with key
         packages: a dict with key the package and value all files in the package directory
         modules: dict with key non=package module name and value the filename
     """
+    if excluded_pkgs is None:
+        excluded_pkgs = []
+
     res = {'packages' : {}, 'modules': {}}
     offset = len(REPO_LIB_DIR.split(os.path.sep))
     for root, _, files in os.walk(REPO_LIB_DIR):
         package = '.'.join(root.split(os.path.sep)[offset:])
-        if '__init__.py' in files:
-            if package == 'vsc' or package.startswith('vsc.'):
+        if '__init__.py' in files or package in excluded_pkgs:
+            # Force vsc shared packages/namespace
+            if '__init__.py' in files and (package == 'vsc' or package.startswith('vsc.')):
                 init = open(os.path.join(root, '__init__.py')).read()
                 if not re.search(r'^import\s+pkg_resources\npkg_resources.declare_namespace\(__name__\)$', init, re.M):
                     raise Exception(('vsc namespace packages do not allow non-shared namespace in dir %s.'
@@ -342,6 +350,9 @@ def files_in_packages():
 
     return res
 
+# This initial list is ok for regular repositories
+# But inside an rpm building enviroment, the gathered list
+# is possibly not complete due to excluded_pkgs_rpm
 FILES_IN_PACKAGES = files_in_packages()
 
 
@@ -369,7 +380,7 @@ def remove_extra_bdist_rpm_files(pkgs=None):
         all_files = FILES_IN_PACKAGES['packages'].get(pkg, [])
         # only add overlapping files, in this case the __init__ providing/extending the namespace
         res.extend([f for f in all_files if os.path.basename(f) == '__init__.py'])
-    log.info('removing files from rpm: %s' % res)
+    log.info('files to be removed from rpm: %s' % res)
 
     return res
 
@@ -707,7 +718,7 @@ class VscTestCommand(TestCommand):
 
         # force __path__ of packages in the repo (to deal with namespace extensions)
 
-        packages = files_in_packages()['packages']
+        packages = FILES_IN_PACKAGES['packages']
         # sort them, parents first
         pkg_names = sorted(packages.keys())
         # cleanup children first
@@ -970,7 +981,6 @@ SHARED_TARGET = {
     'command_packages': ['vsc.install.shared_setup', NEW_SHARED_SETUP, 'setuptools.command', 'distutils.command'],
     'download_url': '',
     'package_dir': {'': DEFAULT_LIB_DIR},
-    'packages': generate_packages(),
     'setup_requires' : ['setuptools', 'vsc-install >= %s' % VERSION],
     'test_suite': DEFAULT_TEST_SUITE,
     'url': '',
@@ -1203,7 +1213,7 @@ def build_setup_cfg_for_bdist_rpm(target):
 
 def prepare_rpm(target):
     """
-    Make some preparations required for proepr rpm creation
+    Make some preparations required for proper rpm creation
         exclude files provided by packages that are shared
             excluded_pkgs_rpm: is a list of packages, default to ['vsc']
             set it to None when defining own function
@@ -1212,6 +1222,14 @@ def prepare_rpm(target):
     pkgs = target.pop('excluded_pkgs_rpm', ['vsc'])
     if pkgs is not None:
         getattr(__builtin__, '__target')['excluded_pkgs_rpm'] = pkgs
+
+    # regenerate the list, taking into accoutn that this could be an rpmbuild enviorment
+    # with a stripped down sdist source
+    global FILES_IN_PACKAGES
+    FILES_IN_PACKAGES = files_in_packages(excluded_pkgs=pkgs)
+
+    # Add (default) packages to SHARED_TARGET
+    SHARED_TARGET['packages'] = generate_packages()
 
     build_setup_cfg_for_bdist_rpm(target)
 
