@@ -752,7 +752,7 @@ class VscTestCommand(TestCommand):
                 __import__(module)
                 log.debug('Imported module %s' % module)
             except ImportError as e:
-                log.info('Failed to reload module %s, continuing: %s' % (module, e))
+                raise ImportError("Failed to reload module %s: %s" % (module, e))
 
         return cleanup
 
