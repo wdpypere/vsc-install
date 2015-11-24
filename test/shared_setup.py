@@ -75,7 +75,7 @@ class TestSetup(TestCase):
         """
         # when testing with a base_dir that has a .git folder, and a .gitignore file, we should get an error mentioning
         # .pyc
-        base_dir = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), './testdata')
+        base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), './testdata')
         try:
             rel_gitignore(['testdata'], base_dir=base_dir)
         except Exception as e:
@@ -83,6 +83,6 @@ class TestSetup(TestCase):
         else:
             self.assertTrue(False, 'rel_gitignore should have raised an exception, but did not!')
         # it should not fail if base_dir does not contain a .git folder
-        base_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+        base_dir = os.path.dirname(os.path.realpath(__file__))
         self.assertEqual(rel_gitignore(['testdata'], base_dir=base_dir), ['../testdata'])
 

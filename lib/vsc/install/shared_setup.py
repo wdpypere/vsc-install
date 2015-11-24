@@ -65,6 +65,8 @@ except ImportError:
     have_xmlrunner = False
 
 
+GITIGNORE_PATTERNS = ['.pyc', '.pyo', '~']
+
 # private class variables to communicate
 # between VscScanningLoader and VscTestCommand
 # stored in __builtin__ because the (Vsc)TestCommand.run_tests
@@ -313,8 +315,8 @@ def rel_gitignore(paths, base_dir=None):
         patterns = [l.strip().replace('*','.*') for l in open(gitignore).readlines() if l.startswith('*')]
         reg = re.compile('^('+'|'.join(patterns)+')$')
         # check if we at least filter out .pyc files, since we're in a python project
-        if not reg.search('bla.pyc'):
-            raise Exception("%s/.gitignore does not contain a line to match *.pyc files" % base_dir)
+        if not all([reg.search(text) for text in ['bla%s' % pattern for pattern in GITIGNORE_PATTERNS]]):
+            raise Exception("%s/.gitignore does not contain these patterns: %s " % (base_dir, GITIGNORE_PATTERNS))
 
         res = [f for f in res if not reg.search(f)]
 
