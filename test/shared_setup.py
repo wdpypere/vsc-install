@@ -75,9 +75,11 @@ class TestSetup(TestCase):
         """
         # when testing with a base_dir that has a .git folder, and a .gitignore file, we should get an error mentioning
         # .pyc
-        with self.assertRaisesRegexp(Exception, '.pyc'):
-            base_dir = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), './testdata')
+        base_dir = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), './testdata')
+        try:
             rel_gitignore(['testdata'], base_dir=base_dir)
+        except Exception as e:
+            self.assertTrue('.pyc' in e.message)
         # it should not fail if base_dir does not contain a .git folder
         base_dir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
         self.assertEqual(rel_gitignore(['testdata'], base_dir=base_dir), ['../testdata'])
