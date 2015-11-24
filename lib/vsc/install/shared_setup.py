@@ -144,13 +144,19 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.10'
+VERSION = '0.9.12'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
 # list of non-vsc packages that do not need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
-NO_PREFIX_PYTHON_BDIST_RPM = []
+# dependencies starting with python- are also not re-prefixed
+NO_PREFIX_PYTHON_BDIST_RPM = ['pbs_python']
+
+# Hardcode map of python dependency prefix to their rpm python- flavour prefix
+PYTHON_BDIST_RPM_PREFIX_MAP = {
+    'pycrypto': 'python-crypto',
+}
 
 # determine the base directory of the repository
 # set it via REPO_BASE_DIR (mainly to support non-"python setup" usage/hacks)
@@ -306,20 +312,28 @@ def rel_gitignore(paths):
     return res
 
 
-def files_in_packages():
+def files_in_packages(excluded_pkgs=None):
     """
     Gather all __init__ files provided by the lib/ subdir
         filenames are relative to the REPO_BASE_DIR
+
+    If a directory exists matching a package but with no __init__.py,
+    it is ignored unless the package (not the path!) is in the excluded_pkgs list
+
     Return dict  with key
         packages: a dict with key the package and value all files in the package directory
         modules: dict with key non=package module name and value the filename
     """
+    if excluded_pkgs is None:
+        excluded_pkgs = []
+
     res = {'packages' : {}, 'modules': {}}
     offset = len(REPO_LIB_DIR.split(os.path.sep))
     for root, _, files in os.walk(REPO_LIB_DIR):
         package = '.'.join(root.split(os.path.sep)[offset:])
-        if '__init__.py' in files:
-            if package == 'vsc' or package.startswith('vsc.'):
+        if '__init__.py' in files or package in excluded_pkgs:
+            # Force vsc shared packages/namespace
+            if '__init__.py' in files and (package == 'vsc' or package.startswith('vsc.')):
                 init = open(os.path.join(root, '__init__.py')).read()
                 if not re.search(r'^import\s+pkg_resources\npkg_resources.declare_namespace\(__name__\)$', init, re.M):
                     raise Exception(('vsc namespace packages do not allow non-shared namespace in dir %s.'
@@ -336,6 +350,9 @@ def files_in_packages():
 
     return res
 
+# This initial list is ok for regular repositories
+# But inside an rpm building enviroment, the gathered list
+# is possibly not complete due to excluded_pkgs_rpm
 FILES_IN_PACKAGES = files_in_packages()
 
 
@@ -353,17 +370,20 @@ def find_extra_sdist_files():
 
 
 def remove_extra_bdist_rpm_files(pkgs=None):
-    """For list of packages pkgs, make the function to exclude all files from rpm"""
+    """For list of packages pkgs, make the function to exclude all conflicting files from rpm"""
 
     if pkgs is None:
         pkgs = getattr(__builtin__, '__target').get('excluded_pkgs_rpm', [])
 
     res = []
     for pkg in pkgs:
-        res.extend(FILES_IN_PACKAGES['packages'].get(pkg, []))
-    log.info('removing files from rpm: %s' % res)
+        all_files = FILES_IN_PACKAGES['packages'].get(pkg, [])
+        # only add overlapping files, in this case the __init__ providing/extending the namespace
+        res.extend([f for f in all_files if os.path.basename(f) == '__init__.py'])
+    log.info('files to be removed from rpm: %s' % res)
 
     return res
+
 
 class vsc_sdist(sdist):
     """
@@ -409,7 +429,7 @@ class vsc_sdist(sdist):
         # replace 'vsc.install.shared_setup' -> NEW_SHARED_SETUP
         code = re.sub(r'vsc\.install\.shared_setup', NEW_SHARED_SETUP, code)
         # replace 'from vsc.install import shared_setup' -> import NEW_SHARED_SETUP as shared_setup
-        code = re.sub(r'from\s+vsc.install\s+import\s+shared_setup', 'import %s as shared_setup', code)
+        code = re.sub(r'from\s+vsc.install\s+import\s+shared_setup', 'import %s as shared_setup' % NEW_SHARED_SETUP, code)
 
         # write it
         fh = open(dest, 'w')
@@ -636,6 +656,46 @@ class VscTestCommand(TestCommand):
         self.test_loader = '%s:%s' % (self.TEST_LOADER_CLASS.TEST_LOADER_MODULE, self.TEST_LOADER_CLASS.__name__)
         log.info("test_loader set to %s" % self.test_loader)
 
+    def reload_modules(self, package, remove_only=False, own_modules=False):
+        """
+        Cleanup and restore package because we use
+        vsc package tools very early.
+        So we need to make sure they are picked up from the paths as specified
+        in setup_sys_path, not to mix with installed and already loaded modules
+
+        If remove_only, only remove, not reload
+
+        If own_modules, only remove modules provided by this "repository"
+        """
+
+        def candidate(modulename):
+            """Select candidate modules to reload"""
+            module_in_package = modulename in (package,) or modulename.startswith(package+'.')
+
+            if own_modules:
+                is_own_module = modulename in FILES_IN_PACKAGES['modules']
+            else:
+                is_own_module = True
+
+            return module_in_package and is_own_module
+
+        reload_modules = []
+        # sort package first
+        loaded_modules = sorted(filter(candidate, sys.modules.keys()))
+        # remove package last
+        for name in loaded_modules[::-1]:
+            if hasattr(sys.modules[name], '__file__'):
+                # only actual modules, filo ordered
+                reload_modules.insert(0, name)
+            del(sys.modules[name])
+
+        if not remove_only:
+            # reimport
+            for name in reload_modules:
+                __import__(name)
+
+        return reload_modules
+
     def setup_sys_path(self):
         """
         Prepare sys.path to be able to
@@ -664,43 +724,37 @@ class VscTestCommand(TestCommand):
         if os.path.isdir(REPO_SCRIPTS_DIR):
             sys.path.insert(0, REPO_SCRIPTS_DIR)
 
-        # insert lib dir
+        # insert lib dir before newly inserted test/base/scripts
         sys.path.insert(0, REPO_LIB_DIR)
 
-        # force __path__ of packages in the repo
-        packages = files_in_packages()['packages']
-        for package in packages.keys():
+        # force __path__ of packages in the repo (to deal with namespace extensions)
+
+        packages = FILES_IN_PACKAGES['packages']
+        # sort them, parents first
+        pkg_names = sorted(packages.keys())
+        # cleanup children first
+        reloaded_modules = []
+        for package in pkg_names[::-1]:
+            reloaded_modules.extend(self.reload_modules(package, remove_only=True, own_modules=True))
+
+        # insert in order, parents first
+        for package in pkg_names:
             try:
                 __import__(package)
+                log.debug('Imported package %s' % package)
             except ImportError as e:
                 raise ImportError("Failed to import package %s from current repository: %s" % (package, e))
             sys.modules[package].__path__.insert(0, os.path.dirname(packages[package][0]))
 
+        # reload the loaded modules with new __path__
+        for module in reloaded_modules:
+            try:
+                __import__(module)
+                log.debug('Imported module %s' % module)
+            except ImportError as e:
+                raise ImportError("Failed to reload module %s: %s" % (module, e))
+
         return cleanup
-
-    def reload_modules(self, package):
-        """
-        Cleanup and restore package because we use
-        vsc package tools very early.
-        So we need to make sure they are picked up from the paths as specified
-        in setup_sys_path, not to mix with installed and already loaded modules
-        """
-
-        def candidate(modulename):
-            """Select candidate modules to reload"""
-            return modulename in (package,) or modulename.startswith(package+'.')
-
-        loaded_modules = filter(candidate, sys.modules.keys())
-        reload_modules = []
-        for name in loaded_modules:
-            if hasattr(sys.modules[name], '__file__'):
-                # only actual modules
-                reload_modules.append(name)
-            del(sys.modules[name])
-
-        # reimport
-        for name in reload_modules:
-            __import__(name)
 
     def force_xmlrunner(self):
         """
@@ -938,7 +992,6 @@ SHARED_TARGET = {
     'command_packages': ['vsc.install.shared_setup', NEW_SHARED_SETUP, 'setuptools.command', 'distutils.command'],
     'download_url': '',
     'package_dir': {'': DEFAULT_LIB_DIR},
-    'packages': generate_packages(),
     'setup_requires' : ['setuptools', 'vsc-install >= %s' % VERSION],
     'test_suite': DEFAULT_TEST_SUITE,
     'url': '',
@@ -966,21 +1019,30 @@ def sanitize(name):
     """
     Transforms name into a sensible string for use in setup.cfg.
 
-    python- is prefixed in case of
-        enviroment variable VSC_INSTALL_PYTHON is set to 1 and either
+    enviroment variable VSC_RPM_PYTHON is set to 1 and either
+        name starts with key from PYTHON_BDIST_RPM_PREFIX_MAP
+            new name starts with value
+        python- is prefixed in case of
             name is not in hardcoded list NO_PREFIX_PYTHON_BDIST_RPM
             name starts with 'vsc'
+            and name does not start with python-
     """
     if isinstance(name, basestring):
-        p_p = (os.environ.get('VSC_RPM_PYTHON', False) and
-               ((name not in NO_PREFIX_PYTHON_BDIST_RPM)
-                or name.startswith('vsc')))
-        if p_p:
-            name = 'python-%s' % name
 
+        if os.environ.get('VSC_RPM_PYTHON', 'NOT_ONE') == '1':
+            # hardcoded prefix map
+            for pydep, rpmname in PYTHON_BDIST_RPM_PREFIX_MAP.items():
+                if name.startswith(pydep):
+                    return rpmname+name[len(pydep):]
+
+            # more sensible map
+            p_p = (not ([x for x in NO_PREFIX_PYTHON_BDIST_RPM if name.startswith(x)] or name.startswith('python-'))
+                   or name.startswith('vsc'))
+            if p_p:
+                name = 'python-%s' % name
         return name
-
-    return ",".join([sanitize(r) for r in name])
+    else:
+        return ",".join([sanitize(r) for r in name])
 
 
 def get_md5sum(filename):
@@ -1162,7 +1224,7 @@ def build_setup_cfg_for_bdist_rpm(target):
 
 def prepare_rpm(target):
     """
-    Make some preparations required for proepr rpm creation
+    Make some preparations required for proper rpm creation
         exclude files provided by packages that are shared
             excluded_pkgs_rpm: is a list of packages, default to ['vsc']
             set it to None when defining own function
@@ -1171,6 +1233,14 @@ def prepare_rpm(target):
     pkgs = target.pop('excluded_pkgs_rpm', ['vsc'])
     if pkgs is not None:
         getattr(__builtin__, '__target')['excluded_pkgs_rpm'] = pkgs
+
+    # regenerate the list, taking into accoutn that this could be an rpmbuild enviorment
+    # with a stripped down sdist source
+    global FILES_IN_PACKAGES
+    FILES_IN_PACKAGES = files_in_packages(excluded_pkgs=pkgs)
+
+    # Add (default) packages to SHARED_TARGET
+    SHARED_TARGET['packages'] = generate_packages()
 
     build_setup_cfg_for_bdist_rpm(target)
 
