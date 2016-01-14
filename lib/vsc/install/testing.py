@@ -42,8 +42,14 @@ import pprint
 import re
 import sys
 
-from prospector.config import ProspectorConfig
-from prospector.run import Prospector
+if sys.version_info < (2,7):
+    HAS_PROTECTOR = False
+    Prospector = None
+    ProspectorConfig = None
+else:
+    HAS_PROTECTOR = True
+    from prospector.run import Prospector
+    from prospector.config import ProspectorConfig
 
 from cStringIO import StringIO
 from distutils import log
@@ -277,6 +283,10 @@ class VSCImportTest(TestCase):
     def test_prospector(self):
         """Run prospector.run.main, but apply white/blacklists to the results"""
 
+        if not HAS_PROTECTOR:
+            log.info('No protector tests are ran')
+            return
+
         sys.argv = ['fakename']
         sys.argv.extend(self.PROSPECTOR_OPTIONS)
         # add/set REPO_BASE_DIR as positional path
@@ -284,8 +294,8 @@ class VSCImportTest(TestCase):
 
         config = ProspectorConfig()
         prospector = Prospector(config)
+
         prospector.execute()
-        log.debug("prospector summary %s" % prospector.summary)
 
         blacklist = map(re.compile, self.PROSPECTOR_BLACKLIST)
         whitelist = map(re.compile, self.PROSPECTOR_WHITELIST)
@@ -303,5 +313,5 @@ class VSCImportTest(TestCase):
 
             if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in whitelist]):
                 failures.append(msg.as_dict())
-        
+
         self.assertFalse(failures, "prospector failures: %s" % pprint.pformat(failures))
