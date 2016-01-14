@@ -71,6 +71,8 @@ Fix failing tests
   ```
   cd <project dir with .git folder>
   REPO_BASE_DIR=$PWD python -m vsc.install.headers path/to/file script_or_not
+  find ./{lib,test} -type f -name '*.py' | xargs -I '{}' REPO_BASE_DIR=$PWD python -m vsc.install.headers '{}'
+  find ./bin -type f -name '*.py' | xargs -I '{}' REPO_BASE_DIR=$PWD python -m vsc.install.headers '{}' 1
   ```
   
   Do not forget to check the diff
