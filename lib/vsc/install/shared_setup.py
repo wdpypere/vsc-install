@@ -1280,13 +1280,18 @@ if __name__ == '__main__':
     """
     This main is the setup.py for vsc-install
     """
+    prospector_version = ''
+    if sys.version < (2, 7):
+        # py26 support dropped in 0.8
+        prospector_version = ' < 0.8'
+
     PACKAGE = {
         'version': VERSION,
         'author': [sdw, ag, jt],
         'maintainer': [sdw, ag, jt],
         'install_requires': [
             'setuptools',
-            'prospector >= 0.11.7',
+            'prospector%s' % prospector_version,
         ],
         'setup_requires': [
             'setuptools'
