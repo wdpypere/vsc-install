@@ -68,7 +68,7 @@ Fix failing tests
 * Fix license headers as described in https://github.com/hpcugent/vsc-install/blob/master/lib/vsc/install/headers.py
   ```
   cd <project dir with .git folder>
-  REPO_BASE_DIR=$PWD python -m vsc.install.headers path/to/file [script_or_not]
+  REPO_BASE_DIR=$PWD python -m vsc.install.headers path/to/file script_or_not
   ```
   Do not forget to check the diff
 * Remove any `build_rpms_settings.sh` leftovers
