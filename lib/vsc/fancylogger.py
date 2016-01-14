@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2015 Ghent University
+# Copyright 2015-2016 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -40,6 +40,8 @@ At least 'import vsc' can be used now without triggering an import of fancylogge
 # it's ok if this fails with only vsc-install installed.
 # we cannot introduce a dependency on vsc-base (and we do not care)
 from vsc.utils.fancylogger import *
+# (re)import these not to confuse pylint (otherwsie seen as undefined)
+from vsc.utils.fancylogger import logToDevLog, getLogger
 
 # Deprecation tracker to syslog
 logToDevLog(True)

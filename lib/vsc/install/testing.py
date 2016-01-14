@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2015 Ghent University
+# Copyright 2014-2016 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -41,6 +41,15 @@ import os
 import pprint
 import re
 import sys
+
+if sys.version_info < (2,7):
+    HAS_PROTECTOR = False
+    Prospector = None
+    ProspectorConfig = None
+else:
+    HAS_PROTECTOR = True
+    from prospector.run import Prospector
+    from prospector.config import ProspectorConfig
 
 from cStringIO import StringIO
 from distutils import log
@@ -210,6 +219,32 @@ class VSCImportTest(TestCase):
 
     CHECK_HEADER = True
 
+    # List of regexps patterns applied to code or message of a prospector.message.Message
+    #   Blacklist: if match, skip message, do not check whitelist
+    #   Whitelist: if match, fail test
+    PROSPECTOR_BLACKLIST = [
+    ]
+    PROSPECTOR_WHITELIST = [
+        'undefined',
+    ]
+
+    # Prospector commandline options (positional path is added automatically)
+    PROSPECTOR_OPTIONS = [
+        '--strictness', 'verylow',
+        '--max-line-length', '120',
+        '--absolute-paths',
+    ]
+
+    def setUp(self):
+        """Cleanup after running a test."""
+        self.orig_sys_argv = sys.argv
+        super(VSCImportTest, self).setUp()
+
+    def tearDown(self):
+        """Cleanup after running a test."""
+        sys.argv = self.orig_sys_argv
+        super(VSCImportTest, self).tearDown()
+
     def _import(self, pkg):
         try:
             __import__(pkg)
@@ -244,3 +279,39 @@ class VSCImportTest(TestCase):
             if self.CHECK_HEADER:
                 self.assertFalse(check_header(os.path.join(REPO_BASE_DIR, scr), script=True, write=False),
                                  msg='check_header of %s' % scr)
+
+    def test_prospector(self):
+        """Run prospector.run.main, but apply white/blacklists to the results"""
+
+        if not HAS_PROTECTOR:
+            log.info('No protector tests are ran')
+            return
+
+        sys.argv = ['fakename']
+        sys.argv.extend(self.PROSPECTOR_OPTIONS)
+        # add/set REPO_BASE_DIR as positional path
+        sys.argv.append(REPO_BASE_DIR)
+
+        config = ProspectorConfig()
+        prospector = Prospector(config)
+
+        prospector.execute()
+
+        blacklist = map(re.compile, self.PROSPECTOR_BLACKLIST)
+        whitelist = map(re.compile, self.PROSPECTOR_WHITELIST)
+
+        failures = []
+        for msg in prospector.get_messages():
+            # example msg.as_dict():
+            #  {'source': 'pylint', 'message': 'Missing function docstring', 'code': 'missing-docstring',
+            #   'location': {'function': 'TestHeaders.test_check_header.lgpl', 'path': u'headers.py',
+            #                'line': 122, 'character': 8, 'module': 'headers'}}
+            log.debug("prospector message %s" % msg.as_dict())
+
+            if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in blacklist]):
+                continue
+
+            if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in whitelist]):
+                failures.append(msg.as_dict())
+
+        self.assertFalse(failures, "prospector failures: %s" % pprint.pformat(failures))

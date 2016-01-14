@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Ghent University
+# Copyright 2011-2016 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -144,7 +144,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.12'
+VERSION = '0.9.13'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -772,10 +772,14 @@ class VscTestCommand(TestCommand):
                 xmlrunner.XMLTestRunner.__init__(self, *args, **kwargs)
 
         cand_main_names = ['unittest.main', 'unittest_main', 'main']
+
+        main_orig = None
+        main_name = None
         for main_name in cand_main_names:
             main_orig = getattr(setuptools.command.test, main_name, None)
             if main_orig is not None:
                 break
+
         if main_orig is None:
             raise Exception("monkey patching XmlRunner failed")
 
@@ -831,7 +835,7 @@ def add_and_remove(alist, extra=None, exclude=None):
     exclude is list of regex patterns to filter the list of strings
     """
     if extra:
-        alist.extend(etxra)
+        alist.extend(extra)
     if exclude:
         for pat in exclude:
             reg = re.compile(pat)
@@ -1063,15 +1067,15 @@ def get_license(license=None):
 
     license_md5 = get_md5sum(license)
     log.info('found license %s with md5sum %s' % (license, license_md5))
-    found_lic = False
+    lic_short = None
+    data = [None, None]
     for lic_short, data in KNOWN_LICENSES.items():
         if license_md5 != data[0]:
             continue
 
-        found_lic = True
         break
 
-    if not found_lic:
+    if not lic_short:
         raise Exception('UNKONWN LICENSE %s provided. Should be fixed or added to vsc-install' % license)
 
     log.info("Found license name %s and classifier %s" , lic_short, data[1])
@@ -1276,12 +1280,23 @@ if __name__ == '__main__':
     """
     This main is the setup.py for vsc-install
     """
+    install_requires = [
+        'setuptools',
+    ]
+    if sys.version_info < (2, 7):
+        # py26 support dropped in 0.8, and theo old versions don't detect enough
+        log.info('no prospector support')
+    else:
+        install_requires.append('prospector >= 0.11.7')
+
     PACKAGE = {
         'version': VERSION,
         'author': [sdw, ag, jt],
         'maintainer': [sdw, ag, jt],
-        'install_requires': ['setuptools'],
-        'setup_requires': ['setuptools'],
+        'install_requires': install_requires,
+        'setup_requires': [
+            'setuptools'
+        ],
         'excluded_pkgs_rpm': [], # vsc-install ships vsc package (the vsc package is removed by default)
     }
 
