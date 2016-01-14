@@ -1,7 +1,8 @@
 import os
+import inspect
 
 from vsc.install import shared_setup
-from vsc.install.shared_setup import get_name_url, sanitize
+from vsc.install.shared_setup import get_name_url, sanitize, rel_gitignore
 
 from vsc.install.testing import TestCase
 
@@ -65,3 +66,23 @@ class TestSetup(TestCase):
         self.assertEqual(sanitize(['anything >= 5', 'vsc-xyz >= 10', 'pycrypto == 12', 'pbs_python <= 13']),
                          'anything >= 5,vsc-xyz >= 10,pycrypto == 12,pbs_python <= 13',
                          msg='list is ,-joined and nothing replaced/prefixed with VSC_RPM_PYTHON not set')
+
+
+    def test_rel_gitignore(self):
+        """
+        Test the rel_gitignore function
+        it should fail, since we don't specify a path for .pyc files in our gitignore
+        """
+        # when testing with a base_dir that has a .git folder, and a .gitignore file, we should get an error mentioning
+        # .pyc
+        base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), './testdata')
+        try:
+            rel_gitignore(['testdata'], base_dir=base_dir)
+        except Exception as e:
+            self.assertTrue('.pyc' in e.message)
+        else:
+            self.assertTrue(False, 'rel_gitignore should have raised an exception, but did not!')
+        # it should not fail if base_dir does not contain a .git folder
+        base_dir = os.path.dirname(os.path.realpath(__file__))
+        self.assertEqual(rel_gitignore(['testdata'], base_dir=base_dir), ['../testdata'])
+

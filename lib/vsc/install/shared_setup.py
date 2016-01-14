@@ -65,6 +65,8 @@ except ImportError:
     have_xmlrunner = False
 
 
+GITIGNORE_PATTERNS = ['.pyc', '.pyo', '~']
+
 # private class variables to communicate
 # between VscScanningLoader and VscTestCommand
 # stored in __builtin__ because the (Vsc)TestCommand.run_tests
@@ -296,19 +298,30 @@ def get_name_url(filename=None, version=None, license_name=None):
         return res
 
 
-def rel_gitignore(paths):
+def rel_gitignore(paths, base_dir=None):
     """
     A list of paths, return list of relative paths to REPO_BASE_DIR,
     filter with primitive gitignore
+    This raises an error when there is a .git directory but no .gitignore
     """
-    res = [os.path.relpath(p, REPO_BASE_DIR) for p in paths]
+    if not base_dir:
+        base_dir = REPO_BASE_DIR
+
+    res = [os.path.relpath(p, base_dir) for p in paths]
 
     # primitive gitignore
-    gitignore = os.path.join(REPO_BASE_DIR, '.gitignore')
+    gitignore = os.path.join(base_dir, '.gitignore')
     if os.path.isfile(gitignore):
         patterns = [l.strip().replace('*','.*') for l in open(gitignore).readlines() if l.startswith('*')]
         reg = re.compile('^('+'|'.join(patterns)+')$')
+        # check if we at least filter out .pyc files, since we're in a python project
+        if not all([reg.search(text) for text in ['bla%s' % pattern for pattern in GITIGNORE_PATTERNS]]):
+            raise Exception("%s/.gitignore does not contain these patterns: %s " % (base_dir, GITIGNORE_PATTERNS))
+
         res = [f for f in res if not reg.search(f)]
+
+    elif os.path.isdir(os.path.join(base_dir, '.git')):
+        raise Exception("No .gitignore in git repo: %s" % base_dir)
     return res
 
 

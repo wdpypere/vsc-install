@@ -37,3 +37,5 @@ pip-log.txt
 html
 test-reports
 htmlcov/
+
+.ropeproject
