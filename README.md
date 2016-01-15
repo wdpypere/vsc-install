@@ -71,17 +71,22 @@ Fix failing tests
   ```
   cd <project dir with .git folder>
   REPO_BASE_DIR=$PWD python -m vsc.install.headers path/to/file script_or_not
-  find ./{lib,test} -type f -name '*.py' | xargs -I '{}' REPO_BASE_DIR=$PWD python -m vsc.install.headers '{}'
-  find ./bin -type f -name '*.py' | xargs -I '{}' REPO_BASE_DIR=$PWD python -m vsc.install.headers '{}' 1
   ```
-  
+
+  Fix them all at once using find
+
+  ```
+  find ./{lib,test} -type f -name '*.py' | REPO_BASE_DIR=$PWD xargs -I '{}' python -m vsc.install.headers '{}'
+  find ./bin -type f -name '*.py' | REPO_BASE_DIR=$PWD xargs -I '{}' python -m vsc.install.headers '{}' 1
+  ```
+
   Do not forget to check the diff
 * Remove any `build_rpms_settings.sh` leftovers
 * The `TARGET` dict in `setup.py` should be minimal unless you really know what you are doing (i.e. if it is truly different from defaults)
  * Remove `name`, `scripts`, ...
 * `Exception: vsc namespace packages do not allow non-shared namespace`
  * Add to the `__init__.py`
- 
+
  ```python
  """
  Allow other packages to extend this namespace, zip safe setuptools style
