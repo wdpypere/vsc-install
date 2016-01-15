@@ -42,21 +42,23 @@ import pprint
 import re
 import sys
 
-if sys.version_info < (2,7):
-    HAS_PROTECTOR = False
-    Prospector = None
-    ProspectorConfig = None
-else:
-    HAS_PROTECTOR = True
-    from prospector.run import Prospector
-    from prospector.config import ProspectorConfig
-
 from cStringIO import StringIO
 from distutils import log
 from unittest import TestCase as OrigTestCase
 from vsc.install.shared_setup import generate_packages, generate_scripts, generate_modules, \
     FILES_IN_PACKAGES, REPO_BASE_DIR
 from vsc.install.headers import nicediff, check_header
+
+try:
+    from prospector.run import Prospector
+    from prospector.config import ProspectorConfig
+    HAS_PROTECTOR = True
+except ImportError:
+    # No prospector in py26 or earlier
+    # Also not enforced on installation
+    HAS_PROTECTOR = False
+    Prospector = None
+    ProspectorConfig = None
 
 
 class TestCase(OrigTestCase):
@@ -284,7 +286,15 @@ class VSCImportTest(TestCase):
         """Run prospector.run.main, but apply white/blacklists to the results"""
 
         if not HAS_PROTECTOR:
-            log.info('No protector tests are ran')
+            if sys.version_info < (2, 7):
+                log.info('No protector tests are ran on py26 or older.')
+            else:
+                log.info('No protector tests are ran, install prospector manually first')
+
+                # This is fatal on jenkins/...
+                if 'JENKINS_URL' in os.environ:
+                    self.assertTrue(False, 'prospector must be installed in jenkins environment')
+
             return
 
         sys.argv = ['fakename']

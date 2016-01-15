@@ -1297,10 +1297,14 @@ if __name__ == '__main__':
         'setuptools',
     ]
     if sys.version_info < (2, 7):
-        # py26 support dropped in 0.8, and theo old versions don't detect enough
-        log.info('no prospector support')
+        # py26 support dropped in 0.8, and the old versions don't detect enough
+        log.info('no prospector support in py26 (or older)')
     else:
-        install_requires.append('prospector >= 0.11.7')
+        # For now, not enforcing propspector.
+        # It would complicate rpm creation too much.
+        # Should be re-added when the testing code is moved to vsc-testing
+        log.info('not enforcing prospector support. run "easy_install propspector" yourself')
+        #install_requires.append('prospector >= 0.11.7')
 
     PACKAGE = {
         'version': VERSION,
