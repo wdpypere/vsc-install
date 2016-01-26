@@ -302,11 +302,15 @@ ARR_TEMPLATE = """#
 """
 
 if __name__ == '__main__':
-    fns = sys.argv[0:-1]
+    args = sys.argv[1:]
     try:
-        is_script = int(sys.argv[-1]) == 1
+        is_script = int(args[-1]) == 1
     except:
         is_script = False
-    for fn in fns:
+
+    if is_script:
+        args.pop(-1)
+
+    for fn in args:
         log.info('Going to check_header for file %s (is_script=%s)' % (fn, is_script))
         check_header(fn, script=is_script, write=True)
