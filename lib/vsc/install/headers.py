@@ -43,7 +43,7 @@ import re
 import sys
 
 from datetime import date
-from vsc.install.shared_setup import get_license, get_name_url, log
+from vsc.install.shared_setup import get_license, get_name_url, log, SHEBANG_ENV_PYTHON
 
 HEADER_REGEXP = re.compile(r'\A(.*?)^(?:\'\'\'|"""|### END OF HEADER)', re.M | re.S)
 ENCODING_REGEXP = re.compile(r'^(\s*#\s*.*?coding[:=]\s*([-\w.]+).*).*$', re.M) # PEP0263, 1st or 2nd line
@@ -182,7 +182,12 @@ def check_header(filename, script=False, write=False):
     header, shebang = get_header(filename, script=script)
     header_end_pos = len(header)
     if shebang is not None:
+        # original position
         header_end_pos += 1 + len(shebang) # 1 is from splitted newline
+
+        if 'python' in shebang:
+            log.info('python in shebang, forcing env python')
+            shebang = SHEBANG_ENV_PYTHON
 
     if re.search(r'^### External compatible license\s*$', header, re.M):
         log.info('Header is an external compatible license. Not doing anything')

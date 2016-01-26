@@ -146,7 +146,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.14'
+VERSION = '0.9.15'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -159,6 +159,9 @@ NO_PREFIX_PYTHON_BDIST_RPM = ['pbs_python']
 PYTHON_BDIST_RPM_PREFIX_MAP = {
     'pycrypto': 'python-crypto',
 }
+
+SHEBANG_ENV_PYTHON = '#!/usr/bin/env python'
+SHEBANG_PYTHON_E = '#!/usr/bin/python -E'
 
 # determine the base directory of the repository
 # set it via REPO_BASE_DIR (mainly to support non-"python setup" usage/hacks)
@@ -404,30 +407,44 @@ class vsc_sdist(sdist):
     and modifed the shipped setup.py to be able to use this
     """
 
-    def _copy_setup_py(self, base_dir):
+    def _recopy(self, base_dir, *paths):
         """
-        re-copy setup.py, to avoid soft/hardlinks
+        re-copy file with relative os.path.join(paths), to avoid soft/hardlinks
         (code based on setuptools.command.sdist make_release_tree method)
+
+        returns the final destination and content of the file
         """
-        dest = os.path.join(base_dir, 'setup.py')
+        dest = os.path.join(base_dir, *paths)
         log.info('recopying dest %s if hardlinked' % dest)
         if hasattr(os, 'link') and os.path.exists(dest):
             # unlink and re-copy, since it might be hard-linked, and
             # we don't want to change the source version
             os.unlink(dest)
-            self.copy_file(os.path.join(REPO_BASE_DIR, 'setup.py'), dest)
+            self.copy_file(os.path.join(REPO_BASE_DIR, *paths), dest)
 
-    def _mod_setup_py(self, base_dir):
-        """
-        Modify the setup.py in the distribution directory
-        """
-
-        # _copy_setup_py already ran
-
-        dest = os.path.join(base_dir, 'setup.py')
         fh = open(dest, 'r')
         code = fh.read()
         fh.close()
+
+        return dest, code
+
+    def _write(self, dest, code):
+        """write code to dest"""
+        fh = open(dest, 'w')
+        fh.write(code)
+        fh.close()
+
+    def _copy_setup_py(self, base_dir):
+        """
+        re-copy setup.py, to avoid soft/hardlinks
+        (code based on setuptools.command.sdist make_release_tree method)
+        """
+        return self._recopy(base_dir, 'setup.py')
+
+    def _mod_setup_py(self, dest, code):
+        """
+        Modify the setup.py in the distribution directory
+        """
 
         # look for first line that does someting with vsc.install and shared_setup
         reg = re.search(r'^.*vsc.install.*shared_setup.*$', code, re.M)
@@ -444,10 +461,7 @@ class vsc_sdist(sdist):
         # replace 'from vsc.install import shared_setup' -> import NEW_SHARED_SETUP as shared_setup
         code = re.sub(r'from\s+vsc.install\s+import\s+shared_setup', 'import %s as shared_setup' % NEW_SHARED_SETUP, code)
 
-        # write it
-        fh = open(dest, 'w')
-        fh.write(code)
-        fh.close()
+        self._write(dest, code)
 
     def _add_shared_setup(self, base_dir):
         """Create the new shared_setup in distribution directory"""
@@ -486,19 +500,43 @@ class vsc_sdist(sdist):
         sdist.make_release_tree(self, base_dir, files)
 
         # have to make sure setup.py is not a symlink
-        self._copy_setup_py(base_dir)
+        dest, code = self._copy_setup_py(base_dir)
 
         if __name__ == '__main__':
             log.info('running shared_setup as main, not adding it to sdist')
         else:
             # use a new name, to avoid confusion with original
-            self._mod_setup_py(base_dir)
+            self._mod_setup_py(dest, code)
 
             self._add_shared_setup(base_dir)
 
         # Add mandatory files
         for fn in [LICENSE, README]:
             self.copy_file(os.path.join(REPO_BASE_DIR, fn), os.path.join(base_dir, fn))
+
+
+class vsc_sdist_rpm(vsc_sdist):
+    """Manipulate the shebang in all scripts"""
+
+    def make_release_tree(self, base_dir, files):
+        vsc_sdist.make_release_tree(self, base_dir, files)
+
+        if self.distribution.has_scripts():
+            # code based on sdist add_defaults
+            build_scripts = self.get_finalized_command('build_scripts')
+            scripts = build_scripts.get_source_files()
+
+            log.info("scripts to check for shebang %s" % (scripts))
+            pyshebang_reg = re.compile(r'\A'+SHEBANG_ENV_PYTHON)
+            for fn in scripts:
+                first_line = open(os.path.join(base_dir, fn)).readline()
+                if pyshebang_reg.search(first_line):
+                    log.info("going to adapt shebang for script %s" % fn)
+                    dest, code = self._recopy(base_dir, fn)
+                    code = pyshebang_reg.sub(SHEBANG_PYTHON_E, code)
+                    self._write(dest, code)
+        else:
+            log.info("no scripts to check for shebang")
 
 
 class vsc_egg_info(egg_info):
@@ -584,6 +622,7 @@ class vsc_bdist_rpm(orig_bdist_rpm):
     def run(self):
         log.info("vsc_bdist_rpm = %s" % (self.__dict__))
         SHARED_TARGET['cmdclass']['egg_info'] = vsc_bdist_rpm_egg_info  # changed to allow removal of files
+        SHARED_TARGET['cmdclass']['sdist'] = vsc_sdist_rpm  # changed to allow modification of shebangs
         self.run_command('egg_info')  # ensure distro name is up-to-date
         orig_bdist_rpm.run(self)
 
@@ -891,6 +930,7 @@ def generate_scripts(extra=None, exclude=None):
     res = add_and_remove(res, extra=extra, exclude=exclude)
     log.info('generated scripts list: %s' % res)
     return res
+
 
 class vsc_release(Command):
     """Print the steps / commands to take to release"""
