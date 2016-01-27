@@ -527,8 +527,10 @@ class vsc_sdist_rpm(vsc_sdist):
             scripts = build_scripts.get_source_files()
 
             log.info("scripts to check for shebang %s" % (scripts))
-            pyshebang_reg = re.compile(r'\A'+SHEBANG_ENV_PYTHON)
+            # does not include newline
+            pyshebang_reg = re.compile(r'\A%s.*$' % SHEBANG_ENV_PYTHON, re.M)
             for fn in scripts:
+                # includes newline
                 first_line = open(os.path.join(base_dir, fn)).readline()
                 if pyshebang_reg.search(first_line):
                     log.info("going to adapt shebang for script %s" % fn)
