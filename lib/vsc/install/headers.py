@@ -43,7 +43,7 @@ import re
 import sys
 
 from datetime import date
-from vsc.install.shared_setup import get_license, get_name_url, log
+from vsc.install.shared_setup import get_license, get_name_url, log, SHEBANG_ENV_PYTHON
 
 HEADER_REGEXP = re.compile(r'\A(.*?)^(?:\'\'\'|"""|### END OF HEADER)', re.M | re.S)
 ENCODING_REGEXP = re.compile(r'^(\s*#\s*.*?coding[:=]\s*([-\w.]+).*).*$', re.M) # PEP0263, 1st or 2nd line
@@ -181,12 +181,19 @@ def check_header(filename, script=False, write=False):
 
     header, shebang = get_header(filename, script=script)
     header_end_pos = len(header)
+    changed = False
     if shebang is not None:
+        # original position
         header_end_pos += 1 + len(shebang) # 1 is from splitted newline
 
+        if 'python' in shebang and shebang != SHEBANG_ENV_PYTHON:
+            log.info('python in shebang, forcing env python (header modified)')
+            changed = True
+            shebang = SHEBANG_ENV_PYTHON
+
     if re.search(r'^### External compatible license\s*$', header, re.M):
-        log.info('Header is an external compatible license. Not doing anything')
-        return False
+        log.info('Header is an external compatible license. Leaving the header as-is.')
+        return changed
 
     # genheader
     # version is irrelevant
@@ -211,9 +218,9 @@ def check_header(filename, script=False, write=False):
         enc_line = reg_enc.group(1) + "\n" # matches full line, but not newline
         gen_header = enc_line + gen_header
 
-    changed = header != gen_header
-
-    log.info("Diff header vs gen_header\n" + "".join(nicediff(header, gen_header)))
+    if header != gen_header:
+        log.info("Diff header vs gen_header\n" + "".join(nicediff(header, gen_header)))
+        changed = True
 
     if write and changed:
         log.info('write enabled and different header. Going to modify file %s' % filename)

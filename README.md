@@ -81,6 +81,7 @@ Fix failing tests
   ```
 
   Do not forget to check the diff
+* Python scripts (i.e. with a python shebang and installed as scripts in setup) have to use `#!/usr/bin/env python` as shebang
 * Remove any `build_rpms_settings.sh` leftovers
 * The `TARGET` dict in `setup.py` should be minimal unless you really know what you are doing (i.e. if it is truly different from defaults)
  * Remove `name`, `scripts`, ...
