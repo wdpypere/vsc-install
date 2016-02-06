@@ -146,7 +146,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.15'
+VERSION = '0.9.16'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1357,6 +1357,7 @@ if __name__ == '__main__':
             'setuptools'
         ],
         'excluded_pkgs_rpm': [], # vsc-install ships vsc package (the vsc package is removed by default)
+        'namespace_packages': ['vsc'],
     }
 
     action_target(PACKAGE)
