@@ -21,7 +21,7 @@ Initialise the test directory with
 ```bash
 mkdir -p test
 echo '' > test/__init__.py
-echo 'from vsc.install.testing import VSCImportTest' > test/00-import.py
+echo 'from vsc.install.commontest import CommonTest' > test/00-import.py
 ```
 
 When the tests are run, `test`, `lib` and `bin` (if relevant) are added to `sys.path`,
