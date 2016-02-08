@@ -188,6 +188,10 @@ class TestCase(OrigTestCase):
 
 
 # backwards incompatible change
-class VSCImportTest(object):
-    def __init__(self, *args, **kwargs):
-        raise Exception('Use "from vsc.install.commontest import CommonTest" instead of VSCImportTest.')
+class VSCImportTest(TestCase):
+    def test_deprecated_fail(self):
+        """
+        VSCImportTest is now deprecated and will always fail, use
+            from vsc.install.commontest import CommonTest
+        """
+        self.assertTrue(False, msg='Use "from vsc.install.commontest import CommonTest" instead of VSCImportTest.')
