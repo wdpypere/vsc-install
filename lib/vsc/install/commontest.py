@@ -33,6 +33,7 @@ Running python setup.py test will pick this up and do its magic
 
 @author: Stijn De Weirdt (Ghent University)
 """
+import logging
 import os
 import pprint
 import re
@@ -53,9 +54,12 @@ ProspectorConfig = None
 if sys.version_info >= (2, 7):
     # Do not even try on py26
     try:
+        _old_basicconfig = logging.basicConfig
         from prospector.run import Prospector
         from prospector.config import ProspectorConfig
         HAS_PROTECTOR = True
+        # restore in case pyroma is missing (see https://github.com/landscapeio/prospector/pull/156)
+        logging.basicConfig = _old_basicconfig
     except ImportError:
         pass
 
