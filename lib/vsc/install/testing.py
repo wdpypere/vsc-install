@@ -29,40 +29,17 @@ Shared module for vsc software testing
 TestCase: use instead of unittest TestCase
    from vsc.install.testing import TestCase
 
-VSCImport usage: make a module 00-import.py in the test/ dir that has only the following line
-   from vsc.install.testing import VSCImportTest
-
-Running python setup.py test will pick this up and do its magic
-
 @author: Stijn De Weirdt (Ghent University)
 @author: Kenneth Hoste (Ghent University)
 """
-import os
 import pprint
 import re
 import sys
 
 from cStringIO import StringIO
-from distutils import log
 from unittest import TestCase as OrigTestCase
-from vsc.install.shared_setup import generate_packages, generate_scripts, generate_modules, \
-    FILES_IN_PACKAGES, REPO_BASE_DIR
-from vsc.install.headers import nicediff, check_header
+from vsc.install.headers import nicediff
 
-# No prospector in py26 or earlier
-# Also not enforced on installation
-HAS_PROTECTOR = False
-Prospector = None
-ProspectorConfig = None
-
-if sys.version_info >= (2, 7):
-    # Do not even try on py26
-    try:
-        from prospector.run import Prospector
-        from prospector.config import ProspectorConfig
-        HAS_PROTECTOR = True
-    except ImportError:
-        pass
 
 class TestCase(OrigTestCase):
     """Enhanced test case, provides extra functionality (e.g. an assertErrorRegex method)."""
@@ -210,121 +187,11 @@ class TestCase(OrigTestCase):
         super(TestCase, self).tearDown()
 
 
+# backwards incompatible change
 class VSCImportTest(TestCase):
-    """Dummy class to prove importing VSC namespace works"""
-
-    EXTRA_PKGS = None # additional packages to test / try to import
-    EXCLUDE_PKGS = None # list of regexp patters to remove from list of package to test
-
-    EXTRA_MODS = None # additional modules to test / try to import
-    EXCLUDE_MODS = None # list of regexp patterns to remove from list of modules to test
-
-    EXTRA_SCRIPTS = None # additional scripts to test / try to import
-    EXCLUDE_SCRIPTS = None # list of regexp patterns to remove from list of scripts to test
-
-    CHECK_HEADER = True
-
-    # List of regexps patterns applied to code or message of a prospector.message.Message
-    #   Blacklist: if match, skip message, do not check whitelist
-    #   Whitelist: if match, fail test
-    PROSPECTOR_BLACKLIST = [
-    ]
-    PROSPECTOR_WHITELIST = [
-        'undefined',
-    ]
-
-    # Prospector commandline options (positional path is added automatically)
-    PROSPECTOR_OPTIONS = [
-        '--strictness', 'verylow',
-        '--max-line-length', '120',
-        '--absolute-paths',
-    ]
-
-    def setUp(self):
-        """Cleanup after running a test."""
-        self.orig_sys_argv = sys.argv
-        super(VSCImportTest, self).setUp()
-
-    def tearDown(self):
-        """Cleanup after running a test."""
-        sys.argv = self.orig_sys_argv
-        super(VSCImportTest, self).tearDown()
-
-    def _import(self, pkg):
-        try:
-            __import__(pkg)
-        except ImportError as e:
-            log.warn('Import of %s failed with %s' % (pkg, e))
-
-        self.assertTrue(pkg in sys.modules, msg='import %s was success' % pkg)
-
-    def test_import_packages(self):
-        """Try to import each namespace"""
-        for pkg in generate_packages(extra=self.EXTRA_PKGS, exclude=self.EXCLUDE_PKGS):
-            self._import(pkg)
-
-            if self.CHECK_HEADER:
-                for fn in FILES_IN_PACKAGES['packages'][pkg]:
-                    self.assertFalse(check_header(os.path.join(REPO_BASE_DIR, fn), script=False, write=False),
-                                     msg='check_header of %s' % fn)
-
-    def test_import_modules(self):
-        """Try to import each module"""
-        for modname in generate_modules(extra=self.EXTRA_MODS, exclude=self.EXCLUDE_MODS):
-            self._import(modname)
-
-    def test_importscripts(self):
-        """Try to import each python script as a module"""
-        # sys.path is already setup correctly
-        for scr in generate_scripts(extra=self.EXTRA_SCRIPTS, exclude=self.EXCLUDE_SCRIPTS):
-            if not scr.endswith('.py'):
-                continue
-            self._import(os.path.basename(scr)[:-len('.py')])
-
-            if self.CHECK_HEADER:
-                self.assertFalse(check_header(os.path.join(REPO_BASE_DIR, scr), script=True, write=False),
-                                 msg='check_header of %s' % scr)
-
-    def test_prospector(self):
-        """Run prospector.run.main, but apply white/blacklists to the results"""
-
-        if not HAS_PROTECTOR:
-            if sys.version_info < (2, 7):
-                log.info('No protector tests are ran on py26 or older.')
-            else:
-                log.info('No protector tests are ran, install prospector manually first')
-
-                # This is fatal on jenkins/...
-                if 'JENKINS_URL' in os.environ:
-                    self.assertTrue(False, 'prospector must be installed in jenkins environment')
-
-            return
-
-        sys.argv = ['fakename']
-        sys.argv.extend(self.PROSPECTOR_OPTIONS)
-        # add/set REPO_BASE_DIR as positional path
-        sys.argv.append(REPO_BASE_DIR)
-
-        config = ProspectorConfig()
-        prospector = Prospector(config)
-
-        prospector.execute()
-
-        blacklist = map(re.compile, self.PROSPECTOR_BLACKLIST)
-        whitelist = map(re.compile, self.PROSPECTOR_WHITELIST)
-
-        failures = []
-        for msg in prospector.get_messages():
-            # example msg.as_dict():
-            #  {'source': 'pylint', 'message': 'Missing function docstring', 'code': 'missing-docstring',
-            #   'location': {'function': 'TestHeaders.test_check_header.lgpl', 'path': u'headers.py',
-            #                'line': 122, 'character': 8, 'module': 'headers'}}
-            log.debug("prospector message %s" % msg.as_dict())
-
-            if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in blacklist]):
-                continue
-
-            if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in whitelist]):
-                failures.append(msg.as_dict())
-
-        self.assertFalse(failures, "prospector failures: %s" % pprint.pformat(failures))
+    def test_deprecated_fail(self):
+        """
+        VSCImportTest is now deprecated and will always fail, use
+            from vsc.install.commontest import CommonTest
+        """
+        self.assertTrue(False, msg='Use "from vsc.install.commontest import CommonTest" instead of VSCImportTest.')
