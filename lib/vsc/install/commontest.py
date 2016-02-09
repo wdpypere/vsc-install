@@ -34,6 +34,7 @@ Running python setup.py test will pick this up and do its magic
 @author: Stijn De Weirdt (Ghent University)
 """
 import logging
+import optparse
 import os
 import pprint
 import re
@@ -144,6 +145,7 @@ class CommonTest(TestCase):
 
     def test_prospector(self):
         """Run prospector.run.main, but apply white/blacklists to the results"""
+        orig_expand_default = optparse.HelpFormatter.expand_default
 
         if not HAS_PROTECTOR:
             if sys.version_info < (2, 7):
@@ -183,5 +185,11 @@ class CommonTest(TestCase):
 
             if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in whitelist]):
                 failures.append(msg.as_dict())
+
+        # There is some ugly monkeypatch code in pylint
+        #     (or logilab if no recent enough pylint is installed)
+        # Make sure the original is restored
+        # (before any errors are reported; no need to put this in setUp/tearDown)
+        optparse.HelpFormatter.expand_default = orig_expand_default
 
         self.assertFalse(failures, "prospector failures: %s" % pprint.pformat(failures))
