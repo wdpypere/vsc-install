@@ -1049,6 +1049,7 @@ SHARED_TARGET = {
         "vsc_release": vsc_release,
     },
     'command_packages': ['vsc.install.shared_setup', NEW_SHARED_SETUP, 'setuptools.command', 'distutils.command'],
+    'namespace_packages': ['vsc'],
     'download_url': '',
     'package_dir': {'': DEFAULT_LIB_DIR},
     'setup_requires' : ['setuptools', 'vsc-install >= %s' % VERSION],
