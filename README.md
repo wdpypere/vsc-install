@@ -44,14 +44,13 @@ python setup.py test --help
 
 In case following error occurs, it means there is a test module `XYZ` that cannot be imported.
 
-```
-  ...
-  File "setup.py", line 499, in loadTestsFromModule
-     testsuites = ScanningLoader.loadTestsFromModule(self, module)
-  File "build/bdist.linux-x86_64/egg/setuptools/command/test.py", line 37, in loadTestsFromModule
-  File "/usr/lib64/python2.7/unittest/loader.py", line 100, in loadTestsFromName
+```txt
+File "setup.py", line 499, in loadTestsFromModule
+    testsuites = ScanningLoader.loadTestsFromModule(self, module)
+File "build/bdist.linux-x86_64/egg/setuptools/command/test.py", line 37, in loadTestsFromModule
+File "/usr/lib64/python2.7/unittest/loader.py", line 100, in loadTestsFromName
     parent, obj = obj, getattr(obj, part)
-  AttributeError: 'module' object has no attribute 'XYZ'
+AttributeError: 'module' object has no attribute 'XYZ'
 ```
 
 You can try get the actual import error for fixing the issue with
@@ -63,9 +62,13 @@ Fix failing tests
 =================
 
 * Missing / incorrect `LICENSE`
+
  * Copy the appropirate license file under `known_licenses` in the project directory and name the file `LICENSE`
+
 * Missing `README.md`
+
  * Create a `README.md` file with at least a `Description` section
+
 * Fix license headers as described in https://github.com/hpcugent/vsc-install/blob/master/lib/vsc/install/headers.py
 
   ```
@@ -84,8 +87,11 @@ Fix failing tests
 * Python scripts (i.e. with a python shebang and installed as scripts in setup) have to use `#!/usr/bin/env python` as shebang
 * Remove any `build_rpms_settings.sh` leftovers
 * The `TARGET` dict in `setup.py` should be minimal unless you really know what you are doing (i.e. if it is truly different from defaults)
+
  * Remove `name`, `scripts`, ...
+
 * `Exception: vsc namespace packages do not allow non-shared namespace`
+
  * Add to the `__init__.py`
 
  ```python
