@@ -1049,7 +1049,6 @@ SHARED_TARGET = {
         "vsc_release": vsc_release,
     },
     'command_packages': ['vsc.install.shared_setup', NEW_SHARED_SETUP, 'setuptools.command', 'distutils.command'],
-    'namespace_packages': ['vsc'],
     'download_url': '',
     'package_dir': {'': DEFAULT_LIB_DIR},
     'setup_requires' : ['setuptools', 'vsc-install >= %s' % VERSION],
@@ -1146,6 +1145,7 @@ def parse_target(target, urltemplate=None):
 
         vsc_description: set the description and long_description from the README
         vsc_scripts: generate scripts from bin content
+        vsc_namespace_pkg: register 'vsc' as a namespace package
 
     Remove sdist vsc class with '"vsc_sdist": False' in target
     """
@@ -1217,6 +1217,9 @@ def parse_target(target, urltemplate=None):
         sdist_cmdclass = new_target['cmdclass'].pop('sdist')
         if not issubclass(sdist_cmdclass, vsc_sdist):
             raise Exception("vsc_sdist is disabled, but the sdist command is not a vsc_sdist (sub)class. Clean up your target.")
+
+    if target.pop('vsc_namespace_pkg', True):
+        new_target['namespace_packages'] = ['vsc']
 
     for k, v in target.items():
         if k in ('author', 'maintainer'):
@@ -1358,7 +1361,6 @@ if __name__ == '__main__':
             'setuptools'
         ],
         'excluded_pkgs_rpm': [], # vsc-install ships vsc package (the vsc package is removed by default)
-        'namespace_packages': ['vsc'],
     }
 
     action_target(PACKAGE)
