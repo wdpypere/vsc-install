@@ -225,6 +225,7 @@ def release_on_pypi(lic):
 def get_name_url(filename=None, version=None, license_name=None):
     """
     Determine name and url of project
+        url has to be either homepage or hpcugent remote repository (typically upstream)
     """
 
     if filename is None:
@@ -276,6 +277,9 @@ def get_name_url(filename=None, version=None, license_name=None):
     reg = re.search(r'^git@(.*?):(.*)$', res.get('url', ''))
     if reg:
         res['url'] = "https://%s/%s" % (reg.group(1), reg.group(2))
+
+    if 'url' not in res:
+        raise KeyError("Missing url in git config %s. (Missing mandatory hpcugent (upstream) remote?)" % (res))
 
     # handle git://server/user/project
     if res['url'].startswith('git://'):
