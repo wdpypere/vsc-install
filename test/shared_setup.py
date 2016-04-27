@@ -1,3 +1,28 @@
+#
+# Copyright 2016-2016 Ghent University
+#
+# This file is part of vsc-install,
+# originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
+# with support of Ghent University (http://ugent.be/hpc),
+# the Flemish Supercomputer Centre (VSC) (https://vscentrum.be/nl/en),
+# the Flemish Research Foundation (FWO) (http://www.fwo.be/en)
+# and the Department of Economy, Science and Innovation (EWI) (http://www.ewi-vlaanderen.be/en).
+#
+# https://github.com/hpcugent/vsc-install
+#
+# vsc-install is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Library General Public License as
+# published by the Free Software Foundation, either version 2 of
+# the License, or (at your option) any later version.
+#
+# vsc-install is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Library General Public License for more details.
+#
+# You should have received a copy of the GNU Library General Public License
+# along with vsc-install. If not, see <http://www.gnu.org/licenses/>.
+#
 import os
 import inspect
 
@@ -16,7 +41,8 @@ class TestSetup(TestCase):
             'url': 'https://github.com/hpcugent/vsc-install',
             'download_url': 'https://github.com/hpcugent/vsc-install/archive/0.1.2.tar.gz',
         }
-        for fn in ['PKG-INFO', 'git_config', 'git_config_1', 'git_config_2', 'git_config_3', 'git_config_4']:
+        for fn in ['PKG-INFO', 'git_config', 'git_config_1', 'git_config_2', 'git_config_3', 'git_config_4',
+                   'git_config_5']:
             self.assertEqual(get_name_url(os.path.join(shared_setup.REPO_TEST_DIR, 'setup', fn), version='0.1.2'), res,
                              msg='determined name and url from %s file' % fn)
 
