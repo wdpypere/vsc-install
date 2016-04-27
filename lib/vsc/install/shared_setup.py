@@ -146,7 +146,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.9.20'
+VERSION = '0.9.21'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -256,7 +256,7 @@ def get_name_url(filename=None, version=None, license_name=None):
         ],
         'url': [
             r'^Home-page:\s*(.*?)\s*$',
-            r'^\s*url\s*=\s*(https?.*?github.*?[:/]hpcugent/.*?)\.git\s*$',
+            r'^\s*url\s*=\s*((?:https?|ssh).*?github.*?[:/]hpcugent/.*?)\.git\s*$',
             r'^\s*url\s*=\s*(git[:@].*?github.*?[:/]hpcugent/.*?)(?:\.git)?\s*$',
         ],
         'download_url' : [
@@ -282,8 +282,9 @@ def get_name_url(filename=None, version=None, license_name=None):
         raise KeyError("Missing url in git config %s. (Missing mandatory hpcugent (upstream) remote?)" % (res))
 
     # handle git://server/user/project
-    if res['url'].startswith('git://'):
-        res['url'] = "https://%s" % res['url'][len('git://'):]
+    reg = re.search(r'^(git|ssh)://', res.get('url', ''))
+    if reg:
+        res['url'] = "https://%s" % res['url'][len(reg.group(0)):]
 
     if not 'download_url' in res:
         if release_on_pypi(license_name):
