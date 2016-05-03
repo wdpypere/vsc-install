@@ -145,7 +145,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10'
+VERSION = '0.10.1'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -417,6 +417,11 @@ class vsc_setup(object):
         Upon sdist, add this vsc.install.shared_setup to the sdist
         and modifed the shipped setup.py to be able to use this
         """
+
+        def __init__(self, *args, **kwargs):
+            sdist.__init__(self, *args, **kwargs)
+            self.setup = vsc_setup()
+
         def _recopy(self, base_dir, *paths):
             """
             re-copy file with relative os.path.join(paths), to avoid soft/hardlinks
@@ -430,7 +435,7 @@ class vsc_setup(object):
                 # unlink and re-copy, since it might be hard-linked, and
                 # we don't want to change the source version
                 os.unlink(dest)
-                self.copy_file(os.path.join(self.REPO_BASE_DIR, *paths), dest)
+                self.copy_file(os.path.join(self.setup.REPO_BASE_DIR, *paths), dest)
 
             fh = open(dest, 'r')
             code = fh.read()
@@ -524,7 +529,7 @@ class vsc_setup(object):
 
             # Add mandatory files
             for fn in [LICENSE, README]:
-                self.copy_file(os.path.join(self.REPO_BASE_DIR, fn), os.path.join(base_dir, fn))
+                self.copy_file(os.path.join(self.setup.REPO_BASE_DIR, fn), os.path.join(base_dir, fn))
 
     class vsc_sdist_rpm(vsc_sdist):
         """Manipulate the shebang in all scripts"""
@@ -1363,7 +1368,7 @@ if __name__ == '__main__':
         'maintainer': [sdw, ag, jt],
         'install_requires': install_requires,
         'setup_requires': [
-            'setuptools'
+            'setuptools',
         ],
         'excluded_pkgs_rpm': [],  # vsc-install ships vsc package (the vsc package is removed by default)
     }
