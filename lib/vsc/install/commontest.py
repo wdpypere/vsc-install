@@ -41,8 +41,7 @@ import re
 import sys
 
 from distutils import log
-from vsc.install.shared_setup import generate_packages, generate_scripts, generate_modules, \
-    FILES_IN_PACKAGES, REPO_BASE_DIR
+from vsc.install.shared_setup import vsc_setup
 from vsc.install.headers import check_header
 from vsc.install.testing import TestCase
 
@@ -64,6 +63,7 @@ if sys.version_info >= (2, 7):
     except ImportError:
         pass
 
+
 class CommonTest(TestCase):
     """
     Test class to group common basic tests such as
@@ -71,14 +71,14 @@ class CommonTest(TestCase):
         - simple prospector test
     """
 
-    EXTRA_PKGS = None # additional packages to test / try to import
-    EXCLUDE_PKGS = None # list of regexp patters to remove from list of package to test
+    EXTRA_PKGS = None  # additional packages to test / try to import
+    EXCLUDE_PKGS = None  # list of regexp patters to remove from list of package to test
 
-    EXTRA_MODS = None # additional modules to test / try to import
-    EXCLUDE_MODS = None # list of regexp patterns to remove from list of modules to test
+    EXTRA_MODS = None  # additional modules to test / try to import
+    EXCLUDE_MODS = None  # list of regexp patterns to remove from list of modules to test
 
-    EXTRA_SCRIPTS = None # additional scripts to test / try to import
-    EXCLUDE_SCRIPTS = None # list of regexp patterns to remove from list of scripts to test
+    EXTRA_SCRIPTS = None  # additional scripts to test / try to import
+    EXCLUDE_SCRIPTS = None  # list of regexp patterns to remove from list of scripts to test
 
     CHECK_HEADER = True
 
@@ -89,6 +89,13 @@ class CommonTest(TestCase):
     ]
     PROSPECTOR_WHITELIST = [
         'undefined',
+        'no-value-for-parameter',
+        'dangerous-default-value',
+        'redefined-builtin',
+        #'bare-except',
+        #'protected-access',
+        #'E713',
+        #'wrong-import-position',
     ]
 
     # Prospector commandline options (positional path is added automatically)
@@ -101,6 +108,7 @@ class CommonTest(TestCase):
     def setUp(self):
         """Cleanup after running a test."""
         self.orig_sys_argv = sys.argv
+        self.setup = vsc_setup()
         super(CommonTest, self).setUp()
 
     def tearDown(self):
@@ -118,29 +126,29 @@ class CommonTest(TestCase):
 
     def test_import_packages(self):
         """Try to import each namespace"""
-        for pkg in generate_packages(extra=self.EXTRA_PKGS, exclude=self.EXCLUDE_PKGS):
+        for pkg in self.setup.generate_packages(extra=self.EXTRA_PKGS, exclude=self.EXCLUDE_PKGS):
             self._import(pkg)
 
             if self.CHECK_HEADER:
-                for fn in FILES_IN_PACKAGES['packages'][pkg]:
-                    self.assertFalse(check_header(os.path.join(REPO_BASE_DIR, fn), script=False, write=False),
+                for fn in self.setup.files_in_packages()['packages'][pkg]:
+                    self.assertFalse(check_header(os.path.join(self.setup.REPO_BASE_DIR, fn), script=False, write=False),
                                      msg='check_header of %s' % fn)
 
     def test_import_modules(self):
         """Try to import each module"""
-        for modname in generate_modules(extra=self.EXTRA_MODS, exclude=self.EXCLUDE_MODS):
+        for modname in self.setup.generate_modules(extra=self.EXTRA_MODS, exclude=self.EXCLUDE_MODS):
             self._import(modname)
 
     def test_importscripts(self):
         """Try to import each python script as a module"""
         # sys.path is already setup correctly
-        for scr in generate_scripts(extra=self.EXTRA_SCRIPTS, exclude=self.EXCLUDE_SCRIPTS):
+        for scr in self.setup.generate_scripts(extra=self.EXTRA_SCRIPTS, exclude=self.EXCLUDE_SCRIPTS):
             if not scr.endswith('.py'):
                 continue
             self._import(os.path.basename(scr)[:-len('.py')])
 
             if self.CHECK_HEADER:
-                self.assertFalse(check_header(os.path.join(REPO_BASE_DIR, scr), script=True, write=False),
+                self.assertFalse(check_header(os.path.join(self.setup.REPO_BASE_DIR, scr), script=True, write=False),
                                  msg='check_header of %s' % scr)
 
     def test_prospector(self):
@@ -162,7 +170,7 @@ class CommonTest(TestCase):
         sys.argv = ['fakename']
         sys.argv.extend(self.PROSPECTOR_OPTIONS)
         # add/set REPO_BASE_DIR as positional path
-        sys.argv.append(REPO_BASE_DIR)
+        sys.argv.append(self.setup.REPO_BASE_DIR)
 
         config = ProspectorConfig()
         prospector = Prospector(config)
