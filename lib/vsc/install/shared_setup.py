@@ -145,7 +145,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.1'
+VERSION = '0.10.2'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1335,6 +1335,10 @@ class vsc_setup(object):
         x = self.parse_target(target, urltemplate)
 
         setupfn(**x)
+
+
+# here for backwards compatibility
+SHARED_TARGET = vsc_setup.SHARED_TARGET
 
 
 def action_target(package):
