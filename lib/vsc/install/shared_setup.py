@@ -145,7 +145,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.2'
+VERSION = '0.10.3'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1341,12 +1341,12 @@ class vsc_setup(object):
 SHARED_TARGET = vsc_setup.SHARED_TARGET
 
 
-def action_target(package):
+def action_target(package, *args, **kwargs):
     """
     create a vsc_setup object and call action_target on it with given package
     This is here for backwards compatibility
     """
-    vsc_setup().action_target(package)
+    vsc_setup().action_target(package, *args, **kwargs)
 
 
 if __name__ == '__main__':
