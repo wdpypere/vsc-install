@@ -129,4 +129,4 @@ class TestSetup(TestCase):
             print 'args: ', args
             print 'kwargs', kwargs
 
-        action_target('vsc-test', setupfn=fake_setup)
+        action_target({'name': 'vsc-test'}, setupfn=fake_setup)
