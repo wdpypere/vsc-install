@@ -24,6 +24,7 @@
 # along with vsc-install. If not, see <http://www.gnu.org/licenses/>.
 #
 import os
+import re
 
 from vsc.install import shared_setup
 from vsc.install.shared_setup import action_target, vsc_setup
@@ -129,4 +130,16 @@ class TestSetup(TestCase):
             print 'args: ', args
             print 'kwargs', kwargs
 
+        self.mock_stdout(True)
         action_target({'name': 'vsc-test'}, setupfn=fake_setup)
+        txt = self.get_stdout()
+        self.mock_stdout(False)
+
+        self.assertTrue('args: ()' in txt)
+        self.assertTrue(re.search("^kwargs: {.*'name': 'vsc-test'", txt, re.M))
+
+        self.mock_stdout(True)
+        action_target({'name': 'vsc-test'}, setupfn=fake_setup, urltemplate='http://example.com/%(name)s')
+        txt = self.get_stdout()
+        self.mock_stdout(False)
+        self.assertTrue(re.search("^kwargs: {.*'url': 'http://example.com/vsc-test'", txt, re.M))
