@@ -135,12 +135,12 @@ class TestSetup(TestCase):
         txt = self.get_stdout()
         self.mock_stdout(False)
 
-        self.assertTrue(re.search("^args:\s*\(\)", txt, re.M))
-        self.assertTrue(re.search("^kwargs:\s*{.*'name':\s*'vsc-test'", txt, re.M))
+        self.assertTrue(re.search(r"^args:\s*\(\)", txt, re.M))
+        self.assertTrue(re.search(r"^kwargs:\s*\{.*'name':\s*'vsc-test'", txt, re.M))
 
         self.mock_stdout(True)
         action_target({'name': 'vsc-test'}, setupfn=fake_setup, urltemplate='http://example.com/%(name)s')
         txt = self.get_stdout()
         self.mock_stdout(False)
-        self.assertTrue(re.search("^args:\s*\(\)", txt, re.M))
-        self.assertTrue(re.search("^kwargs: {.*'url': 'http://example.com/vsc-test'", txt, re.M))
+        self.assertTrue(re.search(r"^args:\s*\(\)", txt, re.M))
+        self.assertTrue(re.search(r"^kwargs:\s*\{.*'url':\s*'http://example.com/vsc-test'", txt, re.M))
