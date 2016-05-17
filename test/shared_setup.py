@@ -128,7 +128,7 @@ class TestSetup(TestCase):
         def fake_setup(*args, **kwargs):
             """Fake setup function to test action_target with."""
             print 'args: ', args
-            print 'kwargs', kwargs
+            print 'kwargs:', kwargs
 
         self.mock_stdout(True)
         action_target({'name': 'vsc-test'}, setupfn=fake_setup)
