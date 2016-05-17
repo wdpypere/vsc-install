@@ -24,9 +24,10 @@
 # along with vsc-install. If not, see <http://www.gnu.org/licenses/>.
 #
 import os
+import re
 
 from vsc.install import shared_setup
-from vsc.install.shared_setup import vsc_setup
+from vsc.install.shared_setup import action_target, vsc_setup
 
 from vsc.install.testing import TestCase
 
@@ -116,3 +117,30 @@ class TestSetup(TestCase):
         # it should not fail if base_dir does not contain a .git folder
         base_dir = os.path.dirname(os.path.realpath(__file__))
         self.assertEqual(self.setup.rel_gitignore(['testdata'], base_dir=base_dir), ['../testdata'])
+
+    def test_import(self):
+        """Test importing things from shared_setup.py, these should not be broken for backward compatibility."""
+        from vsc.install.shared_setup import SHARED_TARGET
+        from vsc.install.shared_setup import ag, eh, jt, kh, kw, lm, sdw, wdp, wp
+
+    def test_action_target(self):
+        """Test action_target function, mostly w.r.t. backward compatibility."""
+        def fake_setup(*args, **kwargs):
+            """Fake setup function to test action_target with."""
+            print 'args: ', args
+            print 'kwargs:', kwargs
+
+        self.mock_stdout(True)
+        action_target({'name': 'vsc-test'}, setupfn=fake_setup)
+        txt = self.get_stdout()
+        self.mock_stdout(False)
+
+        self.assertTrue(re.search(r"^args:\s*\(\)", txt, re.M))
+        self.assertTrue(re.search(r"^kwargs:\s*\{.*'name':\s*'vsc-test'", txt, re.M))
+
+        self.mock_stdout(True)
+        action_target({'name': 'vsc-test'}, setupfn=fake_setup, urltemplate='http://example.com/%(name)s')
+        txt = self.get_stdout()
+        self.mock_stdout(False)
+        self.assertTrue(re.search(r"^args:\s*\(\)", txt, re.M))
+        self.assertTrue(re.search(r"^kwargs:\s*\{.*'url':\s*'http://example.com/vsc-test'", txt, re.M))
