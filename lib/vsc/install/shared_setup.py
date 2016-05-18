@@ -121,7 +121,7 @@ if log.Log.__name__ != 'NewLog':
 # available authors
 ag = ('Andy Georges', 'andy.georges@ugent.be')
 eh = ('Ewan Higgs', 'Ewan.Higgs@UGent.be')
-jt = ('Jens Timmermans', 'jens.timmermans@ugent.be')
+jt = ('Jens Timmerman', 'jens.timmerman@ugent.be')
 kh = ('Kenneth Hoste', 'kenneth.hoste@ugent.be')
 kw = ('Kenneth Waegeman', 'Kenneth.Waegeman@UGent.be')
 lm = ('Luis Fernando Munoz Meji?as', 'luis.munoz@ugent.be')
