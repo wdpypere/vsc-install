@@ -121,7 +121,7 @@ if log.Log.__name__ != 'NewLog':
 # available authors
 ag = ('Andy Georges', 'andy.georges@ugent.be')
 eh = ('Ewan Higgs', 'Ewan.Higgs@UGent.be')
-jt = ('Jens Timmermans', 'jens.timmermans@ugent.be')
+jt = ('Jens Timmerman', 'jens.timmerman@ugent.be')
 kh = ('Kenneth Hoste', 'kenneth.hoste@ugent.be')
 kw = ('Kenneth Waegeman', 'Kenneth.Waegeman@UGent.be')
 lm = ('Luis Fernando Munoz Meji?as', 'luis.munoz@ugent.be')
@@ -145,7 +145,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.4'
+VERSION = '0.10.5'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 

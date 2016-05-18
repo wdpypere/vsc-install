@@ -3,13 +3,13 @@ Name: vsc-install
 Version: 0.9.5
 Summary: vsc-install provides shared setuptools functions and classes for python libraries developed by UGent's HPC group
 Home-page: https://github.com/hpcugent/vsc-install
-Author: Stijn De Weirdt;Andy Georges;Jens Timmermans
-Author-email: stijn.deweirdt@ugent.be;andy.georges@ugent.be;jens.timmermans@ugent.be
+Author: Stijn De Weirdt;Andy Georges;Jens Timmerman
+Author-email: stijn.deweirdt@ugent.be;andy.georges@ugent.be;jens.timmerman@ugent.be
 License: LGPLv2+
 Download-URL: https://github.com/hpcugent/vsc-install/archive/0.1.2.tar.gz
 Description: Description
         ===========
         vsc-install provides shared setuptools functions and classes for python libraries developed by UGent's HPC group
-        
+
 Platform: UNKNOWN
 Classifier: License :: OSI Approved :: GNU Lesser General Public License v2 or later (LGPLv2+)
