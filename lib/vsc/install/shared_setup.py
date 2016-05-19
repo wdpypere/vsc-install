@@ -1304,8 +1304,9 @@ class vsc_setup(object):
         if pkgs is not None:
             getattr(__builtin__, '__target')['excluded_pkgs_rpm'] = pkgs
 
-        # Add (default) packages to SHARED_TARGET
-        vsc_setup.SHARED_TARGET['packages'] = self.generate_packages()
+        # Add (default) and excluded_pkgs_rpm packages to SHARED_TARGET
+        # the default ones are only the ones with a __init__.py file
+        vsc_setup.SHARED_TARGET['packages'] = self.generate_packages(extra=pkgs)
         self.build_setup_cfg_for_bdist_rpm(target)
 
     def action_target(self, target, setupfn=setup, extra_sdist=None, urltemplate=None):
@@ -1353,9 +1354,6 @@ if __name__ == '__main__':
     """
     This main is the setup.py for vsc-install
     """
-    install_requires = [
-        'setuptools',
-    ]
     if sys.version_info < (2, 7):
         # py26 support dropped in 0.8, and the old versions don't detect enough
         log.info('no prospector support in py26 (or older)')
@@ -1370,10 +1368,6 @@ if __name__ == '__main__':
         'version': VERSION,
         'author': [sdw, ag, jt],
         'maintainer': [sdw, ag, jt],
-        'install_requires': install_requires,
-        'setup_requires': [
-            'setuptools',
-        ],
         'excluded_pkgs_rpm': [],  # vsc-install ships vsc package (the vsc package is removed by default)
     }
 

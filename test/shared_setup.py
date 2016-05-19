@@ -144,3 +144,21 @@ class TestSetup(TestCase):
         self.mock_stdout(False)
         self.assertTrue(re.search(r"^args:\s*\(\)", txt, re.M))
         self.assertTrue(re.search(r"^kwargs:\s*\{.*'url':\s*'http://example.com/vsc-test'", txt, re.M))
+
+    def test_prepare_rpm(self):
+        """
+        Test the prepare rpm function
+        especially in effect to genereting correct package list wrt excluded_pkgs_rpm
+        """
+        package = {
+            'name': 'vsc-test',
+            'excluded_pkgs_rpm': [],
+        }
+        self.setup.prepare_rpm(package)
+        self.assertEqual(vsc_setup.SHARED_TARGET['packages'], [])
+        package = {
+            'name': 'vsc-test',
+            'excluded_pkgs_rpm': ['vsc', 'test'],
+        }
+        self.setup.prepare_rpm(package)
+        self.assertEqual(vsc_setup.SHARED_TARGET['packages'], ['vsc', 'test'])
