@@ -1358,6 +1358,9 @@ if __name__ == '__main__':
     """
     This main is the setup.py for vsc-install
     """
+    install_requires = [
+        'setuptools',
+    ]
     if sys.version_info < (2, 7):
         # py26 support dropped in 0.8, and the old versions don't detect enough
         log.info('no prospector support in py26 (or older)')
@@ -1373,6 +1376,7 @@ if __name__ == '__main__':
         'author': [sdw, ag, jt],
         'maintainer': [sdw, ag, jt],
         'excluded_pkgs_rpm': [],  # vsc-install ships vsc package (the vsc package is removed by default)
+        'install_requires': install_requires,
         'setup_requires': 'setuptools',
     }
 
