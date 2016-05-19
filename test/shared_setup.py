@@ -154,11 +154,18 @@ class TestSetup(TestCase):
             'name': 'vsc-test',
             'excluded_pkgs_rpm': [],
         }
-        self.setup.prepare_rpm(package)
-        self.assertEqual(vsc_setup.SHARED_TARGET['packages'], [])
+        setup = vsc_setup()
+
+
+        libdir  = os.path.join(os.path.dirname(os.path.realpath(__file__)), './testdata')
+        setup.REPO_LIB_DIR = libdir
+        setup.prepare_rpm(package)
+        self.assertEqual(setup.SHARED_TARGET['packages'], ['vsc', 'vsc.test'])
         package = {
             'name': 'vsc-test',
-            'excluded_pkgs_rpm': ['vsc', 'test'],
+            'excluded_pkgs_rpm': ['vsc', 'vsc.test'],
         }
-        self.setup.prepare_rpm(package)
-        self.assertEqual(vsc_setup.SHARED_TARGET['packages'], ['vsc', 'test'])
+        setup = vsc_setup()
+        setup.REPO_LIB_DIR = libdir
+        setup.prepare_rpm(package)
+        self.assertEqual(setup.SHARED_TARGET['packages'], ['vsc', 'vsc.test'])

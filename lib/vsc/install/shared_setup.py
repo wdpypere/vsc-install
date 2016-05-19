@@ -918,7 +918,9 @@ class vsc_setup(object):
             extra is a list of packages added to the discovered ones
             exclude is list of regex patterns to filter the packages
         """
-        res = vsc_setup.add_and_remove(self.package_files['packages'].keys(), extra=extra, exclude=exclude)
+        packages = self.package_files['packages'].keys()
+        log.info('initial packages list: %s' % packages)
+        res = vsc_setup.add_and_remove(packages, extra=extra, exclude=exclude)
         log.info('generated packages list: %s' % res)
         return res
 
@@ -1306,7 +1308,9 @@ class vsc_setup(object):
 
         # Add (default) and excluded_pkgs_rpm packages to SHARED_TARGET
         # the default ones are only the ones with a __init__.py file
-        vsc_setup.SHARED_TARGET['packages'] = self.generate_packages(extra=pkgs)
+        # therefor we regenerate self.package files with the excluded pkgs as extra param
+        self.package_files = self.files_in_packages(excluded_pkgs=pkgs)
+        vsc_setup.SHARED_TARGET['packages'] = self.generate_packages()
         self.build_setup_cfg_for_bdist_rpm(target)
 
     def action_target(self, target, setupfn=setup, extra_sdist=None, urltemplate=None):
@@ -1369,6 +1373,7 @@ if __name__ == '__main__':
         'author': [sdw, ag, jt],
         'maintainer': [sdw, ag, jt],
         'excluded_pkgs_rpm': [],  # vsc-install ships vsc package (the vsc package is removed by default)
+        'setup_requires': 'setuptools',
     }
 
     action_target(PACKAGE)
