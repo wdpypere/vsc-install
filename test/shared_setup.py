@@ -35,7 +35,6 @@ from vsc.install.testing import TestCase
 class TestSetup(TestCase):
     """Test shared_setup"""
 
-
     def setUp(self):
         """create a self.setup.instance for every test"""
         super(TestSetup, self).setUp()
@@ -148,7 +147,7 @@ class TestSetup(TestCase):
     def test_prepare_rpm(self):
         """
         Test the prepare rpm function
-        especially in effect to genereting correct package list wrt excluded_pkgs_rpm
+        especially in effect to generating correct package list wrt excluded_pkgs_rpm
         """
         package = {
             'name': 'vsc-test',
@@ -156,8 +155,7 @@ class TestSetup(TestCase):
         }
         setup = vsc_setup()
 
-
-        libdir  = os.path.join(os.path.dirname(os.path.realpath(__file__)), './testdata')
+        libdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), './testdata')
         setup.REPO_LIB_DIR = libdir
         setup.prepare_rpm(package)
         self.assertEqual(setup.SHARED_TARGET['packages'], ['vsc', 'vsc.test'])
