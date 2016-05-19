@@ -1375,9 +1375,11 @@ if __name__ == '__main__':
         'version': VERSION,
         'author': [sdw, ag, jt],
         'maintainer': [sdw, ag, jt],
-        'excluded_pkgs_rpm': [],  # vsc-install ships vsc package (the vsc package is removed by default)
         'install_requires': install_requires,
-        'setup_requires': 'setuptools',
+        'setup_requires': [
+            'setuptools',
+        ],
+        'excluded_pkgs_rpm': [],  # vsc-install ships vsc package (the vsc package is removed by default)
     }
 
     action_target(PACKAGE)
