@@ -145,7 +145,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.5'
+VERSION = '0.10.6'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -918,7 +918,9 @@ class vsc_setup(object):
             extra is a list of packages added to the discovered ones
             exclude is list of regex patterns to filter the packages
         """
-        res = vsc_setup.add_and_remove(self.package_files['packages'].keys(), extra=extra, exclude=exclude)
+        packages = self.package_files['packages'].keys()
+        log.info('initial packages list: %s' % packages)
+        res = vsc_setup.add_and_remove(packages, extra=extra, exclude=exclude)
         log.info('generated packages list: %s' % res)
         return res
 
@@ -1304,7 +1306,10 @@ class vsc_setup(object):
         if pkgs is not None:
             getattr(__builtin__, '__target')['excluded_pkgs_rpm'] = pkgs
 
-        # Add (default) packages to SHARED_TARGET
+        # Add (default) and excluded_pkgs_rpm packages to SHARED_TARGET
+        # the default ones are only the ones with a __init__.py file
+        # therefor we regenerate self.package files with the excluded pkgs as extra param
+        self.package_files = self.files_in_packages(excluded_pkgs=pkgs)
         vsc_setup.SHARED_TARGET['packages'] = self.generate_packages()
         self.build_setup_cfg_for_bdist_rpm(target)
 

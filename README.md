@@ -2,6 +2,14 @@ Description
 ===========
 vsc-install provides shared setuptools functions and classes for python libraries developed by UGent's HPC group
 
+Common pitfalls
+=========
+bdist_rpm will fail if your install_requires = 'setuptools' because it will fail to find a setuptools rpm.
+```
+export VSC_RPM_PYTHON=1
+```
+will make sure the `python-` prefix is added to the packages in install_requires for building RPM's so python-setuptools will be used.
+
 Add tests
 =========
 
