@@ -92,15 +92,16 @@ class CommonTest(TestCase):
         'no-value-for-parameter',
         'dangerous-default-value',
         'redefined-builtin',
-        #'bare-except',
+        'bare-except',
+        'E713',
         #'protected-access',
-        #'E713',
         #'wrong-import-position',
+        #'arguments-differ',
     ]
 
     # Prospector commandline options (positional path is added automatically)
     PROSPECTOR_OPTIONS = [
-        '--strictness', 'verylow',
+        '--strictness', 'medium',
         '--max-line-length', '120',
         '--absolute-paths',
     ]

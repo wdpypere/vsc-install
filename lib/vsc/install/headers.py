@@ -46,7 +46,8 @@ from datetime import date
 from vsc.install.shared_setup import vsc_setup, log, SHEBANG_ENV_PYTHON
 
 HEADER_REGEXP = re.compile(r'\A(.*?)^(?:\'\'\'|"""|### END OF HEADER)', re.M | re.S)
-ENCODING_REGEXP = re.compile(r'^(\s*#\s*.*?coding[:=]\s*([-\w.]+).*).*$', re.M) # PEP0263, 1st or 2nd line
+ENCODING_REGEXP = re.compile(r'^(\s*#\s*.*?coding[:=]\s*([-\w.]+).*).*$', re.M)  # PEP0263, 1st or 2nd line
+
 
 def nicediff(txta, txtb, offset=5):
     """
@@ -58,12 +59,12 @@ def nicediff(txta, txtb, offset=5):
     return list with diff (one per line) (not a generator like ndiff or unified_diff)
     """
     diff = list(difflib.ndiff(txta.splitlines(1), txtb.splitlines(1)))
-    different_idx = [idx for idx,line in enumerate(diff) if not line.startswith(' ')]
+    different_idx = [idx for idx, line in enumerate(diff) if not line.startswith(' ')]
     res_idx = []
     # very bruteforce
     for didx in different_idx:
         for idx in range(max(didx-offset, 0), min(didx+offset, len(diff)-1)):
-            if not idx in res_idx:
+            if idx not in res_idx:
                 res_idx.append(idx)
     res_idx.sort()
     # insert linenumbers too? what are the linenumbers in ndiff?
@@ -184,7 +185,7 @@ def check_header(filename, script=False, write=False):
     changed = False
     if shebang is not None:
         # original position
-        header_end_pos += 1 + len(shebang) # 1 is from splitted newline
+        header_end_pos += 1 + len(shebang)  # 1 is from splitted newline
 
         if 'python' in shebang and shebang != SHEBANG_ENV_PYTHON:
             log.info('python in shebang, forcing env python (header modified)')
@@ -216,7 +217,7 @@ def check_header(filename, script=False, write=False):
     # force encoding?
     reg_enc = ENCODING_REGEXP.search(header)
     if reg_enc:
-        enc_line = reg_enc.group(1) + "\n" # matches full line, but not newline
+        enc_line = reg_enc.group(1) + "\n"  # matches full line, but not newline
         gen_header = enc_line + gen_header
 
     if header != gen_header:
@@ -313,7 +314,7 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     try:
         is_script = int(args[-1]) == 1
-    except:
+    except IndexError, ValueError:
         is_script = False
 
     if is_script:

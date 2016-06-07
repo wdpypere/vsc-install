@@ -106,7 +106,7 @@ if log.Log.__name__ != 'NewLog':
             newmsg = "%s: %s" % (self._log_levels.get(level, 'UNKNOWN'), msg)
             try:
                 return self._orig_log(self, level, newmsg, args)
-            except:
+            except Exception:
                 print newmsg % args
 
     log.Log = NewLog
@@ -288,10 +288,12 @@ class vsc_setup(object):
                     log.info('found match %s %s in %s' % (name, res[name], filename))
                     break
 
+        self.private_repo = False
         # handle git@server:user/project
         reg = re.search(r'^git@(.*?):(.*)$', res.get('url', ''))
         if reg:
             res['url'] = "https://%s/%s" % (reg.group(1), reg.group(2))
+            self.private_repo = True
 
         if 'url' not in res:
             raise KeyError("Missing url in git config %s. (Missing mandatory hpcugent (upstream) remote?)" % (res))
@@ -300,6 +302,7 @@ class vsc_setup(object):
         reg = re.search(r'^(git|ssh)://', res.get('url', ''))
         if reg:
             res['url'] = "https://%s" % res['url'][len(reg.group(0)):]
+            self.private_repo = True
 
         if 'download_url' not in res:
             if vsc_setup.release_on_pypi(license_name):
@@ -663,12 +666,12 @@ class vsc_setup(object):
 
         TEST_LOADER_MODULE = __name__
 
-        def loadTestsFromModule(self, module):
+        def loadTestsFromModule(self, module, pattern=None):
             """
             Support test module and function name based filtering
             """
             try:
-                testsuites = ScanningLoader.loadTestsFromModule(self, module)
+                testsuites = ScanningLoader.loadTestsFromModule(self, module, pattern)
             except:
                 log.error('Failed to load tests from module %s', module)
                 raise
@@ -1063,6 +1066,10 @@ class vsc_setup(object):
         'setup_requires': ['setuptools', 'vsc-install >= %s' % VERSION],
         'test_suite': DEFAULT_TEST_SUITE,
         'url': '',
+        'dependency_links': [],
+        'install_requires': [],
+        'tests_require': [],
+        'setup_requires': [],
     }
 
     def cleanup(self, prefix=''):
@@ -1154,6 +1161,7 @@ class vsc_setup(object):
             vsc_description: set the description and long_description from the README
             vsc_scripts: generate scripts from bin content
             vsc_namespace_pkg: register 'vsc' as a namespace package
+            dependency_links: set links for dependencies
 
         Remove sdist vsc class with '"vsc_sdist": False' in target
         """
@@ -1247,6 +1255,27 @@ class vsc_setup(object):
                 else:
                     new_target[k] = type(v)()
                     new_target[k] += v
+
+        if self.private_repo:
+            git_scheme = 'git+ssh://'
+            # TODO: this doesn't work, keeps on looking for vsc-utils on github.ugentbe and fails :-(
+            # we can fix this with a list of public hpcugent repos somewhere?
+            urls = [('github.ugent.be', 'git+ssh://'), ('github.com', 'git+https://')]
+        else:
+            urls = [('github.com', 'git+https://')]
+        for dependency in set(new_target['install_requires'] + new_target['setup_requires'] +
+                              new_target['tests_require']):
+            if dependency.startswith('vsc'):
+                dep = dependency.split(' ')[0]
+                depversion = ''
+                for comp in ['=', '<']:
+                    try:
+                        depversion = "-" + dependency.split(comp)[1].strip()
+                    except IndexError:
+                        pass
+                for url, git_scheme in urls:
+                    new_target['dependency_links'] += [''.join([git_scheme, url, '/hpcugent/', dep, '.git#egg=',
+                                                       dep, depversion])]
 
         log.debug("New target = %s" % (new_target))
         return new_target
