@@ -44,6 +44,8 @@ from vsc.install.headers import nicediff
 class TestCase(OrigTestCase):
     """Enhanced test case, provides extra functionality (e.g. an assertErrorRegex method)."""
 
+    longMessage = True # print both standard messgae and custom message
+
     LOGCACHE = {}
 
     ASSERT_MAX_DIFF = 100
