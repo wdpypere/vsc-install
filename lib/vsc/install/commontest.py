@@ -122,7 +122,7 @@ class CommonTest(TestCase):
         except ImportError as e:
             log.warn('Import of %s failed with %s' % (pkg, e))
 
-        self.assertTrue(pkg in sys.modules)
+        self.assertTrue(pkg in sys.modules, msg='import %s was success' % pkg)
 
     def test_import_packages(self):
         """Try to import each namespace"""
