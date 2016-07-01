@@ -145,7 +145,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.8'
+VERSION = '0.10.9'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -201,6 +201,42 @@ KNOWN_LICENSES = {
 
 # a whitelist of licenses that allow pushing to pypi during vsc_release
 PYPI_LICENSES = ['LGPLv2+', 'GPLv2']
+
+
+def _fvs(msg=None):
+    """
+    Find the most relevant vsc_setup (sub)class
+
+    vsc_setup class attributes cannot use self.__class__ in their methods
+    This is the almost next best thing.
+
+    It will allow to do some subclassing, but probably not of any internal test-related method.
+
+    This will go horribly wrong when too many subclasses are created, but why would you do that...
+
+    msg is a message prefix
+    """
+    if msg is None:
+        msg = ''
+    else:
+        msg += ': '
+
+    # Passing parent as argument does not make a difference for the TEST_LOADER setting
+    parent = vsc_setup
+    pname = parent.__name__
+
+    subclasses = parent.__subclasses__()
+    if len(subclasses) > 1:
+        log.warn("%sMore than one %s subclass found (%s), returning the first one" % (msg, pname, [x.__name__ for x in subclasses]))
+
+    klass = parent
+    if subclasses:
+        klass = subclasses[0]
+        log.debug("%sFound %s subclass %s" % (msg, pname, klass.__name__))
+    else:
+        log.debug("%sFound no subclasses, returning %s" % (msg, pname))
+
+    return klass
 
 
 class vsc_setup(object):
@@ -302,7 +338,7 @@ class vsc_setup(object):
             res['url'] = "https://%s" % res['url'][len(reg.group(0)):]
 
         if 'download_url' not in res:
-            if vsc_setup.release_on_pypi(license_name):
+            if _fvs('get_name_url').release_on_pypi(license_name):
                 # no external download url
                 # force to None
                 res['download_url'] = None
@@ -420,7 +456,7 @@ class vsc_setup(object):
 
         def __init__(self, *args, **kwargs):
             sdist.__init__(self, *args, **kwargs)
-            self.setup = vsc_setup()
+            self.setup = _fvs('vsc_sdist')()
 
         def _recopy(self, base_dir, *paths):
             """
@@ -535,7 +571,7 @@ class vsc_setup(object):
         """Manipulate the shebang in all scripts"""
 
         def make_release_tree(self, base_dir, files):
-            vsc_setup.vsc_sdist.make_release_tree(self, base_dir, files)
+            _fvs('vsc_sdist_rpm').vsc_sdist.make_release_tree(self, base_dir, files)
 
             if self.distribution.has_scripts():
                 # code based on sdist add_defaults
@@ -567,7 +603,7 @@ class vsc_setup(object):
             """Handle missing lib dir for scripts-only packages"""
             # the egginfo data will be deleted as part of the cleanup
             cleanup = []
-            setupper = vsc_setup()
+            setupper = _fvs('vsc_egg_info finalize_options')()
             if not os.path.exists(setupper.REPO_LIB_DIR):
                 log.warn('vsc_egg_info create missing %s (will be removed later)' % setupper.REPO_LIB_DIR)
                 os.mkdir(setupper.REPO_LIB_DIR)
@@ -584,7 +620,7 @@ class vsc_setup(object):
         def find_sources(self):
             """Default lookup."""
             egg_info.find_sources(self)
-            self.filelist.extend(vsc_setup.find_extra_sdist_files())
+            self.filelist.extend(_fvs('vsc_egg_info find_sources').find_extra_sdist_files())
 
     class vsc_bdist_rpm_egg_info(vsc_egg_info):
         """Class to determine the source files that should be present in an (S)RPM.
@@ -595,8 +631,8 @@ class vsc_setup(object):
 
         def find_sources(self):
             """Finds the sources as default and then drop the cruft."""
-            vsc_setup.vsc_egg_info.find_sources(self)
-            for fn in vsc_setup().remove_extra_bdist_rpm_files():
+            _fvs('vsc_bdist_rpm_egg_info').vsc_egg_info.find_sources(self)
+            for fn in _fvs('vsc_bdist_rpm_egg_info for')().remove_extra_bdist_rpm_files():
                 log.debug("removing %s from source list" % (fn))
                 if fn in self.filelist.files:
                     self.filelist.files.remove(fn)
@@ -635,10 +671,11 @@ class vsc_setup(object):
         """
         def run(self):
             log.info("vsc_bdist_rpm = %s" % (self.__dict__))
+            klass = _fvs('vsc_bdist_rpm egg_info')
             # changed to allow file removal
-            vsc_setup.SHARED_TARGET['cmdclass']['egg_info'] = vsc_setup.vsc_bdist_rpm_egg_info
+            klass.SHARED_TARGET['cmdclass']['egg_info'] = klass.vsc_bdist_rpm_egg_info
             # changed to allow modification of shebangs
-            vsc_setup.SHARED_TARGET['cmdclass']['sdist'] = vsc_setup.vsc_sdist_rpm
+            klass.SHARED_TARGET['cmdclass']['sdist'] = klass.vsc_sdist_rpm
             self.run_command('egg_info')  # ensure distro name is up-to-date
             orig_bdist_rpm.run(self)
 
@@ -652,7 +689,7 @@ class vsc_setup(object):
         for ts in testsuites:
             # ts is either a test or testsuite of more tests
             if isinstance(ts, TestSuite):
-                res.addTest(vsc_setup.filter_testsuites(ts))
+                res.addTest(_fvs('filter_testsuites').filter_testsuites(ts))
             else:
                 if re.search(test_filter, ts._testMethodName):
                     res.addTest(ts)
@@ -660,6 +697,7 @@ class vsc_setup(object):
 
     class VscScanningLoader(ScanningLoader):
         """The class to look for tests"""
+        # This class cannot be modified by subclassing and _fvs
 
         TEST_LOADER_MODULE = __name__
 
@@ -684,7 +722,7 @@ class vsc_setup(object):
                     pass
                 elif re.search(test_filter['module'], name):
                     if test_filter['function'] is not None:
-                        res = vsc_setup.filter_testsuites(testsuites)
+                        res = _fvs('loadTestsFromModule').filter_testsuites(testsuites)
                     # add parents (and module itself)
                     pms = name.split('.')
                     for pm_idx in range(len(pms)):
@@ -707,6 +745,7 @@ class vsc_setup(object):
             ('test-xmlrunner=', 'X', "use XMLTestRunner with value as output name (e.g. test-reports)"),
         ]
 
+        # You cannot use the _fvs here, so this cannot be modified by subclassing
         TEST_LOADER = 'vsc.install.shared_setup:vsc_setup.VscScanningLoader'
 
         def initialize_options(self):
@@ -717,7 +756,7 @@ class vsc_setup(object):
             self.test_filterm = None
             self.test_filterf = None
             self.test_xmlrunner = None
-            self.setupper = vsc_setup()
+            self.setupper = _fvs('VscTestCommand initialize_options')()
 
             self.test_loader = self.TEST_LOADER
             log.info("test_loader set to %s" % self.test_loader)
@@ -920,7 +959,7 @@ class vsc_setup(object):
         """
         packages = self.package_files['packages'].keys()
         log.info('initial packages list: %s' % packages)
-        res = vsc_setup.add_and_remove(packages, extra=extra, exclude=exclude)
+        res = _fvs('generate_packages').add_and_remove(packages, extra=extra, exclude=exclude)
         log.info('generated packages list: %s' % res)
         return res
 
@@ -929,18 +968,19 @@ class vsc_setup(object):
         Return list of non-package modules
         Supports extra and/or exclude from add_and_remove
         """
-        res = vsc_setup.add_and_remove(self.package_files['modules'].keys(), extra=extra, exclude=exclude)
+        res = _fvs('generate_modules').add_and_remove(self.package_files['modules'].keys(), extra=extra, exclude=exclude)
         log.info('generated modules list: %s' % res)
         return res
 
     def generate_scripts(self, extra=None, exclude=None):
-        """Return a list of scripts in REPOS_SCRIPTS_DIR
+        """
+        Return a list of scripts in REPOS_SCRIPTS_DIR
         Supports extra and/or exclude from add_and_remove
         """
         res = []
         if os.path.isdir(self.REPO_SCRIPTS_DIR):
             res = self.rel_gitignore(glob.glob("%s/*" % self.REPO_SCRIPTS_DIR))
-        res = vsc_setup.add_and_remove(res, extra=extra, exclude=exclude)
+        res = _fvs('generate_scripts').add_and_remove(res, extra=extra, exclude=exclude)
         log.info('generated scripts list: %s' % res)
         return res
 
@@ -1042,12 +1082,13 @@ class vsc_setup(object):
                 self.warn("Don't know how to continue with the release for this non-github repository")
 
             lic = self.distribution.get_license()
-            if vsc_setup.release_on_pypi(lic):
+            if _fvs('vsc_release run').release_on_pypi(lic):
                 self.pypi()
             else:
                 log.info("%s license %s does not allow uploading to pypi" % (fullname, lic))
 
     # shared target config
+    # the cmdclass is updated to the _fvs() ones in parse_target
     SHARED_TARGET = {
         'cmdclass': {
             "bdist_rpm": vsc_bdist_rpm,
@@ -1110,7 +1151,8 @@ class vsc_setup(object):
                     name = 'python-%s' % name
             return name
         else:
-            return ",".join([vsc_setup.sanitize(r) for r in name])
+            klass = _fvs('sanitize')
+            return ",".join([klass.sanitize(r) for r in name])
 
     @staticmethod
     def get_md5sum(filename):
@@ -1129,7 +1171,7 @@ class vsc_setup(object):
         if not os.path.exists(license_name):
             raise Exception('LICENSE is missing (was looking for %s)' % license)
 
-        license_md5 = vsc_setup.get_md5sum(license_name)
+        license_md5 = _fvs('get_license').get_md5sum(license_name)
         log.info('found license %s with md5sum %s' % (license_name, license_md5))
         lic_short = None
         data = [None, None]
@@ -1157,8 +1199,15 @@ class vsc_setup(object):
 
         Remove sdist vsc class with '"vsc_sdist": False' in target
         """
+        vsc_setup_klass = _fvs('parse_target')
+
         new_target = {}
-        new_target.update(vsc_setup.SHARED_TARGET)
+        new_target.update(vsc_setup_klass.SHARED_TARGET)
+
+        # update the cmdclass with ones from vsc_setup_klass
+        # cannot do this in one go, whne SHARED_TARGET is defined, vsc_setup doesn't exist yet
+        for name, klass in new_target['cmdclass'].items():
+            new_target['cmdclass'][name] = getattr(vsc_setup_klass, klass.__name__)
 
         # prepare classifiers
         classifiers = new_target.setdefault('classifiers', [])
@@ -1224,7 +1273,7 @@ class vsc_setup(object):
         use_vsc_sdist = target.pop('vsc_sdist', True)
         if not use_vsc_sdist:
             sdist_cmdclass = new_target['cmdclass'].pop('sdist')
-            if not issubclass(sdist_cmdclass, vsc_setup.vsc_sdist):
+            if not issubclass(sdist_cmdclass, vsc_setup_klass.vsc_sdist):
                 raise Exception("vsc_sdist is disabled, but the sdist command is not a vsc_sdist"
                                 "(sub)class. Clean up your target.")
 
@@ -1277,16 +1326,17 @@ class vsc_setup(object):
             print "Cannot create setup.cfg for target %s: %s" % (target['name'], err)
             sys.exit(1)
 
+        klass = _fvs('build_setup_cfg_for_bdist_rpm')
         txt = ["[bdist_rpm]"]
         if 'install_requires' in target:
-            txt.extend(["requires = %s" % (vsc_setup.sanitize(target['install_requires']))])
+            txt.extend(["requires = %s" % (klass.sanitize(target['install_requires']))])
 
         if 'provides' in target:
-            txt.extend(["provides = %s" % (vsc_setup.sanitize(target['provides']))])
+            txt.extend(["provides = %s" % (klass.sanitize(target['provides']))])
             target.pop('provides')
 
         if 'setup_requires' in target:
-            txt.extend(["build_requires = %s" % (vsc_setup.sanitize(target['setup_requires']))])
+            txt.extend(["build_requires = %s" % (klass.sanitize(target['setup_requires']))])
 
         # add metadata
         txt += ['', '[metadata]', '', 'description-file = %s' % README, '']
@@ -1310,7 +1360,7 @@ class vsc_setup(object):
         # the default ones are only the ones with a __init__.py file
         # therefor we regenerate self.package files with the excluded pkgs as extra param
         self.package_files = self.files_in_packages(excluded_pkgs=pkgs)
-        vsc_setup.SHARED_TARGET['packages'] = self.generate_packages()
+        _fvs('prepare_rpm').SHARED_TARGET['packages'] = self.generate_packages()
         self.build_setup_cfg_for_bdist_rpm(target)
 
     def action_target(self, target, setupfn=setup, extra_sdist=None, urltemplate=None):
@@ -1343,7 +1393,7 @@ class vsc_setup(object):
 
 
 # here for backwards compatibility
-SHARED_TARGET = vsc_setup.SHARED_TARGET
+SHARED_TARGET = _fvs('SHARED_TARGET').SHARED_TARGET
 
 
 def action_target(package, *args, **kwargs):
@@ -1351,7 +1401,7 @@ def action_target(package, *args, **kwargs):
     create a vsc_setup object and call action_target on it with given package
     This is here for backwards compatibility
     """
-    vsc_setup().action_target(package, *args, **kwargs)
+    _fvs('action_target function')().action_target(package, *args, **kwargs)
 
 
 if __name__ == '__main__':
