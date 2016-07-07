@@ -709,10 +709,15 @@ class vsc_setup(object):
             Support test module and function name based filtering
             """
             try:
+                # pattern is new, this can fail on some old setuptools
                 testsuites = ScanningLoader.loadTestsFromModule(self, module, pattern)
-            except:
-                log.error('Failed to load tests from module %s', module)
-                raise
+            except TypeError:
+                log.warning('pattern argument not supported on this setuptools yet, ignoring')
+                try:
+                    testsuites = ScanningLoader.loadTestsFromModule(self, module)
+                except Exception:
+                    log.error('Failed to load tests from module %s', module)
+                    raise
 
             test_filter = getattr(__builtin__, '__test_filter')
 
