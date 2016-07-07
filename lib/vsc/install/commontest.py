@@ -94,9 +94,14 @@ class CommonTest(TestCase):
         'redefined-builtin',
         'bare-except',
         'E713',
-        #'protected-access',
-        #'wrong-import-position',
-        #'arguments-differ',
+        'arguments-differ',
+        'unused-argument',
+        'unused-variable',
+        'protected-access',
+        'reimported',
+        'F811',
+        'wrong-import-position',
+        #'logging-not-lazy',
     ]
 
     # Prospector commandline options (positional path is added automatically)
