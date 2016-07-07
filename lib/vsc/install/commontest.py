@@ -86,21 +86,28 @@ class CommonTest(TestCase):
     #   Blacklist: if match, skip message, do not check whitelist
     #   Whitelist: if match, fail test
     PROSPECTOR_BLACKLIST = [
+        #'wrong-import-position',  # not sure about this, these usually have a good reason
     ]
+    # to dissable any of these warnings in a block, you can do things like add a comment # pylint: disable=C0321
     PROSPECTOR_WHITELIST = [
         'undefined',
         'no-value-for-parameter',
         'dangerous-default-value',
         'redefined-builtin',
-        #'bare-except',
+        'bare-except',
+        'E713',  # not 'c' in d: -> 'c' not in d:
+        'arguments-differ',
+        'unused-argument',
+        'unused-variable',
+        'reimported',
+        'F811',  # redefinition of unused name
         #'protected-access',
-        #'E713',
-        #'wrong-import-position',
+        #'logging-not-lazy',
     ]
 
     # Prospector commandline options (positional path is added automatically)
     PROSPECTOR_OPTIONS = [
-        '--strictness', 'verylow',
+        '--strictness', 'medium',
         '--max-line-length', '120',
         '--absolute-paths',
     ]

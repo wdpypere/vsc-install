@@ -106,7 +106,7 @@ if log.Log.__name__ != 'NewLog':
             newmsg = "%s: %s" % (self._log_levels.get(level, 'UNKNOWN'), msg)
             try:
                 return self._orig_log(self, level, newmsg, args)
-            except:
+            except Exception:
                 print newmsg % args
 
     log.Log = NewLog
@@ -145,7 +145,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.9'
+VERSION = '0.10.10'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -267,6 +267,7 @@ class vsc_setup(object):
         self.REPO_TEST_DIR = os.path.join(self.REPO_BASE_DIR, DEFAULT_TEST_SUITE)
 
         self.package_files = self.files_in_packages()
+        self.private_repo = False
 
     @staticmethod
     def release_on_pypi(lic):
@@ -328,6 +329,7 @@ class vsc_setup(object):
         reg = re.search(r'^git@(.*?):(.*)$', res.get('url', ''))
         if reg:
             res['url'] = "https://%s/%s" % (reg.group(1), reg.group(2))
+            self.private_repo = True
 
         if 'url' not in res:
             raise KeyError("Missing url in git config %s. (Missing mandatory hpcugent (upstream) remote?)" % (res))
@@ -336,6 +338,7 @@ class vsc_setup(object):
         reg = re.search(r'^(git|ssh)://', res.get('url', ''))
         if reg:
             res['url'] = "https://%s" % res['url'][len(reg.group(0)):]
+            self.private_repo = True
 
         if 'download_url' not in res:
             if _fvs('get_name_url').release_on_pypi(license_name):
@@ -701,15 +704,21 @@ class vsc_setup(object):
 
         TEST_LOADER_MODULE = __name__
 
-        def loadTestsFromModule(self, module):
+        # pylint: disable=arguments-differ
+        def loadTestsFromModule(self, module, pattern=None):
             """
             Support test module and function name based filtering
             """
             try:
-                testsuites = ScanningLoader.loadTestsFromModule(self, module)
-            except:
-                log.error('Failed to load tests from module %s', module)
-                raise
+                # pattern is new, this can fail on some old setuptools
+                testsuites = ScanningLoader.loadTestsFromModule(self, module, pattern)
+            except TypeError:
+                log.warn('pattern argument not supported on this setuptools yet, ignoring')
+                try:
+                    testsuites = ScanningLoader.loadTestsFromModule(self, module)
+                except Exception:
+                    log.error('Failed to load tests from module %s', module)
+                    raise
 
             test_filter = getattr(__builtin__, '__test_filter')
 
@@ -1104,6 +1113,10 @@ class vsc_setup(object):
         'setup_requires': ['setuptools', 'vsc-install >= %s' % VERSION],
         'test_suite': DEFAULT_TEST_SUITE,
         'url': '',
+        'dependency_links': [],
+        'install_requires': [],
+        'tests_require': [],
+        'setup_requires': [],
     }
 
     def cleanup(self, prefix=''):
@@ -1196,6 +1209,7 @@ class vsc_setup(object):
             vsc_description: set the description and long_description from the README
             vsc_scripts: generate scripts from bin content
             vsc_namespace_pkg: register 'vsc' as a namespace package
+            dependency_links: set links for dependencies
 
         Remove sdist vsc class with '"vsc_sdist": False' in target
         """
