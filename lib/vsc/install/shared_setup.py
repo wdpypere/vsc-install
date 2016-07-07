@@ -267,6 +267,7 @@ class vsc_setup(object):
         self.REPO_TEST_DIR = os.path.join(self.REPO_BASE_DIR, DEFAULT_TEST_SUITE)
 
         self.package_files = self.files_in_packages()
+        self.private_repo = False
 
     @staticmethod
     def release_on_pypi(lic):
@@ -324,7 +325,6 @@ class vsc_setup(object):
                     log.info('found match %s %s in %s' % (name, res[name], filename))
                     break
 
-        self.private_repo = False
         # handle git@server:user/project
         reg = re.search(r'^git@(.*?):(.*)$', res.get('url', ''))
         if reg:
