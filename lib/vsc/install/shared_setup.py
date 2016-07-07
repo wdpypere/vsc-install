@@ -1305,27 +1305,6 @@ class vsc_setup(object):
                     new_target[k] = type(v)()
                     new_target[k] += v
 
-        if self.private_repo:
-            git_scheme = 'git+ssh://'
-            # TODO: this doesn't work, keeps on looking for vsc-utils on github.ugentbe and fails :-(
-            # we can fix this with a list of public hpcugent repos somewhere?
-            urls = [('github.ugent.be', 'git+ssh://'), ('github.com', 'git+https://')]
-        else:
-            urls = [('github.com', 'git+https://')]
-        for dependency in set(new_target['install_requires'] + new_target['setup_requires'] +
-                              new_target['tests_require']):
-            if dependency.startswith('vsc'):
-                dep = dependency.split(' ')[0]
-                depversion = ''
-                for comp in ['=', '<']:
-                    try:
-                        depversion = "-" + dependency.split(comp)[1].strip()
-                    except IndexError:
-                        pass
-                for url, git_scheme in urls:
-                    new_target['dependency_links'] += [''.join([git_scheme, url, '/hpcugent/', dep, '.git#egg=',
-                                                       dep, depversion])]
-
         log.debug("New target = %s" % (new_target))
         return new_target
 
