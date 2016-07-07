@@ -712,7 +712,7 @@ class vsc_setup(object):
                 # pattern is new, this can fail on some old setuptools
                 testsuites = ScanningLoader.loadTestsFromModule(self, module, pattern)
             except TypeError:
-                log.warning('pattern argument not supported on this setuptools yet, ignoring')
+                log.warn('pattern argument not supported on this setuptools yet, ignoring')
                 try:
                     testsuites = ScanningLoader.loadTestsFromModule(self, module)
                 except Exception:
