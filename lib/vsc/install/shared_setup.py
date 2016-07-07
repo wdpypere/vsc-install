@@ -704,6 +704,7 @@ class vsc_setup(object):
 
         TEST_LOADER_MODULE = __name__
 
+        # pylint: disable=arguments-differ
         def loadTestsFromModule(self, module, pattern=None):
             """
             Support test module and function name based filtering

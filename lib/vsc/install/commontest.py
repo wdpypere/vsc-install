@@ -88,18 +88,19 @@ class CommonTest(TestCase):
     PROSPECTOR_BLACKLIST = [
         #'wrong-import-position',  # not sure about this, these usually have a good reason
     ]
+    # to dissable any of these warnings in a block, you can do things like add a comment # pylint: disable=C0321
     PROSPECTOR_WHITELIST = [
         'undefined',
         'no-value-for-parameter',
         'dangerous-default-value',
         'redefined-builtin',
         'bare-except',
-        'E713',
+        'E713',  # not 'c' in d: -> 'c' not in d:
         'arguments-differ',
         'unused-argument',
         'unused-variable',
         'reimported',
-        'F811',
+        'F811',  # redefinition of unused name
         #'protected-access',
         #'logging-not-lazy',
     ]
