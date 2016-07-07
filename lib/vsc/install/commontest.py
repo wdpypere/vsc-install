@@ -86,6 +86,7 @@ class CommonTest(TestCase):
     #   Blacklist: if match, skip message, do not check whitelist
     #   Whitelist: if match, fail test
     PROSPECTOR_BLACKLIST = [
+        #'wrong-import-position',  # not sure about this, these usually have a good reason
     ]
     PROSPECTOR_WHITELIST = [
         'undefined',
@@ -97,10 +98,9 @@ class CommonTest(TestCase):
         'arguments-differ',
         'unused-argument',
         'unused-variable',
-        'protected-access',
         'reimported',
         'F811',
-        'wrong-import-position',
+        #'protected-access',
         #'logging-not-lazy',
     ]
 
