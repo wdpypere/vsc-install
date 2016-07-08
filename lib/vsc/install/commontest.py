@@ -101,6 +101,8 @@ class CommonTest(TestCase):
         'unused-variable',
         'reimported',
         'F811',  # redefinition of unused name
+        'unused-import',
+        'syntax-error',
         #'protected-access',
         #'logging-not-lazy',
     ]
