@@ -81,6 +81,10 @@ class TestCase(OrigTestCase):
     def setUp(self):
         """Prepare test case."""
         super(TestCase, self).setUp()
+
+        self.maxDiff = None
+        self.longMessage = True
+
         self.orig_sys_stdout = sys.stdout
         self.orig_sys_stderr = sys.stderr
 
