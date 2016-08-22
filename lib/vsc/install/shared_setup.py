@@ -145,7 +145,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.11'
+VERSION = '0.10.12'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
