@@ -145,7 +145,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.11'
+VERSION = '0.10.12'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -704,7 +704,6 @@ class vsc_setup(object):
 
         TEST_LOADER_MODULE = __name__
 
-        # pylint: disable=arguments-differ
         def loadTestsFromModule(self, module, pattern=None):
             """
             Support test module and function name based filtering
@@ -1115,7 +1114,7 @@ class vsc_setup(object):
         'url': '',
         'dependency_links': [],
         'install_requires': [],
-        'tests_require': [],
+        'tests_require': ['nose', 'mock'],
         'setup_requires': [],
     }
 
@@ -1217,6 +1216,15 @@ class vsc_setup(object):
 
         new_target = {}
         new_target.update(vsc_setup_klass.SHARED_TARGET)
+
+        if sys.version_info < (2, 7):
+            # py26 support dropped in 0.8, and the old versions don't detect enough
+            log.info('no prospector support in py26 (or older)')
+        else:
+            log.info('adding prospector to tests_require')
+            tests_requires = new_target.setdefault('tests_require', [])
+            tests_requires.extend(['prospector >= 0.12.1', 'pylint < 1.6.0'])
+
 
         # update the cmdclass with ones from vsc_setup_klass
         # cannot do this in one go, whne SHARED_TARGET is defined, vsc_setup doesn't exist yet
@@ -1425,15 +1433,6 @@ if __name__ == '__main__':
     install_requires = [
         'setuptools',
     ]
-    if sys.version_info < (2, 7):
-        # py26 support dropped in 0.8, and the old versions don't detect enough
-        log.info('no prospector support in py26 (or older)')
-    else:
-        # For now, not enforcing propspector.
-        # It would complicate rpm creation too much.
-        # Should be re-added when the testing code is moved to vsc-testing
-        log.info('not enforcing prospector support. run "easy_install propspector" yourself')
-        # install_requires.append('prospector >= 0.11.7')
 
     PACKAGE = {
         'version': VERSION,

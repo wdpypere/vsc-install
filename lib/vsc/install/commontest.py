@@ -129,7 +129,8 @@ class CommonTest(TestCase):
         try:
             __import__(pkg)
         except ImportError as e:
-            self.assertFalse(e, msg='import %s'%pkg)
+            log.debug("__path__ %s" % (["%s = %s" % (name, getattr(mod, '__path__', 'None')) for name, mod in sys.modules.items()]))
+            self.assertFalse(e, msg="import %s failed sys.path %s exception %s" % (pkg, sys.path, e))
 
         self.assertTrue(pkg in sys.modules, msg='%s in sys.modules after import' % pkg)
 
