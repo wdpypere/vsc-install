@@ -63,8 +63,10 @@ try:
 except ImportError:
     have_xmlrunner = False
 
-
+# Test that these are matched by a .gitignore pattern
 GITIGNORE_PATTERNS = ['.pyc', '.pyo', '~']
+# .gitnore needs to contain these exactly
+GITIGNORE_EXACT_PATTERNS = ['.eggs']
 
 # private class variables to communicate
 # between VscScanningLoader and VscTestCommand
@@ -373,11 +375,17 @@ class vsc_setup(object):
         # primitive gitignore
         gitignore = os.path.join(base_dir, '.gitignore')
         if os.path.isfile(gitignore):
-            patterns = [l.strip().replace('*', '.*') for l in open(gitignore).readlines() if l.startswith('*')]
+            all_patterns = [l for l in [l.strip() for l in open(gitignore).readlines()] if l and not l.startswith('#')]
+
+            patterns = [l.replace('*', '.*') for l in all_patterns if l.startswith('*')]
             reg = re.compile('^('+'|'.join(patterns)+')$')
+
             # check if we at least filter out .pyc files, since we're in a python project
             if not all([reg.search(text) for text in ['bla%s' % pattern for pattern in GITIGNORE_PATTERNS]]):
                 raise Exception("%s/.gitignore does not contain these patterns: %s " % (base_dir, GITIGNORE_PATTERNS))
+
+            if not all([l in all_patterns for l in GITIGNORE_EXACT_PATTERNS]):
+                raise Exception("%s/.gitignore does not contain all following patterns: %s " % (base_dir, GITIGNORE_EXACT_PATTERNS))
 
             res = [f for f in res if not reg.search(f)]
 
