@@ -203,6 +203,19 @@ class VscGroup(object):
 => do you need the import? use import as
 did you mean to use the same name? ...
 
+unpacking-in-except / redefine-in-handler
+-----------------------------------------
+
+Multiple exception have to be grouped in a tuple like
+
+```python
+    ...
+except (ExceptionOne, ExceptionTwo) ...
+    ...
+```
+
+(espcially when used like `except A, B:` which should be `except (A, B):`.
+
 turning off these errors
 -------------------------
 
