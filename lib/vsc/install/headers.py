@@ -314,7 +314,7 @@ if __name__ == '__main__':
     args = sys.argv[1:]
     try:
         is_script = int(args[-1]) == 1
-    except IndexError, ValueError:
+    except (IndexError, ValueError):
         is_script = False
 
     if is_script:

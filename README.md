@@ -118,14 +118,14 @@ try:
    # something
 except:
 ```
-This is bad, because this except will also catch sys.exit() or Keyboardinterupts, something you 
-typically do not want, if you catch these the program will be in a weird state and then continue on, 
+This is bad, because this except will also catch sys.exit() or Keyboardinterupts, something you
+typically do not want, if you catch these the program will be in a weird state and then continue on,
 whilst the person who just pressed ctrl+c is wondering what is going on and why it is not stopping.
 
 so at the very least make this
 except Exception (which doesn't catch sys.exit and KeyboardInterupt)
 and it would be appreciated if you could actually figure out what exceptions to expect and only catch those
-and let your program crash if something you did not intend happens 
+and let your program crash if something you did not intend happens
 because it helps developers catch weird errors on their side better.
 
 if you do something like
@@ -136,7 +136,7 @@ except Exception:
     pass # if somestring is not an integer, we didn't need to write anyway, but otherwise we do
 ```
 because you know sometimes this string does not contain an integer, so the int() call can fail
-you should really only catch ValueError, because this will also fail when your disk is full, or you don't have permissions 
+you should really only catch ValueError, because this will also fail when your disk is full, or you don't have permissions
 or xxx other reasons, and the important data will not be written out and nobody will notice anything!
 
 
@@ -151,12 +151,12 @@ Also helps code review, not in reads better, like english.
 arguments-differ
 -----------------
 
-this will give you errors if you override a function of a superclass but don't use the same amount of arguments, 
+this will give you errors if you override a function of a superclass but don't use the same amount of arguments,
 using less will surely give you errors, so the linter catches this for you now
 
 unused-argument
 -----------------
-if you have a function definition witch accepts an argument that is never used in the function body this will now give an error. 
+if you have a function definition witch accepts an argument that is never used in the function body this will now give an error.
 clean up your function definition, or fix the error where you actually do need to take this argument into account
 
 unused-variable
@@ -164,12 +164,12 @@ unused-variable
 defining a variable and then not using it anymore smells bad, why did you do that?
 sometimes you do things like
 ```python
-out, exit_code = run_command(something) 
+out, exit_code = run_command(something)
 ```
-but you are not interested in the out, only in the exit code, 
-in this case, write 
+but you are not interested in the out, only in the exit code,
+in this case, write
 ```python
-_, exit_code = run_command(something) 
+_, exit_code = run_command(something)
 ```
 
 using _ as a variable name lets pylint and other readers know you do not intend to use that output in the first place.
@@ -177,7 +177,7 @@ using _ as a variable name lets pylint and other readers know you do not intend 
 
 reimported
 -------------
-when you re import a name somewhere else, 
+when you re import a name somewhere else,
 usually this is just an import to much, or 2 imports with the same name, pay attention.
 ```python
 import six
@@ -200,16 +200,31 @@ class VscGroup(object):
     pass
 ```
 
-=> do you need the import? use import as 
+=> do you need the import? use import as
 did you mean to use the same name? ...
+
+unpacking-in-except / redefine-in-handler
+-----------------------------------------
+
+Multiple exception have to be grouped in a tuple like
+
+```python
+    ...
+except (ExceptionOne, ExceptionTwo) ...
+    ...
+```
+
+(espcially when used like `except A, B:` which should be `except (A, B):`.
 
 turning off these errors
 -------------------------
 
 
-if in any of these cases you think: yes, I really needed to do this, I'm monkeypatching things, I'm adding extra functionality that does indeed have an extra(default) paramenter, etc, etc
+If in any of these cases you think: yes, I really needed to do this,
+I'm monkeypatching things, I'm adding extra functionality that does indeed have an extra(default) paramenter, etc, etc
 you can let pylint know to ignore this error in this one specific block of code
-by adding e.g.the comment
+by adding e.g. the comment `# pylint: disable=<name or numeric id of pylint code>`
+
 ```python
 class Something(object):
     def dosomething(self, some, thing):
@@ -218,5 +233,7 @@ class Something(object):
 class MyFancyThing(SomeThing):
     # pylint: disable=arguments-differ
     def dosomething(self, some, thing, fancy=None):
-         # do soemthing fancy
+         # do something fancy
 ```
+
+Full list with all codes is available at http://pylint-messages.wikidot.com/all-codes

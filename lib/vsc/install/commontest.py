@@ -103,6 +103,7 @@ class CommonTest(TestCase):
         'F811',  # redefinition of unused name
         'unused-import',
         'syntax-error',
+        'unpacking-in-except', 'redefine-in-handler', # except A, B -> except (A, B)
         #'protected-access',
         #'logging-not-lazy',
     ]
