@@ -29,6 +29,7 @@ Shared module for vsc software setup
 @author: Stijn De Weirdt (Ghent University)
 @author: Andy Georges (Ghent University)
 """
+import __builtin__
 import glob
 import hashlib
 import inspect
@@ -71,7 +72,6 @@ GITIGNORE_EXACT_PATTERNS = ['.eggs']
 # between VscScanningLoader and VscTestCommand
 # stored in __builtin__ because the (Vsc)TestCommand.run_tests
 # reloads and cleans up the modules
-import __builtin__
 if not hasattr(__builtin__, '__target'):
     setattr(__builtin__, '__target', {})
 
@@ -228,7 +228,10 @@ def _fvs(msg=None):
 
     subclasses = parent.__subclasses__()
     if len(subclasses) > 1:
-        log.warn("%sMore than one %s subclass found (%s), returning the first one" % (msg, pname, [x.__name__ for x in subclasses]))
+        log.warn("%sMore than one %s subclass found (%s), returning the first one",
+                 msg,
+                 pname,
+                 [x.__name__ for x in subclasses])
 
     klass = parent
     if subclasses:
@@ -384,7 +387,9 @@ class vsc_setup(object):
                 raise Exception("%s/.gitignore does not contain these patterns: %s " % (base_dir, GITIGNORE_PATTERNS))
 
             if not all([l in all_patterns for l in GITIGNORE_EXACT_PATTERNS]):
-                raise Exception("%s/.gitignore does not contain all following patterns: %s " % (base_dir, GITIGNORE_EXACT_PATTERNS))
+                raise Exception("%s/.gitignore does not contain all following patterns: %s ",
+                                base_dir,
+                                GITIGNORE_EXACT_PATTERNS)
 
             res = [f for f in res if not reg.search(f)]
 
@@ -983,7 +988,8 @@ class vsc_setup(object):
         Return list of non-package modules
         Supports extra and/or exclude from add_and_remove
         """
-        res = _fvs('generate_modules').add_and_remove(self.package_files['modules'].keys(), extra=extra, exclude=exclude)
+        res = _fvs('generate_modules').add_and_remove(self.package_files['modules'].keys(), extra=extra,
+                                                      exclude=exclude)
         log.info('generated modules list: %s' % res)
         return res
 
@@ -1223,6 +1229,14 @@ class vsc_setup(object):
 
         new_target = {}
         new_target.update(vsc_setup_klass.SHARED_TARGET)
+
+        if sys.version_info < (2, 7):
+            # py26 support dropped in 0.8, and the old versions don't detect enough
+            log.info('no prospector support in py26 (or older)')
+        else:
+            log.info('adding prospector to tests_require')
+            tests_requires = new_target.setdefault('tests_require', [])
+            tests_requires.extend(['prospector >= 0.12.1', 'pylint < 1.6.0'])
 
         # update the cmdclass with ones from vsc_setup_klass
         # cannot do this in one go, when SHARED_TARGET is defined, vsc_setup doesn't exist yet
