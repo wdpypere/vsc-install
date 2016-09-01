@@ -147,7 +147,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.13'
+VERSION = '0.10.14'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1225,15 +1225,6 @@ class vsc_setup(object):
         new_target = {}
         new_target.update(vsc_setup_klass.SHARED_TARGET)
 
-        if sys.version_info < (2, 7):
-            # py26 support dropped in 0.8, and the old versions don't detect enough
-            log.info('no prospector support in py26 (or older)')
-        else:
-            log.info('adding prospector to tests_require')
-            tests_requires = new_target.setdefault('tests_require', [])
-            tests_requires.extend(['prospector >= 0.12.1', 'pylint < 1.6.0'])
-
-
         # update the cmdclass with ones from vsc_setup_klass
         # cannot do this in one go, whne SHARED_TARGET is defined, vsc_setup doesn't exist yet
         for name, klass in new_target['cmdclass'].items():
@@ -1326,6 +1317,17 @@ class vsc_setup(object):
                 else:
                     new_target[k] = type(v)()
                     new_target[k] += v
+
+       if sys.version_info < (2, 7):
+            # py26 support dropped in 0.8, and the old versions don't detect enough
+            log.info('no prospector support in py26 (or older)')
+            tests_requires = new_target.setdefault('tests_require', [])
+            new_target['tests_require'] = [x for x in tests_requires if 'prospector' not in x]
+        else:
+            log.info('adding prospector to tests_require')
+            tests_requires = new_target.setdefault('tests_require', [])
+            tests_requires.extend(['prospector >= 0.12.1', 'pylint < 1.6.0'])
+            new_target['tests_require'] = tests_requires
 
         log.debug("New target = %s" % (new_target))
         return new_target
