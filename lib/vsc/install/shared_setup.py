@@ -1318,7 +1318,7 @@ class vsc_setup(object):
                     new_target[k] = type(v)()
                     new_target[k] += v
 
-       if sys.version_info < (2, 7):
+        if sys.version_info < (2, 7):
             # py26 support dropped in 0.8, and the old versions don't detect enough
             log.info('no prospector support in py26 (or older)')
             tests_requires = new_target.setdefault('tests_require', [])
