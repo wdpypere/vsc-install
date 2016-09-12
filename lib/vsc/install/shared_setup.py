@@ -1401,7 +1401,7 @@ class vsc_setup(object):
         provides: list of rpm provides for setup.cfg
         """
         if not setupfn:
-            #  late import, so were dont' accedentaly use the distutils setup
+            #  late import, so were don't accidentally use the distutils setup
             from setuptools import setup
             setupfn = setup
         if not extra_sdist:
