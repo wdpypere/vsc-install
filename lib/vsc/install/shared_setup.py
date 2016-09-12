@@ -1400,9 +1400,10 @@ class vsc_setup(object):
         makesetupcfg: boolean, default True, to generate the setup.cfg (set to False if a manual setup.cfg is provided)
         provides: list of rpm provides for setup.cfg
         """
-        if not setupfn:
-            #  late import, so were don't accidentally use the distutils setup
-            from setuptools import setup
+        if setupfn is not None:
+            # late import, so were don't accidentally use the distutils setup
+            # see https://github.com/pypa/setuptools/issues/73
+            from setuptools import setup  # pylint: disable=wrong-import-possition
             setupfn = setup
         if not extra_sdist:
             extra_sdist = []
