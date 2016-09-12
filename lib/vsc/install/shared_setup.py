@@ -46,7 +46,6 @@ from distutils.dir_util import remove_tree
 from setuptools import Command
 from setuptools.command.test import test as TestCommand
 from setuptools.command.test import ScanningLoader
-from setuptools import setup
 from setuptools.command.bdist_rpm import bdist_rpm as orig_bdist_rpm
 from setuptools.command.build_py import build_py
 from setuptools.command.egg_info import egg_info
@@ -1122,7 +1121,7 @@ class vsc_setup(object):
         'url': '',
         'dependency_links': [],
         'install_requires': [],
-        'tests_require': ['nose', 'mock'],
+        'tests_require': [],
         'setup_requires': [],
     }
 
@@ -1395,12 +1394,16 @@ class vsc_setup(object):
         _fvs('prepare_rpm').SHARED_TARGET['packages'] = self.generate_packages()
         self.build_setup_cfg_for_bdist_rpm(target)
 
-    def action_target(self, target, setupfn=setup, extra_sdist=None, urltemplate=None):
+    def action_target(self, target, setupfn=None, extra_sdist=None, urltemplate=None):
         """
         Additional target attributes
         makesetupcfg: boolean, default True, to generate the setup.cfg (set to False if a manual setup.cfg is provided)
         provides: list of rpm provides for setup.cfg
         """
+        if not setupfn:
+            #  late import, so were dont' accedentaly use the distutils setup
+            from setuptools import setup
+            setupfn = setup
         if not extra_sdist:
             extra_sdist = []
         do_cleanup = True
