@@ -146,7 +146,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.15'
+VERSION = '0.10.16'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1342,13 +1342,13 @@ class vsc_setup(object):
                 dep = dependency.split(' ')[0]
                 depversion = ''
                 for comp in ['=', '<']:
-					try:
-						depversion = "-" + dependency.split(comp)[1].strip()
-					except IndexError:
-						pass
-					for url, git_scheme in urls:
-						new_target['dependency_links'] += [''.join([git_scheme, url, '/hpcugent/', dep, '.git#egg=',
-														dep, depversion])]
+                    try:
+                        depversion = "-" + dependency.split(comp)[1].strip()
+                    except IndexError:
+                        pass
+                    for url, git_scheme in urls:
+                        new_target['dependency_links'] += [''.join([git_scheme, url, '/hpcugent/', dep, '.git#egg=',
+                                                           dep, depversion])]
 
         log.debug("New target = %s" % (new_target))
         print new_target
