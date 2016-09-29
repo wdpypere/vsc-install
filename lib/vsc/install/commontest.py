@@ -104,6 +104,8 @@ class CommonTest(TestCase):
         'unused-import',
         'syntax-error',
         'unpacking-in-except', 'redefine-in-handler', # except A, B -> except (A, B)
+        'E101',  # mixing tabs and spaces
+        'bad-indentation',
         #'protected-access',
         #'logging-not-lazy',
     ]

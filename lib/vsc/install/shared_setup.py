@@ -146,7 +146,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.15'
+VERSION = '0.10.16'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1328,7 +1328,30 @@ class vsc_setup(object):
             tests_requires.extend(['prospector >= 0.12.1', 'pylint < 1.6.0'])
             new_target['tests_require'] = tests_requires
 
+        if self.private_repo:
+            urls = [
+                ('github.ugent.be', 'git+ssh://git@'),
+                ('github.com', 'git+ssh://git@'),
+                ('github.com', 'git+https://'),
+            ]
+        else:
+            urls = [('github.com', 'git+https://')]
+        for dependency in set(new_target['install_requires'] + new_target['setup_requires'] +
+            new_target['tests_require']):
+            if dependency.startswith('vsc'):
+                dep = dependency.split(' ')[0]
+                depversion = ''
+                for comp in ['=', '<']:
+                    try:
+                        depversion = "-" + dependency.split(comp)[1].strip()
+                    except IndexError:
+                        pass
+                    for url, git_scheme in urls:
+                        new_target['dependency_links'] += [''.join([git_scheme, url, '/hpcugent/', dep, '.git#egg=',
+                                                           dep, depversion])]
+
         log.debug("New target = %s" % (new_target))
+        print new_target
         return new_target
 
     @staticmethod
