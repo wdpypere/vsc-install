@@ -27,7 +27,7 @@ import os
 import re
 
 from vsc.install import shared_setup
-from vsc.install.shared_setup import action_target, vsc_setup
+from vsc.install.shared_setup import action_target, vsc_setup, _fvs
 
 from vsc.install.testing import TestCase
 
@@ -167,3 +167,20 @@ class TestSetup(TestCase):
         setup.REPO_LIB_DIR = libdir
         setup.prepare_rpm(package)
         self.assertEqual(setup.SHARED_TARGET['packages'], ['vsc', 'vsc.test'])
+
+    def test_parse_target(self):
+        """Test for parse target"""
+        package = {
+            'name': 'vsc-test',
+            'excluded_pkgs_rpm': [],
+        }
+        setup = vsc_setup()
+        klass = _fvs('vsc_bdist_rpm egg_info')
+        # test to see if we don't fail on unknown/new cmdclasses
+        orig_target = klass.SHARED_TARGET
+        klass.SHARED_TARGET['cmdclass']['easy_install'] = object
+        new_target = setup.parse_target(package)
+        self.assertEquals(new_target['name'], 'vsc-test')
+        klass.SHARED_TARGET = orig_target
+
+

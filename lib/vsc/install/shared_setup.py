@@ -146,7 +146,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.16'
+VERSION = '0.10.17'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1225,9 +1225,12 @@ class vsc_setup(object):
         new_target.update(vsc_setup_klass.SHARED_TARGET)
 
         # update the cmdclass with ones from vsc_setup_klass
-        # cannot do this in one go, whne SHARED_TARGET is defined, vsc_setup doesn't exist yet
+        # cannot do this in one go, when SHARED_TARGET is defined, vsc_setup doesn't exist yet
         for name, klass in new_target['cmdclass'].items():
-            new_target['cmdclass'][name] = getattr(vsc_setup_klass, klass.__name__)
+            try:
+                new_target['cmdclass'][name] = getattr(vsc_setup_klass, klass.__name__)
+            except AttributeError:
+                del new_target['cmdclass'][name]
 
         # prepare classifiers
         classifiers = new_target.setdefault('classifiers', [])
