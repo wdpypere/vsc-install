@@ -173,10 +173,10 @@ class TestSetup(TestCase):
         package = {
             'name': 'vsc-test',
             'excluded_pkgs_rpm': [],
-            # test to see if we don't fail on unknown/new cmdclasses
         }
         setup = vsc_setup()
         klass = _fvs('vsc_bdist_rpm egg_info')
+        # test to see if we don't fail on unknown/new cmdclasses
         klass.SHARED_TARGET['cmdclass']['easy_install'] = object
         orig_target = klass.SHARED_TARGET
         new_target = setup.parse_target(package)
