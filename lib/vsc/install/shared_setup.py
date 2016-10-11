@@ -1225,7 +1225,7 @@ class vsc_setup(object):
         new_target.update(vsc_setup_klass.SHARED_TARGET)
 
         # update the cmdclass with ones from vsc_setup_klass
-        # cannot do this in one go, whne SHARED_TARGET is defined, vsc_setup doesn't exist yet
+        # cannot do this in one go, when SHARED_TARGET is defined, vsc_setup doesn't exist yet
         for name, klass in new_target['cmdclass'].items():
             try:
                 new_target['cmdclass'][name] = getattr(vsc_setup_klass, klass.__name__)
