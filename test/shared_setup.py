@@ -177,8 +177,8 @@ class TestSetup(TestCase):
         setup = vsc_setup()
         klass = _fvs('vsc_bdist_rpm egg_info')
         # test to see if we don't fail on unknown/new cmdclasses
-        klass.SHARED_TARGET['cmdclass']['easy_install'] = object
         orig_target = klass.SHARED_TARGET
+        klass.SHARED_TARGET['cmdclass']['easy_install'] = object
         new_target = setup.parse_target(package)
         self.assertEquals(new_target['name'], 'vsc-test')
         klass.SHARED_TARGET = orig_target
