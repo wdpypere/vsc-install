@@ -1128,7 +1128,6 @@ class vsc_setup(object):
         'dependency_links': [],
         'install_requires': [],
         'tests_require': [],
-        'setup_requires': [],
     }
 
     def cleanup(self, prefix=''):
