@@ -146,7 +146,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.18'
+VERSION = '0.10.19'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -721,15 +721,30 @@ class vsc_setup(object):
             Support test module and function name based filtering
             """
             try:
-                # pattern is new, this can fail on some old setuptools
-                testsuites = ScanningLoader.loadTestsFromModule(self, module, pattern)
-            except TypeError:
-                log.warn('pattern argument not supported on this setuptools yet, ignoring')
                 try:
-                    testsuites = ScanningLoader.loadTestsFromModule(self, module)
-                except Exception:
-                    log.error('Failed to load tests from module %s', module)
-                    raise
+                    # pattern is new, this can fail on some old setuptools
+                    testsuites = ScanningLoader.loadTestsFromModule(self, module, pattern)
+                except TypeError:
+                    log.warn('pattern argument not supported on this setuptools yet, ignoring')
+                    try:
+                        testsuites = ScanningLoader.loadTestsFromModule(self, module)
+                    except Exception:
+                        log.error('Failed to load tests from module %s', module)
+                        raise
+            except AttributeError as err:
+                # This error is not that useful
+                log.error('Failed to load tests from module %s', module)
+                # Handle specific class of exception due to import failures of the tests
+                reg = re.search(r'object has no attribute \'(.*)\'', str(err))
+                if reg:
+                    test_module = '.'.join([module.__name__, reg.group(1)])
+                    try:
+                        __import__(test_module)
+                    except ImportError as e:
+                        tpl = "Failed to import test module %s: %s (derived from original exception %s)"
+                        raise ImportError(tpl % (test_module, e, err))
+
+                raise
 
             test_filter = getattr(__builtin__, '__test_filter')
 
