@@ -86,7 +86,9 @@ class CommonTest(TestCase):
     #   Blacklist: if match, skip message, do not check whitelist
     #   Whitelist: if match, fail test
     PROSPECTOR_BLACKLIST = [
-        #'wrong-import-position',  # not sure about this, these usually have a good reason
+        # 'wrong-import-position',  # not sure about this, these usually have a good reason
+        'Locally disabling',  # shows up when you locally disable a warning, this is the point
+        'Useless suppression',  # shows up when you locally disable/suppress a warning, this is the point
     ]
     # to dissable any of these warnings in a block, you can do things like add a comment # pylint: disable=C0321
     PROSPECTOR_WHITELIST = [
@@ -103,11 +105,26 @@ class CommonTest(TestCase):
         'F811',  # redefinition of unused name
         'unused-import',
         'syntax-error',
-        'unpacking-in-except', 'redefine-in-handler', # except A, B -> except (A, B)
         'E101',  # mixing tabs and spaces
         'bad-indentation',
         #'protected-access',
         #'logging-not-lazy',
+        'duplicate-key',  # when a key appears twice in a dict definition
+        'E501',  # 'line too long'when a line is longer then 120 chars
+        # 'protected-access',
+        # 'logging-not-lazy',
+        # will stop working in python3
+        'unpacking-in-except', 'redefine-in-handler',  # except A, B -> except (A, B)
+        'indexing-exception',  # indexing exceptions doesn't work in python3, use Exc.args[index] instead (but why?)
+        'raising-string',  # don't raise strings, raise objects extending Exception
+        'old-octal-literal',  # use 0o700 instead of 0700
+        'import-star-module-level',  # Import * only allowed at module level
+        'old-ne-operator',  # don't use <> as not equal operator, use !=
+        'backtick',  # don't use `variable` to turn a variable in a string, use the str() function
+        'old-raise-syntax',  # sed when the alternate raise syntax raise foo, bar is used instead of raise foo(bar) .
+        # once we get ready to really move to python3
+        # 'print-statement',  # use print() and from future import __print__ instead of print
+        # 'metaclass-assignment',  # __metaclass__ doesn't exist anymore in python3
     ]
 
     # Prospector commandline options (positional path is added automatically)
@@ -132,7 +149,8 @@ class CommonTest(TestCase):
         try:
             __import__(pkg)
         except ImportError as e:
-            log.debug("__path__ %s" % (["%s = %s" % (name, getattr(mod, '__path__', 'None')) for name, mod in sys.modules.items()]))
+            log.debug("__path__ %s",
+                      ["%s = %s" % (name, getattr(mod, '__path__', 'None')) for name, mod in sys.modules.items()])
             self.assertFalse(e, msg="import %s failed sys.path %s exception %s" % (pkg, sys.path, e))
 
         self.assertTrue(pkg in sys.modules, msg='%s in sys.modules after import' % pkg)
@@ -144,7 +162,8 @@ class CommonTest(TestCase):
 
             if self.CHECK_HEADER:
                 for fn in self.setup.files_in_packages()['packages'][pkg]:
-                    self.assertFalse(check_header(os.path.join(self.setup.REPO_BASE_DIR, fn), script=False, write=False),
+                    self.assertFalse(check_header(os.path.join(self.setup.REPO_BASE_DIR, fn),
+                                     script=False, write=False),
                                      msg='check_header of %s' % fn)
 
     def test_import_modules(self):
