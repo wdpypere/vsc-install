@@ -107,6 +107,8 @@ class CommonTest(TestCase):
         'syntax-error',
         'E101',  # mixing tabs and spaces
         'bad-indentation',
+        'bad-whitespace',
+        'trailing-whitespace',
         #'protected-access',
         #'logging-not-lazy',
         'duplicate-key',  # when a key appears twice in a dict definition
