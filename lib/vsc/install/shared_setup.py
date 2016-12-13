@@ -1,3 +1,4 @@
+# -*- coding: latin-1 -*-
 #
 # Copyright 2011-2016 Ghent University
 #
@@ -121,6 +122,7 @@ if log.Log.__name__ != 'NewLog':
 
 # available authors
 ag = ('Andy Georges', 'andy.georges@ugent.be')
+asg = ('Álvaro Simón García', 'alvaro.simongarcia@UGent.be')
 eh = ('Ewan Higgs', 'Ewan.Higgs@UGent.be')
 jt = ('Jens Timmerman', 'jens.timmerman@ugent.be')
 kh = ('Kenneth Hoste', 'kenneth.hoste@ugent.be')
@@ -146,7 +148,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.20'
+VERSION = '0.10.21'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
