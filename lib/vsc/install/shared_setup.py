@@ -1158,11 +1158,6 @@ class vsc_setup(object):
                 except OSError:
                     log.error("cleanup failed for %s" % d)
 
-        for fn in ('setup.cfg',):
-            ffn = prefix + fn
-            if os.path.isfile(ffn):
-                os.remove(ffn)
-
     @staticmethod
     def sanitize(name):
         """
