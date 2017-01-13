@@ -1,6 +1,6 @@
 # -*- coding: latin-1 -*-
 #
-# Copyright 2011-2016 Ghent University
+# Copyright 2011-2017 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -77,7 +77,7 @@ if not hasattr(__builtin__, '__target'):
     setattr(__builtin__, '__target', {})
 
 if not hasattr(__builtin__, '__test_filter'):
-    setattr(__builtin__, '__test_filter',  {
+    setattr(__builtin__, '__test_filter', {
         'module': None,
         'function': None,
         'allowmods': [],
@@ -1089,7 +1089,7 @@ class vsc_setup(object):
             release_url = "https://%s/repos/%s/%s/releases?access_token=$%s" % (api_url, owner, name, token_var)
 
             self._print(['# Run command below to make release on %s' % gh])
-            self._print(['curl', '--data', "'%s'" % json.dumps(api_data),  release_url])
+            self._print(['curl', '--data', "'%s'" % json.dumps(api_data), release_url])
 
         def pypi(self):
             """Register, sdist and upload to pypi"""
