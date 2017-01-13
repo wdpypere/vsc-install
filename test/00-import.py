@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2016 Ghent University
+# Copyright 2016-2017 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -25,6 +25,7 @@
 #
 #
 # don't import VSCImportTest, it will trigger the tests
+"""Commontest"""
 import vsc.install.commontest
 
 class ImportTest(vsc.install.commontest.CommonTest):

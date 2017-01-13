@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2016 Ghent University
+# Copyright 2016-2017 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -24,6 +24,7 @@
 # along with vsc-install. If not, see <http://www.gnu.org/licenses/>.
 #
 #
+"""Test headers"""
 import glob
 import os
 

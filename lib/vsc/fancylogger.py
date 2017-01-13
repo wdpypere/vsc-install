@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Ghent University
+# Copyright 2015-2017 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -45,5 +45,5 @@ from vsc.utils.fancylogger import logToDevLog, getLogger
 
 # Deprecation tracker to syslog
 logToDevLog(True)
-getLogger().error("LEGACYVSCFANCYLOGGER from %s %s", __name__, globals().get('__file__','<nofile>'))
+getLogger().error("LEGACYVSCFANCYLOGGER from %s %s", __name__, globals().get('__file__', '<nofile>'))
 logToDevLog(False)

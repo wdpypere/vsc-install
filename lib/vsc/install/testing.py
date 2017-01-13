@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2016 Ghent University
+# Copyright 2014-2017 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -157,7 +157,7 @@ class TestCase(OrigTestCase):
         """
         def logmethod(*args, **kwargs):
             if hasattr(logmethod_func, 'func_name'):
-                funcname=logmethod_func.func_name
+                funcname = logmethod_func.func_name
             elif hasattr(logmethod_func, 'im_func'):
                 funcname = logmethod_func.im_func.__name__
             else:
