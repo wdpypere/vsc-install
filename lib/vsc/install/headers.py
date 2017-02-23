@@ -188,7 +188,8 @@ def check_header(filename, script=False, write=False):
         # original position
         header_end_pos += 1 + len(shebang)  # 1 is from splitted newline
 
-        if 'python' in shebang and shebang not in (SHEBANG_ENV_PYTHON, SHEBANG_NOENV_PYTHON):
+        shebangs_python = (SHEBANG_ENV_PYTHON, SHEBANG_NOENV_PYTHON, SHEBANG_STRIPPED_ENV_PYTHON)
+        if 'python' in shebang and shebang not in shebangs_python:
             log.info('python in shebang, forcing env python (header modified)')
             changed = True
             shebang = SHEBANG_ENV_PYTHON
