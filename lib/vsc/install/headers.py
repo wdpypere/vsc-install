@@ -43,7 +43,8 @@ import re
 import sys
 
 from datetime import date
-from vsc.install.shared_setup import vsc_setup, log, SHEBANG_ENV_PYTHON, SHEBANG_NOENV_PYTHON
+from vsc.install.shared_setup import SHEBANG_ENV_PYTHON, SHEBANG_NOENV_PYTHON, SHEBANG_STRIPPED_ENV_PYTHON
+from vsc.install.shared_setup import log, vsc_setup
 
 HEADER_REGEXP = re.compile(r'\A(.*?)^(?:\'\'\'|"""|### END OF HEADER)', re.M | re.S)
 ENCODING_REGEXP = re.compile(r'^(\s*#\s*.*?coding[:=]\s*([-\w.]+).*).*$', re.M)  # PEP0263, 1st or 2nd line

@@ -165,6 +165,7 @@ PYTHON_BDIST_RPM_PREFIX_MAP = {
 SHEBANG_ENV_PYTHON = '#!/usr/bin/env python'
 SHEBANG_NOENV_PYTHON = '#!/usr/bin/python-noenv'
 SHEBANG_PYTHON_E = '#!/usr/bin/python -E'
+SHEBANG_STRIPPED_ENV_PYTHON = '#!/usr/bin/python-stripped-env'
 
 # to be inserted in sdist version of shared_setup
 NEW_SHARED_SETUP_HEADER_TEMPLATE = """
