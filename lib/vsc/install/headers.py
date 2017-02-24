@@ -43,8 +43,7 @@ import re
 import sys
 
 from datetime import date
-from vsc.install.shared_setup import SHEBANG_ENV_PYTHON, SHEBANG_NOENV_PYTHON, SHEBANG_STRIPPED_ENV_PYTHON
-from vsc.install.shared_setup import log, vsc_setup
+from vsc.install.shared_setup import SHEBANG_ENV_PYTHON, log, vsc_setup
 
 HEADER_REGEXP = re.compile(r'\A(.*?)^(?:\'\'\'|"""|### END OF HEADER)', re.M | re.S)
 ENCODING_REGEXP = re.compile(r'^(\s*#\s*.*?coding[:=]\s*([-\w.]+).*).*$', re.M)  # PEP0263, 1st or 2nd line
@@ -188,8 +187,7 @@ def check_header(filename, script=False, write=False):
         # original position
         header_end_pos += 1 + len(shebang)  # 1 is from splitted newline
 
-        shebangs_python = (SHEBANG_ENV_PYTHON, SHEBANG_NOENV_PYTHON, SHEBANG_STRIPPED_ENV_PYTHON)
-        if 'python' in shebang and shebang not in shebangs_python:
+        if 'python' in shebang and shebang != SHEBANG_ENV_PYTHON:
             log.info('python in shebang, forcing env python (header modified)')
             changed = True
             shebang = SHEBANG_ENV_PYTHON
