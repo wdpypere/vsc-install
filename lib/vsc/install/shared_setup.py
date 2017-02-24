@@ -148,7 +148,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.24'
+VERSION = '0.10.25'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -165,6 +165,7 @@ PYTHON_BDIST_RPM_PREFIX_MAP = {
 SHEBANG_ENV_PYTHON = '#!/usr/bin/env python'
 SHEBANG_NOENV_PYTHON = '#!/usr/bin/python-noenv'
 SHEBANG_PYTHON_E = '#!/usr/bin/python -E'
+SHEBANG_STRIPPED_ENV_PYTHON = '#!/usr/bin/python-stripped-env'
 
 # to be inserted in sdist version of shared_setup
 NEW_SHARED_SETUP_HEADER_TEMPLATE = """
@@ -605,7 +606,7 @@ class vsc_setup(object):
                     if pyshebang_reg.search(first_line):
                         log.info("going to adapt shebang for script %s" % fn)
                         dest, code = self._recopy(base_dir, fn)
-                        code = pyshebang_reg.sub(SHEBANG_PYTHON_E, code)
+                        code = pyshebang_reg.sub(SHEBANG_STRIPPED_ENV_PYTHON, code)
                         self._write(dest, code)
             else:
                 log.info("no scripts to check for shebang")
