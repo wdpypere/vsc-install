@@ -148,7 +148,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.25'
+VERSION = '0.10.26'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -337,6 +337,7 @@ class vsc_setup(object):
         reg = re.search(r'^git@(.*?):(.*)$', res.get('url', ''))
         if reg:
             res['url'] = "https://%s/%s" % (reg.group(1), reg.group(2))
+            log.info('reg found: %s', reg.groups())
             self.private_repo = True
 
         if 'url' not in res:
@@ -346,6 +347,7 @@ class vsc_setup(object):
         reg = re.search(r'^(git|ssh)://', res.get('url', ''))
         if reg:
             res['url'] = "https://%s" % res['url'][len(reg.group(0)):]
+            log.info('reg found: %s', reg.groups())
             self.private_repo = True
 
         if 'download_url' not in res:
@@ -1268,10 +1270,13 @@ class vsc_setup(object):
         new_target['license'] = lic_name
         classifiers.append(lic_classifier)
 
-        if 'name' not in target:
-            log.info('No name defined, trying to determine it')
+        # set name, url, download_url (skip name if it was specified)
+        update = self.get_name_url(version=target['version'], license_name=lic_name)
+        if 'name' in target:
+            log.info('Name defined, not using auto determined name')
             # sets name / url and download_url
-            target.update(self.get_name_url(version=target['version'], license_name=lic_name))
+            del update['name']
+        target.update(update)
 
         if urltemplate:
             new_target['url'] = urltemplate % target
