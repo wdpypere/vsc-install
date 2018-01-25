@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2017 Ghent University
+# Copyright 2014-2018 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -51,6 +51,7 @@ class TestCase(OrigTestCase):
     ASSERT_MAX_DIFF = 100
     DIFF_OFFSET = 5 # lines of text around changes
 
+    # pylint: disable=arguments-differ
     def assertEqual(self, a, b, msg=None):
         """Make assertEqual always print useful messages"""
         try:
