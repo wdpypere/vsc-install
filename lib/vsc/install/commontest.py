@@ -207,6 +207,8 @@ class CommonTest(TestCase):
         sys.argv.append(self.setup.REPO_BASE_DIR)
 
         config = ProspectorConfig()
+        # prospector will sometimes wrongly autodetect django
+        config.libraries = []
         prospector = Prospector(config)
 
         prospector.execute()

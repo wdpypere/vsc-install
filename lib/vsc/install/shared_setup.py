@@ -620,6 +620,8 @@ class vsc_setup(object):
         few extra files we need to add for installation purposes.
         """
 
+
+        # pylint: disable=arguments-differ
         def finalize_options(self, *args, **kwargs):
             """Handle missing lib dir for scripts-only packages"""
             # the egginfo data will be deleted as part of the cleanup
