@@ -148,7 +148,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.26'
+VERSION = '0.10.27'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1251,7 +1251,7 @@ class vsc_setup(object):
         else:
             log.info('adding prospector to tests_require')
             tests_requires = new_target.setdefault('tests_require', [])
-            tests_requires.extend(['prospector >= 0.12.1', 'pylint < 1.6.0'])
+            tests_requires.extend(['prospector >= 0.12.1'])
 
         # update the cmdclass with ones from vsc_setup_klass
         # cannot do this in one go, when SHARED_TARGET is defined, vsc_setup doesn't exist yet
