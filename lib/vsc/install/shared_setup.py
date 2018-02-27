@@ -148,7 +148,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.27'
+VERSION = '0.10.28'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -327,7 +327,7 @@ class vsc_setup(object):
         res = {}
         for name, patterns in all_patterns.items():
             for pat in patterns:
-                reg = re.search(pat, txt, re.M)
+                reg = re.search(pat, txt[:10240], re.M)
                 if reg:
                     res[name] = reg.group(1)
                     log.info('found match %s %s in %s' % (name, res[name], filename))
@@ -1115,7 +1115,9 @@ class vsc_setup(object):
             fullname = self.distribution.get_fullname()
 
             url = self.distribution.get_url()
-            gh_reg = re.search(r'^.*?://([^/]*github[^/]*)/', url)
+            # this is a regex with catastrophic backtracking, so limit the length of url (takes 10 secs to process on
+            # 'a://a' + 'github' *76333 + 'it'
+            gh_reg = re.search(r'^.*?://([^/]*github[^/]*)/', url[:1024])
 
             log.info("Release commands to perform for %s" % fullname)
             if gh_reg:
