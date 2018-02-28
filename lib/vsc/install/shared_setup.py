@@ -148,7 +148,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.28'
+VERSION = '0.10.29'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1348,7 +1348,7 @@ class vsc_setup(object):
                     log.error("%s of config %s needs to be a list (not tuple or string)" % (k, target['name']))
                     sys.exit(1)
                 new_target[k] = ";".join([x[0] for x in v])
-                new_target["%s_email" % k] = ";".join([x[1] for x in v])
+                new_target["%s_email" % k] = ", ".join([x[1] for x in v])
             else:
                 if isinstance(v, dict):
                     # eg command_class
