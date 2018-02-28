@@ -1115,8 +1115,8 @@ class vsc_setup(object):
             fullname = self.distribution.get_fullname()
 
             url = self.distribution.get_url()
-            # this is a regex with catastrophic backtracking, so limit the length of url. This takes 10 secs to process on
-            # 'a://a' + 'github' *12721 + 'it'  
+            # this is a regex with catastrophic backtracking, so limit the length of url. This takes 10 secs  
+            # to process on 'a://a' + 'github' *12721 + 'it'  
             # thx to James Davis (https://github.com/davisjam) for pointing this out. 
             # this regex tries to parse the domain in the url to differentiate between https://github.com/ and 
             # private enterprise installs of github e.g. http://github.example.com/
