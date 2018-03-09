@@ -148,7 +148,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.29'
+VERSION = '0.10.31'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1115,10 +1115,10 @@ class vsc_setup(object):
             fullname = self.distribution.get_fullname()
 
             url = self.distribution.get_url()
-            # this is a regex with catastrophic backtracking, so limit the length of url. This takes 10 secs  
-            # to process on 'a://a' + 'github' *12721 + 'it'  
-            # thx to James Davis (https://github.com/davisjam) for pointing this out. 
-            # this regex tries to parse the domain in the url to differentiate between https://github.com/ and 
+            # this is a regex with catastrophic backtracking, so limit the length of url. This takes 10 secs
+            # to process on 'a://a' + 'github' *12721 + 'it'
+            # thx to James Davis (https://github.com/davisjam) for pointing this out.
+            # this regex tries to parse the domain in the url to differentiate between https://github.com/ and
             # private enterprise installs of github e.g. http://github.example.com/
             gh_reg = re.search(r'^.*?://([^/]*github[^/]*)/', url[:1024])
 
@@ -1258,7 +1258,8 @@ class vsc_setup(object):
         else:
             log.info('adding prospector to tests_require')
             tests_requires = new_target.setdefault('tests_require', [])
-            tests_requires.extend(['prospector >= 0.12.1'])
+            # add fixed pylint-django here as workaround for https://github.com/landscapeio/prospector/issues/245
+            tests_requires.extend(['prospector >= 0.12.1', 'pylint-django == 0.9.1'])
 
         # update the cmdclass with ones from vsc_setup_klass
         # cannot do this in one go, when SHARED_TARGET is defined, vsc_setup doesn't exist yet
