@@ -35,13 +35,13 @@ try:
     import __builtin__
 
 # Python 3
-except:
+except ImportError:
     import builtins as __builtin__
 
 try:
-  basestring
+    basestring
 except NameError:
-  basestring = str
+    from past.builtins import basestring
 
 import glob
 import hashlib

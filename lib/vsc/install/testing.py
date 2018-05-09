@@ -38,12 +38,12 @@ import sys
 
 try:
     basestring
-except:
-    basestring = str
+except NameError:
+    from past.builtins import basestring
 
 try:
     from cStringIO import StringIO
-except:
+except ImportError:
     from io import StringIO
 
 from unittest import TestCase as OrigTestCase
