@@ -111,8 +111,8 @@ class TestHeaders(TestCase):
         }
         for license in KNOWN_LICENSES.keys():
             res_fn = os.path.join(self.setup.REPO_TEST_DIR, 'headers', license)
-            result = open(res_fn).read()
-
+            with open(res_fn) as filey:
+                result = filey.read()
             gen_txt = gen_license_header(license, **data)
             self.assertEqual(gen_txt, result, msg='generated header for license %s as expected' % license)
             log.info('generated license header %s' % license)

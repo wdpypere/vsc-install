@@ -111,7 +111,7 @@ class TestSetup(TestCase):
         try:
             self.setup.rel_gitignore(['testdata'], base_dir=base_dir)
         except Exception as e:
-            self.assertTrue('.pyc' in e.message, msg=e)
+            self.assertTrue('.pyc' in str(e))
         else:
             self.assertTrue(False, 'rel_gitignore should have raised an exception, but did not!')
         # it should not fail if base_dir does not contain a .git folder
@@ -127,8 +127,8 @@ class TestSetup(TestCase):
         """Test action_target function, mostly w.r.t. backward compatibility."""
         def fake_setup(*args, **kwargs):
             """Fake setup function to test action_target with."""
-            print 'args: ', args
-            print 'kwargs:', kwargs
+            print('args: ', args)
+            print('kwargs:', kwargs)
 
         self.mock_stdout(True)
         action_target({'name': 'vsc-test', 'version': '1.0.0'}, setupfn=fake_setup)
@@ -150,6 +150,7 @@ class TestSetup(TestCase):
         """
         Test the prepare rpm function
         especially in effect to generating correct package list wrt excluded_pkgs_rpm
+        we assume the order of the lists doesn't matter (and sort to compare)
         """
         package = {
             'name': 'vsc-test',
@@ -161,7 +162,12 @@ class TestSetup(TestCase):
         libdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), './testdata')
         setup.REPO_LIB_DIR = libdir
         setup.prepare_rpm(package)
-        self.assertEqual(setup.SHARED_TARGET['packages'], ['vsc', 'vsc.test'])
+
+        # Generate list of packages, sorted
+        package_list = list(setup.SHARED_TARGET['packages'])
+        package_list.sort()
+
+        self.assertEqual(package_list, ['vsc', 'vsc.test'])
         package = {
             'name': 'vsc-test',
             'excluded_pkgs_rpm': ['vsc', 'vsc.test'],
@@ -170,7 +176,12 @@ class TestSetup(TestCase):
         setup = vsc_setup()
         setup.REPO_LIB_DIR = libdir
         setup.prepare_rpm(package)
-        self.assertEqual(setup.SHARED_TARGET['packages'], ['vsc', 'vsc.test'])
+
+        # Generate list of packages, sorted
+        package_list = list(setup.SHARED_TARGET['packages'])
+        package_list.sort()
+
+        self.assertEqual(package_list, ['vsc', 'vsc.test'])
 
     def test_parse_target(self):
         """Test for parse target"""

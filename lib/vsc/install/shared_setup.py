@@ -30,7 +30,19 @@ Shared module for vsc software setup
 @author: Stijn De Weirdt (Ghent University)
 @author: Andy Georges (Ghent University)
 """
-import __builtin__
+# Python 2
+try:
+    import __builtin__
+
+# Python 3
+except:
+    import builtins as __builtin__
+
+try:
+  basestring
+except NameError:
+  basestring = str
+
 import glob
 import hashlib
 import inspect
@@ -109,7 +121,7 @@ if log.Log.__name__ != 'NewLog':
             try:
                 return self._orig_log(self, level, newmsg, args)
             except Exception:
-                print newmsg % args
+                print(newmsg % args)
 
     log.Log = NewLog
     log._global_log = NewLog()
@@ -361,13 +373,15 @@ class vsc_setup(object):
         if len(res) != 3:
             raise Exception("Cannot determine name, url and download url from filename %s: got %s" % (filename, res))
         else:
+            keepers = dict()
             for name, value in res.items():
                 if value is None:
                     log.info('Removing None %s' % name)
-                    res.pop(name)
+                else:
+                    keepers[name] = value
 
-            log.info('get_name_url returns %s' % res)
-            return res
+            log.info('get_name_url returns %s' % keepers)
+            return keepers
 
     def rel_gitignore(self, paths, base_dir=None):
         """
@@ -1047,7 +1061,7 @@ class vsc_setup(object):
 
         def _print(self, cmd):
             """Print is evil, cmd is list"""
-            print ' '.join(cmd)
+            print(' '.join(cmd))
 
         def git_tag(self):
             """Tag the version in git"""
@@ -1201,10 +1215,17 @@ class vsc_setup(object):
             klass = _fvs('sanitize')
             return ",".join([klass.sanitize(r) for r in name])
 
+
+
     @staticmethod
     def get_md5sum(filename):
         """Use this function to compute the md5sum in the KNOWN_LICENSES hash"""
-        return hashlib.md5(open(filename).read()).hexdigest()
+        hasher = hashlib.md5()
+        with open(filename, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
 
     def get_license(self, license_name=None):
         """
@@ -1254,13 +1275,15 @@ class vsc_setup(object):
 
         # update the cmdclass with ones from vsc_setup_klass
         # cannot do this in one go, when SHARED_TARGET is defined, vsc_setup doesn't exist yet
+        keepers = new_target.copy()
         for name, klass in new_target['cmdclass'].items():
             try:
                 new_target['cmdclass'][name] = getattr(vsc_setup_klass, klass.__name__)
             except AttributeError:
-                del new_target['cmdclass'][name]
+                print("Not including new_target['cmdclass']['%s']" %name)
 
         # prepare classifiers
+        new_target = keepers
         classifiers = new_target.setdefault('classifiers', [])
 
         # license info
@@ -1385,7 +1408,7 @@ class vsc_setup(object):
                                                            dep, depversion])]
 
         log.debug("New target = %s" % (new_target))
-        print new_target
+        print(new_target)
         return new_target
 
     @staticmethod
@@ -1410,8 +1433,8 @@ class vsc_setup(object):
 
         try:
             setup_cfg = open('setup.cfg', 'w')  # and truncate
-        except (IOError, OSError), err:
-            print "Cannot create setup.cfg for target %s: %s" % (target['name'], err)
+        except (IOError, OSError) as err:
+            print("Cannot create setup.cfg for target %s: %s" % (target['name'], err))
             sys.exit(1)
 
         klass = _fvs('build_setup_cfg_for_bdist_rpm')

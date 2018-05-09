@@ -36,7 +36,16 @@ import pprint
 import re
 import sys
 
-from cStringIO import StringIO
+try:
+    basestring
+except:
+    basestring = str
+
+try:
+    from cStringIO import StringIO
+except:
+    from io import StringIO
+
 from unittest import TestCase as OrigTestCase
 from vsc.install.headers import nicediff
 
@@ -54,6 +63,7 @@ class TestCase(OrigTestCase):
     # pylint: disable=arguments-differ
     def assertEqual(self, a, b, msg=None):
         """Make assertEqual always print useful messages"""
+  
         try:
             super(TestCase, self).assertEqual(a, b)
         except AssertionError as e:
@@ -120,7 +130,7 @@ class TestCase(OrigTestCase):
             str_kwargs = ['='.join([k, str(v)]) for (k, v) in kwargs.items()]
             str_args = ', '.join(map(str, args) + str_kwargs)
             self.assertTrue(False, "Expected errors with %s(%s) call should occur" % (call.__name__, str_args))
-        except error, err:
+        except error as err:
             msg = self.convert_exception_to_str(err)
             if isinstance(regex, basestring):
                 regex = re.compile(regex)
