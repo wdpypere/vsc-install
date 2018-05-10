@@ -981,7 +981,10 @@ class vsc_setup(object):
                 __import__(DEFAULT_TEST_SUITE)
             self.reload_modules(DEFAULT_TEST_SUITE)
 
-            res = TestCommand.run_tests(self)
+            try:
+                res = TestCommand.run_tests(self)
+            except Exception:
+                res = None
 
             # cleanup any diretcories created
             for directory in cleanup:
@@ -1504,7 +1507,6 @@ class vsc_setup(object):
 
         self.prepare_rpm(target)
         x = self.parse_target(target, urltemplate)
-
         setupfn(**x)
 
 
