@@ -93,8 +93,8 @@ def get_header(filename, script=False):
     if not os.path.isfile(filename):
         raise Exception('get_header filename %s not found' % filename)
 
-    with open(filename) as filey:
-        txt = filey.read()
+    with open(filename) as fh:
+        txt = fh.read()
 
     blocks = HEADER_REGEXP.split(txt)
     if len(blocks) == 1:
@@ -226,8 +226,8 @@ def check_header(filename, script=False, write=False):
 
     if write and changed:
         log.info('write enabled and different header. Going to modify file %s' % filename)
-        with open(filename) as filey:
-            wholetext = filey.read()
+        with open(filename) as fh:
+            wholetext = fh.read()
         newtext = ''
         if shebang is not None:
             newtext += shebang + "\n"

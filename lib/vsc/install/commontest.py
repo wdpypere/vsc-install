@@ -89,6 +89,7 @@ class CommonTest(TestCase):
         # 'wrong-import-position',  # not sure about this, these usually have a good reason
         'Locally disabling',  # shows up when you locally disable a warning, this is the point
         'Useless suppression',  # shows up when you locally disable/suppress a warning, this is the point
+        'unclosed file' # These are super prevalent anyway and ignored, so it's not meaningful information
     ]
     # to dissable any of these warnings in a block, you can do things like add a comment # pylint: disable=C0321
     PROSPECTOR_WHITELIST = [

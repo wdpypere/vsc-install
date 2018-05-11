@@ -110,8 +110,8 @@ class TestSetup(TestCase):
         base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), './testdata')
         try:
             self.setup.rel_gitignore(['testdata'], base_dir=base_dir)
-        except Exception as e:
-            self.assertTrue('.pyc' in str(e))
+        except Exception as err:
+            self.assertTrue('.pyc' in str(err))
         else:
             self.assertTrue(False, 'rel_gitignore should have raised an exception, but did not!')
         # it should not fail if base_dir does not contain a .git folder
@@ -127,22 +127,22 @@ class TestSetup(TestCase):
         """Test action_target function, mostly w.r.t. backward compatibility."""
         def fake_setup(*args, **kwargs):
             """Fake setup function to test action_target with."""
-            print('args: ', args)
-            print('kwargs:', kwargs)
+            print('args: %s' %args)
+            print('kwargs: %s' %kwargs)
 
         self.mock_stdout(True)
         action_target({'name': 'vsc-test', 'version': '1.0.0'}, setupfn=fake_setup)
         txt = self.get_stdout()
         self.mock_stdout(False)
-        self.assertTrue(re.search(r"args:.*\(\)", txt, re.M))
-
-        # self.assertTrue(re.search(r"kwargs:.*\{.*'name':.*'vsc-test'", txt, re.M))
+        #self.assertTrue(re.search(r"args:.*\(\)", txt, re.M))
+        self.assertTrue(re.search(r"kwargs:.*\{.*'name':.*'vsc-test'", txt, re.M))
 
         self.mock_stdout(True)
         action_target({'name': 'vsc-test', 'version': '1.0.0'}, setupfn=fake_setup, urltemplate='http://example.com/%(name)s')
         txt = self.get_stdout()
         self.mock_stdout(False)
-        self.assertTrue(re.search(r"args:.*\(\)", txt, re.M))
+        self.assertTrue(re.search(r"kwargs:.*\{.*'name':.*'vsc-test'", txt, re.M))
+        #self.assertTrue(re.search(r"args:.*\(\)", txt, re.M))
         # this doesn't seem to test what you think it does? stdout is nog mocked correctly
         # self.assertTrue(re.search(r"^kwargs:\s*\{.*'url':\s*'http://example.com/vsc-test'", txt, re.M))
 
@@ -163,11 +163,7 @@ class TestSetup(TestCase):
         setup.REPO_LIB_DIR = libdir
         setup.prepare_rpm(package)
 
-        # Generate list of packages, sorted
-        package_list = list(setup.SHARED_TARGET['packages'])
-        package_list.sort()
-
-        self.assertEqual(package_list, ['vsc', 'vsc.test'])
+        self.assertEqual(sorted(setup.SHARED_TARGET['packages']), ['vsc', 'vsc.test'])
         package = {
             'name': 'vsc-test',
             'excluded_pkgs_rpm': ['vsc', 'vsc.test'],
@@ -177,11 +173,7 @@ class TestSetup(TestCase):
         setup.REPO_LIB_DIR = libdir
         setup.prepare_rpm(package)
 
-        # Generate list of packages, sorted
-        package_list = list(setup.SHARED_TARGET['packages'])
-        package_list.sort()
-
-        self.assertEqual(package_list, ['vsc', 'vsc.test'])
+        self.assertEqual(sorted(setup.SHARED_TARGET['packages']), ['vsc', 'vsc.test'])
 
     def test_parse_target(self):
         """Test for parse target"""
