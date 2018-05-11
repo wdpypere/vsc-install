@@ -37,14 +37,14 @@ import re
 import sys
 
 try:
-    basestring
+    basestring  # Python 2
 except NameError:
-    from past.builtins import basestring
+    from past.builtins import basestring # Python 3
 
 try:
-    from cStringIO import StringIO
+    from cStringIO import StringIO # Python 2
 except ImportError:
-    from io import StringIO
+    from io import StringIO # Python 3
 
 from unittest import TestCase as OrigTestCase
 from vsc.install.headers import nicediff

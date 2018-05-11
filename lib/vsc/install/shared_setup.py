@@ -373,7 +373,7 @@ class vsc_setup(object):
         if len(res) != 3:
             raise Exception("Cannot determine name, url and download url from filename %s: got %s" % (filename, res))
         else:
-            keepers = dict()
+            keepers = {}
             for name, value in res.items():
                 if value is None:
                     log.info('Removing None %s' % name)
@@ -981,10 +981,7 @@ class vsc_setup(object):
                 __import__(DEFAULT_TEST_SUITE)
             self.reload_modules(DEFAULT_TEST_SUITE)
 
-            try:
-                res = TestCommand.run_tests(self)
-            except Exception:
-                res = None
+            res = TestCommand.run_tests(self)
 
             # cleanup any diretcories created
             for directory in cleanup:
@@ -1224,8 +1221,8 @@ class vsc_setup(object):
     def get_md5sum(filename):
         """Use this function to compute the md5sum in the KNOWN_LICENSES hash"""
         hasher = hashlib.md5()
-        with open(filename, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
+        with open(filename, "rb") as fh:
+            for chunk in iter(lambda: fh.read(4096), b""):
                 hasher.update(chunk)
         return hasher.hexdigest()
 
@@ -1279,11 +1276,13 @@ class vsc_setup(object):
         # update the cmdclass with ones from vsc_setup_klass
         # cannot do this in one go, when SHARED_TARGET is defined, vsc_setup doesn't exist yet
         keepers = new_target.copy()
-        for name, klass in new_target['cmdclass'].items():
+        for name in list(new_target['cmdclass']):
+            klass = new_target['cmdclass'][name]
             try:
-                new_target['cmdclass'][name] = getattr(vsc_setup_klass, klass.__name__)
+                keepers['cmdclass'][name] = getattr(vsc_setup_klass, klass.__name__)
             except AttributeError:
-                print("Not including new_target['cmdclass']['%s']" %name)
+                del keepers['cmdclass'][name]
+                log.info("Not including new_target['cmdclass']['%s']" %name)
 
         # prepare classifiers
         new_target = keepers
