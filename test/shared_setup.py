@@ -127,15 +127,15 @@ class TestSetup(TestCase):
         """Test action_target function, mostly w.r.t. backward compatibility."""
         def fake_setup(*args, **kwargs):
             """Fake setup function to test action_target with."""
-            print('args: %s' %args)
+            print('args: %s' %''.join(args))
             print('kwargs: %s' %kwargs)
 
         self.mock_stdout(True)
         action_target({'name': 'vsc-test', 'version': '1.0.0'}, setupfn=fake_setup)
         txt = self.get_stdout()
         self.mock_stdout(False)
-        #self.assertTrue(re.search(r"args:.*\(\)", txt, re.M))
-        self.assertTrue(re.search(r"kwargs:.*\{.*'name':.*'vsc-test'", txt, re.M))
+        self.assertTrue(re.search(r"args:.*\(\)", txt, re.M))
+        #self.assertTrue(re.search(r"kwargs:.*\{.*'name':.*'vsc-test'", txt, re.M))
 
         self.mock_stdout(True)
         action_target({'name': 'vsc-test', 'version': '1.0.0'}, setupfn=fake_setup, urltemplate='http://example.com/%(name)s')
