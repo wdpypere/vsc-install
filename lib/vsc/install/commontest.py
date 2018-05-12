@@ -102,7 +102,7 @@ class CommonTest(TestCase):
         'undefined',
         'no-value-for-parameter',
         'dangerous-default-value',
-        'redefined-builtin',
+        'Redefining built-in 'basestring'",
         'bare-except',
         'E713',  # not 'c' in d: -> 'c' not in d:
         'arguments-differ',
