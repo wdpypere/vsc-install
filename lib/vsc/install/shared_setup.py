@@ -1276,7 +1276,7 @@ class vsc_setup(object):
         # update the cmdclass with ones from vsc_setup_klass
         # cannot do this in one go, when SHARED_TARGET is defined, vsc_setup doesn't exist yet
         keepers = new_target.copy()
-        for name in new_target['cmdclass']:
+        for name in list(new_target['cmdclass']):
             klass = new_target['cmdclass'][name]
             try:
                 keepers['cmdclass'][name] = getattr(vsc_setup_klass, klass.__name__)
