@@ -1282,7 +1282,7 @@ class vsc_setup(object):
                 keepers['cmdclass'][name] = getattr(vsc_setup_klass, klass.__name__)
             except AttributeError:
                 del keepers['cmdclass'][name]
-                log.info("Not including new_target['cmdclass']['%s']" %name)
+                log.info("Not including new_target['cmdclass']['%s']" % name)
 
         # prepare classifiers
         new_target = keepers
