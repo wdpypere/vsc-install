@@ -39,12 +39,12 @@ import sys
 try:
     basestring  # Python 2
 except NameError:
-    basestring = str # Python 3
+    basestring = (bytes, str)  # Python 3
 
 try:
-    from cStringIO import StringIO # Python 2
+    from cStringIO import StringIO  # Python 2
 except ImportError:
-    from io import StringIO # Python 3
+    from io import StringIO  # Python 3
 
 from unittest import TestCase as OrigTestCase
 from vsc.install.headers import nicediff

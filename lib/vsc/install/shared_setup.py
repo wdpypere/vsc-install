@@ -39,9 +39,9 @@ except ImportError:
     import builtins as __builtin__
 
 try:
-    basestring
+    basestring  # Python 2
 except NameError:
-    basestring = str
+    basestring = (bytes, str)  # Python 3
 
 import glob
 import hashlib
@@ -1275,17 +1275,17 @@ class vsc_setup(object):
 
         # update the cmdclass with ones from vsc_setup_klass
         # cannot do this in one go, when SHARED_TARGET is defined, vsc_setup doesn't exist yet
-        keepers = new_target.copy()
-        for name in list(new_target['cmdclass']):
+        keepers = new_target['cmdclass'].copy()
+        for name in new_target['cmdclass']:
             klass = new_target['cmdclass'][name]
             try:
-                keepers['cmdclass'][name] = getattr(vsc_setup_klass, klass.__name__)
+                keepers[name] = getattr(vsc_setup_klass, klass.__name__)
             except AttributeError:
-                del keepers['cmdclass'][name]
+                del keepers[name]
                 log.info("Not including new_target['cmdclass']['%s']" % name)
+        new_target['cmdclass'] = keepers
 
         # prepare classifiers
-        new_target = keepers
         classifiers = new_target.setdefault('classifiers', [])
 
         # license info
