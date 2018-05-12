@@ -127,7 +127,7 @@ class TestSetup(TestCase):
         """Test action_target function, mostly w.r.t. backward compatibility."""
         def fake_setup(*args, **kwargs):
             """Fake setup function to test action_target with."""
-            print('args: %s' %''.join(args))
+            print('args: %s' % str(args))
             print('kwargs: %s' %kwargs)
 
         self.mock_stdout(True)
