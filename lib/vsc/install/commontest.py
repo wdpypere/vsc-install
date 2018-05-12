@@ -64,7 +64,7 @@ if sys.version_info >= (2, 7):
     except ImportError:
         pass
 
-# Prospector doesn;t have support for 3.5 / 3.6
+# Prospector doesn't have support for 3.5 / 3.6
 # https://github.com/PyCQA/prospector/issues/233
 if sys.version_info >= (3, 5):
     HAS_PROTECTOR = False
