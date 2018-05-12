@@ -1,0 +1,8 @@
+language: python
+python:
+  - "2.6"
+  - "2.7"
+script:
+  # 'hpcugent' is a mandatory remote for setup.py to work (because of get_name_url)
+  - git remote add hpcugent https://github.com/hpcugent/vsc-install.git
+  - python setup.py test
