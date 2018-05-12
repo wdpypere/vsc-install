@@ -41,7 +41,7 @@ except ImportError:
 try:
     basestring
 except NameError:
-    from past.builtins import basestring
+    basestring = str
 
 import glob
 import hashlib

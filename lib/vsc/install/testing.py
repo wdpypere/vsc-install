@@ -39,7 +39,7 @@ import sys
 try:
     basestring  # Python 2
 except NameError:
-    from past.builtins import basestring # Python 3
+    basestring = str # Python 3
 
 try:
     from cStringIO import StringIO # Python 2

@@ -5,10 +5,6 @@ python:
   - "3.5"
   - "3.6"
 
-install:
-  - echo "Install for Python Version ${TRAVIS_PYTHON_VERSION}"
-  - if [[ $TRAVIS_PYTHON_VERSION == 3.* ]]; then pip install future; fi
-
 script:
   # 'hpcugent' is a mandatory remote for setup.py to work (because of get_name_url)
   - git remote add hpcugent https://github.com/hpcugent/vsc-install.git
