@@ -93,16 +93,15 @@ class CommonTest(TestCase):
     #   Whitelist: if match, fail test
     PROSPECTOR_BLACKLIST = [
         # 'wrong-import-position',  # not sure about this, these usually have a good reason
-        'Redefining built-in',
+        "Redefining built-in 'basestring'",  # basestring is defined when running on top of Python 3.x
         'Locally disabling',  # shows up when you locally disable a warning, this is the point
-        'Useless suppression'  # shows up when you locally disable/suppress a warning, this is the point
+        'Useless suppression',  # shows up when you locally disable/suppress a warning, this is the point
     ]
     # to dissable any of these warnings in a block, you can do things like add a comment # pylint: disable=C0321
     PROSPECTOR_WHITELIST = [
         'undefined',
         'no-value-for-parameter',
         'dangerous-default-value',
-        "Redefining built-in 'basestring'",
         'bare-except',
         'E713',  # not 'c' in d: -> 'c' not in d:
         'arguments-differ',
@@ -140,7 +139,7 @@ class CommonTest(TestCase):
     PROSPECTOR_OPTIONS = [
         '--strictness', 'medium',
         '--max-line-length', '120',
-        '--absolute-paths'
+        '--absolute-paths',
     ]
 
     def setUp(self):
