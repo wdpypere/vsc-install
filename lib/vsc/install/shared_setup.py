@@ -36,7 +36,6 @@ import sys
 if sys.version_info < (3, 0):
     import __builtin__
 else:
-    basestring = (bytes, str)    # make sure 'basestring' (a builtin in Python 2.x) is defined when using Python 3
     import builtins as __builtin__  # make builtins accessible via same way as in Python 3
 
 import glob
@@ -1191,8 +1190,12 @@ class vsc_setup(object):
                 name starts with 'vsc'
                 and name does not start with python-
         """
-        if isinstance(name, basestring):
 
+        if isinstance(name, (list, tuple)):
+            klass = _fvs('sanitize')
+            return ",".join([klass.sanitize(r) for r in name])
+
+        else:
             if os.environ.get('VSC_RPM_PYTHON', 'NOT_ONE') == '1':
                 # hardcoded prefix map
                 for pydep, rpmname in PYTHON_BDIST_RPM_PREFIX_MAP.items():
@@ -1206,9 +1209,7 @@ class vsc_setup(object):
                 if p_p:
                     name = 'python-%s' % name
             return name
-        else:
-            klass = _fvs('sanitize')
-            return ",".join([klass.sanitize(r) for r in name])
+
 
 
 

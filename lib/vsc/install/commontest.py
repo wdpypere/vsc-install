@@ -48,7 +48,7 @@ from vsc.install.testing import TestCase
 
 # No prospector in py26 or earlier
 # Also not enforced on installation
-HAS_PROTECTOR = False
+HAS_PROSPECTOR = False
 Prospector = None
 ProspectorConfig = None
 
@@ -58,7 +58,7 @@ if sys.version_info >= (2, 7):
         _old_basicconfig = logging.basicConfig
         from prospector.run import Prospector
         from prospector.config import ProspectorConfig
-        HAS_PROTECTOR = True
+        HAS_PROSPECTOR = True
         # restore in case pyroma is missing (see https://github.com/landscapeio/prospector/pull/156)
         logging.basicConfig = _old_basicconfig
     except ImportError:
@@ -67,7 +67,7 @@ if sys.version_info >= (2, 7):
 # Prospector doesn't have support for 3.5 / 3.6
 # https://github.com/PyCQA/prospector/issues/233
 if sys.version_info >= (3, 5):
-    HAS_PROTECTOR = False
+    HAS_PROSPECTOR = False
 
 
 class CommonTest(TestCase):
@@ -93,7 +93,6 @@ class CommonTest(TestCase):
     #   Whitelist: if match, fail test
     PROSPECTOR_BLACKLIST = [
         # 'wrong-import-position',  # not sure about this, these usually have a good reason
-        "Redefining built-in 'basestring'",  # basestring is defined when running on top of Python 3.x
         'Locally disabling',  # shows up when you locally disable a warning, this is the point
         'Useless suppression',  # shows up when you locally disable/suppress a warning, this is the point
         'redefined-builtin',
@@ -196,7 +195,7 @@ class CommonTest(TestCase):
         """Run prospector.run.main, but apply white/blacklists to the results"""
         orig_expand_default = optparse.HelpFormatter.expand_default
 
-        if not HAS_PROTECTOR:
+        if not HAS_PROSPECTOR:
             if sys.version_info < (2, 7):
                 log.info('No protector tests are ran on py26 or older.')
             else:

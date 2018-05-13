@@ -37,11 +37,6 @@ import re
 import sys
 
 try:
-    basestring  # Python 2
-except NameError:
-    basestring = (bytes, str)  # Python 3
-
-try:
     from cStringIO import StringIO  # Python 2
 except ImportError:
     from io import StringIO  # Python 3
@@ -72,11 +67,11 @@ class TestCase(OrigTestCase):
             else:
                 msg = "%s: %s" % (msg, e)
 
-            if isinstance(a, basestring):
+            if isinstance(a, str):
                 txta = a
             else:
                 txta = pprint.pformat(a)
-            if isinstance(b, basestring):
+            if isinstance(b, str):
                 txtb = b
             else:
                 txtb = pprint.pformat(b)
@@ -132,7 +127,7 @@ class TestCase(OrigTestCase):
             self.assertTrue(False, "Expected errors with %s(%s) call should occur" % (call.__name__, str_args))
         except error as err:
             msg = self.convert_exception_to_str(err)
-            if isinstance(regex, basestring):
+            if isinstance(regex, str):
                 regex = re.compile(regex)
             self.assertTrue(regex.search(msg), "Pattern '%s' is found in '%s'" % (regex.pattern, msg))
 
