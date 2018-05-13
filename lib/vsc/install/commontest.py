@@ -95,7 +95,6 @@ class CommonTest(TestCase):
         # 'wrong-import-position',  # not sure about this, these usually have a good reason
         'Locally disabling',  # shows up when you locally disable a warning, this is the point
         'Useless suppression',  # shows up when you locally disable/suppress a warning, this is the point
-        'redefined-builtin',
     ]
     # to dissable any of these warnings in a block, you can do things like add a comment # pylint: disable=C0321
     PROSPECTOR_WHITELIST = [
@@ -130,6 +129,7 @@ class CommonTest(TestCase):
         'old-ne-operator',  # don't use <> as not equal operator, use !=
         'backtick',  # don't use `variable` to turn a variable in a string, use the str() function
         'old-raise-syntax',  # sed when the alternate raise syntax raise foo, bar is used instead of raise foo(bar) .
+        'redefined-builtin',
         # once we get ready to really move to python3
         # 'print-statement',  # use print() and from future import __print__ instead of print
         # 'metaclass-assignment',  # __metaclass__ doesn't exist anymore in python3
