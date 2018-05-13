@@ -96,6 +96,7 @@ class CommonTest(TestCase):
         "Redefining built-in 'basestring'",  # basestring is defined when running on top of Python 3.x
         'Locally disabling',  # shows up when you locally disable a warning, this is the point
         'Useless suppression',  # shows up when you locally disable/suppress a warning, this is the point
+        'redefined-builtin',
     ]
     # to dissable any of these warnings in a block, you can do things like add a comment # pylint: disable=C0321
     PROSPECTOR_WHITELIST = [

@@ -30,18 +30,14 @@ Shared module for vsc software setup
 @author: Stijn De Weirdt (Ghent University)
 @author: Andy Georges (Ghent University)
 """
-# Python 2
-try:
+
+import sys
+
+if sys.version_info < (3, 0):
     import __builtin__
-
-# Python 3
-except ImportError:
-    import builtins as __builtin__
-
-try:
-    basestring  # Python 2
-except NameError:
-    basestring = (bytes, str)  # Python 3
+else:
+    basestring = (bytes, str)    # make sure 'basestring' (a builtin in Python 2.x) is defined when using Python 3
+    import builtins as __builtin__  # make builtins accessible via same way as in Python 3
 
 import glob
 import hashlib
@@ -49,7 +45,6 @@ import inspect
 import json
 import os
 import shutil
-import sys
 import re
 
 import setuptools.command.test
