@@ -131,8 +131,8 @@ class CommonTest(TestCase):
         'old-raise-syntax',  # sed when the alternate raise syntax raise foo, bar is used instead of raise foo(bar) .
         'redefined-builtin',
         # once we get ready to really move to python3
-        # 'print-statement',  # use print() and from future import __print__ instead of print
-        # 'metaclass-assignment',  # __metaclass__ doesn't exist anymore in python3
+        'print-statement',  # use print() and from future import __print__ instead of print
+        'metaclass-assignment',  # __metaclass__ doesn't exist anymore in python3
     ]
 
     # Prospector commandline options (positional path is added automatically)
