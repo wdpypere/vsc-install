@@ -24,6 +24,9 @@
 # along with vsc-install. If not, see <http://www.gnu.org/licenses/>.
 #
 """Test shared_setup"""
+
+from __future__ import print_function
+
 import os
 import re
 
