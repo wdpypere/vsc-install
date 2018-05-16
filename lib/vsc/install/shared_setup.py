@@ -31,6 +31,7 @@ Shared module for vsc software setup
 @author: Andy Georges (Ghent University)
 """
 
+from __future__ import print_function
 import sys
 
 if sys.version_info < (3, 0):
