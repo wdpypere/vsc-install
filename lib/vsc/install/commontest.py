@@ -33,6 +33,7 @@ Running python setup.py test will pick this up and do its magic
 
 @author: Stijn De Weirdt (Ghent University)
 """
+
 import logging
 import optparse
 import os
@@ -47,7 +48,7 @@ from vsc.install.testing import TestCase
 
 # No prospector in py26 or earlier
 # Also not enforced on installation
-HAS_PROTECTOR = False
+HAS_PROSPECTOR = False
 Prospector = None
 ProspectorConfig = None
 
@@ -57,11 +58,16 @@ if sys.version_info >= (2, 7):
         _old_basicconfig = logging.basicConfig
         from prospector.run import Prospector
         from prospector.config import ProspectorConfig
-        HAS_PROTECTOR = True
+        HAS_PROSPECTOR = True
         # restore in case pyroma is missing (see https://github.com/landscapeio/prospector/pull/156)
         logging.basicConfig = _old_basicconfig
     except ImportError:
         pass
+
+# Prospector doesn't have support for 3.5 / 3.6
+# https://github.com/PyCQA/prospector/issues/233
+if sys.version_info >= (3, 5):
+    HAS_PROSPECTOR = False
 
 
 class CommonTest(TestCase):
@@ -95,7 +101,6 @@ class CommonTest(TestCase):
         'undefined',
         'no-value-for-parameter',
         'dangerous-default-value',
-        'redefined-builtin',
         'bare-except',
         'E713',  # not 'c' in d: -> 'c' not in d:
         'arguments-differ',
@@ -124,9 +129,10 @@ class CommonTest(TestCase):
         'old-ne-operator',  # don't use <> as not equal operator, use !=
         'backtick',  # don't use `variable` to turn a variable in a string, use the str() function
         'old-raise-syntax',  # sed when the alternate raise syntax raise foo, bar is used instead of raise foo(bar) .
+        'redefined-builtin',
         # once we get ready to really move to python3
-        # 'print-statement',  # use print() and from future import __print__ instead of print
-        # 'metaclass-assignment',  # __metaclass__ doesn't exist anymore in python3
+        'print-statement',  # use print() and from future import __print__ instead of print
+        'metaclass-assignment',  # __metaclass__ doesn't exist anymore in python3
     ]
 
     # Prospector commandline options (positional path is added automatically)
@@ -189,7 +195,7 @@ class CommonTest(TestCase):
         """Run prospector.run.main, but apply white/blacklists to the results"""
         orig_expand_default = optparse.HelpFormatter.expand_default
 
-        if not HAS_PROTECTOR:
+        if not HAS_PROSPECTOR:
             if sys.version_info < (2, 7):
                 log.info('No protector tests are ran on py26 or older.')
             else:

@@ -93,7 +93,8 @@ def get_header(filename, script=False):
     if not os.path.isfile(filename):
         raise Exception('get_header filename %s not found' % filename)
 
-    txt = open(filename).read()
+    with open(filename) as fh:
+        txt = fh.read()
 
     blocks = HEADER_REGEXP.split(txt)
     if len(blocks) == 1:
@@ -162,10 +163,9 @@ def begin_end_from_header(header):
 
 def _write(filename, content):
     """Simple wrapper around open().write for unittesting"""
-    fh = open(filename, 'w')
-    fh.write(content)
-    fh.close()
-
+    with open(filename, 'w') as fh:
+        fh.write(content)
+    
 
 def check_header(filename, script=False, write=False):
     """
@@ -226,7 +226,8 @@ def check_header(filename, script=False, write=False):
 
     if write and changed:
         log.info('write enabled and different header. Going to modify file %s' % filename)
-        wholetext = open(filename).read()
+        with open(filename) as fh:
+            wholetext = fh.read()
         newtext = ''
         if shebang is not None:
             newtext += shebang + "\n"

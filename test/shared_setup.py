@@ -24,6 +24,9 @@
 # along with vsc-install. If not, see <http://www.gnu.org/licenses/>.
 #
 """Test shared_setup"""
+
+from __future__ import print_function
+
 import os
 import re
 
@@ -110,8 +113,8 @@ class TestSetup(TestCase):
         base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), './testdata')
         try:
             self.setup.rel_gitignore(['testdata'], base_dir=base_dir)
-        except Exception as e:
-            self.assertTrue('.pyc' in e.message, msg=e)
+        except Exception as err:
+            self.assertTrue('.pyc' in str(err))
         else:
             self.assertTrue(False, 'rel_gitignore should have raised an exception, but did not!')
         # it should not fail if base_dir does not contain a .git folder
@@ -127,14 +130,13 @@ class TestSetup(TestCase):
         """Test action_target function, mostly w.r.t. backward compatibility."""
         def fake_setup(*args, **kwargs):
             """Fake setup function to test action_target with."""
-            print 'args: ', args
-            print 'kwargs:', kwargs
+            print('args: %s' % str(args))
+            print('kwargs: %s' % kwargs)
 
         self.mock_stdout(True)
         action_target({'name': 'vsc-test', 'version': '1.0.0'}, setupfn=fake_setup)
         txt = self.get_stdout()
         self.mock_stdout(False)
-
         self.assertTrue(re.search(r"^args:\s*\(\)", txt, re.M))
         self.assertTrue(re.search(r"^kwargs:\s*\{.*'name':\s*'vsc-test'", txt, re.M))
 
@@ -150,6 +152,7 @@ class TestSetup(TestCase):
         """
         Test the prepare rpm function
         especially in effect to generating correct package list wrt excluded_pkgs_rpm
+        we assume the order of the lists doesn't matter (and sort to compare)
         """
         package = {
             'name': 'vsc-test',
@@ -161,7 +164,8 @@ class TestSetup(TestCase):
         libdir = os.path.join(os.path.dirname(os.path.realpath(__file__)), './testdata')
         setup.REPO_LIB_DIR = libdir
         setup.prepare_rpm(package)
-        self.assertEqual(setup.SHARED_TARGET['packages'], ['vsc', 'vsc.test'])
+
+        self.assertEqual(sorted(setup.SHARED_TARGET['packages']), ['vsc', 'vsc.test'])
         package = {
             'name': 'vsc-test',
             'excluded_pkgs_rpm': ['vsc', 'vsc.test'],
@@ -170,7 +174,8 @@ class TestSetup(TestCase):
         setup = vsc_setup()
         setup.REPO_LIB_DIR = libdir
         setup.prepare_rpm(package)
-        self.assertEqual(setup.SHARED_TARGET['packages'], ['vsc', 'vsc.test'])
+
+        self.assertEqual(sorted(setup.SHARED_TARGET['packages']), ['vsc', 'vsc.test'])
 
     def test_parse_target(self):
         """Test for parse target"""
