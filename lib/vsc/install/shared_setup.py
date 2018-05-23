@@ -1359,7 +1359,7 @@ class vsc_setup(object):
         else:
             log.info('adding prospector to tests_require')
             tests_requires = new_target.setdefault('tests_require', [])
-            tests_requires.extend(['prospector >= 0.12.1', 'pylint-django == 0.9.1'])
+            tests_requires.extend(['prospector >= 0.12.1', 'pylint<2.0.0', 'pyflakes<1.7.0,>=1.5.0'])
             new_target['tests_require'] = tests_requires
 
         if self.private_repo:
