@@ -30,14 +30,21 @@ Shared module for vsc software setup
 @author: Stijn De Weirdt (Ghent University)
 @author: Andy Georges (Ghent University)
 """
-import __builtin__
+
+from __future__ import print_function
+import sys
+
+if sys.version_info < (3, 0):
+    import __builtin__
+else:
+    import builtins as __builtin__  # make builtins accessible via same way as in Python 3
+
 import glob
 import hashlib
 import inspect
 import json
 import os
 import shutil
-import sys
 import re
 
 import setuptools.command.test
@@ -109,7 +116,7 @@ if log.Log.__name__ != 'NewLog':
             try:
                 return self._orig_log(self, level, newmsg, args)
             except Exception:
-                print newmsg % args
+                print(newmsg % args)
 
     log.Log = NewLog
     log._global_log = NewLog()
@@ -148,7 +155,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.10.33'
+VERSION = '0.11.1'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -361,13 +368,15 @@ class vsc_setup(object):
         if len(res) != 3:
             raise Exception("Cannot determine name, url and download url from filename %s: got %s" % (filename, res))
         else:
+            keepers = {}
             for name, value in res.items():
                 if value is None:
                     log.info('Removing None %s' % name)
-                    res.pop(name)
+                else:
+                    keepers[name] = value
 
-            log.info('get_name_url returns %s' % res)
-            return res
+            log.info('get_name_url returns %s' % keepers)
+            return keepers
 
     def rel_gitignore(self, paths, base_dir=None):
         """
@@ -1047,7 +1056,7 @@ class vsc_setup(object):
 
         def _print(self, cmd):
             """Print is evil, cmd is list"""
-            print ' '.join(cmd)
+            print(' '.join(cmd))
 
         def git_tag(self):
             """Tag the version in git"""
@@ -1182,8 +1191,12 @@ class vsc_setup(object):
                 name starts with 'vsc'
                 and name does not start with python-
         """
-        if isinstance(name, basestring):
 
+        if isinstance(name, (list, tuple)):
+            klass = _fvs('sanitize')
+            return ",".join([klass.sanitize(r) for r in name])
+
+        else:
             if os.environ.get('VSC_RPM_PYTHON', 'NOT_ONE') == '1':
                 # hardcoded prefix map
                 for pydep, rpmname in PYTHON_BDIST_RPM_PREFIX_MAP.items():
@@ -1197,14 +1210,19 @@ class vsc_setup(object):
                 if p_p:
                     name = 'python-%s' % name
             return name
-        else:
-            klass = _fvs('sanitize')
-            return ",".join([klass.sanitize(r) for r in name])
+
+
+
 
     @staticmethod
     def get_md5sum(filename):
         """Use this function to compute the md5sum in the KNOWN_LICENSES hash"""
-        return hashlib.md5(open(filename).read()).hexdigest()
+        hasher = hashlib.md5()
+        with open(filename, "rb") as fh:
+            for chunk in iter(lambda: fh.read(4096), b""):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
 
     def get_license(self, license_name=None):
         """
@@ -1254,11 +1272,15 @@ class vsc_setup(object):
 
         # update the cmdclass with ones from vsc_setup_klass
         # cannot do this in one go, when SHARED_TARGET is defined, vsc_setup doesn't exist yet
-        for name, klass in new_target['cmdclass'].items():
+        keepers = new_target['cmdclass'].copy()
+        for name in new_target['cmdclass']:
+            klass = new_target['cmdclass'][name]
             try:
-                new_target['cmdclass'][name] = getattr(vsc_setup_klass, klass.__name__)
+                keepers[name] = getattr(vsc_setup_klass, klass.__name__)
             except AttributeError:
-                del new_target['cmdclass'][name]
+                del keepers[name]
+                log.info("Not including new_target['cmdclass']['%s']" % name)
+        new_target['cmdclass'] = keepers
 
         # prepare classifiers
         classifiers = new_target.setdefault('classifiers', [])
@@ -1385,7 +1407,7 @@ class vsc_setup(object):
                                                            dep, depversion])]
 
         log.debug("New target = %s" % (new_target))
-        print new_target
+        print(new_target)
         return new_target
 
     @staticmethod
@@ -1410,8 +1432,8 @@ class vsc_setup(object):
 
         try:
             setup_cfg = open('setup.cfg', 'w')  # and truncate
-        except (IOError, OSError), err:
-            print "Cannot create setup.cfg for target %s: %s" % (target['name'], err)
+        except (IOError, OSError) as err:
+            print("Cannot create setup.cfg for target %s: %s" % (target['name'], err))
             sys.exit(1)
 
         klass = _fvs('build_setup_cfg_for_bdist_rpm')
@@ -1481,7 +1503,6 @@ class vsc_setup(object):
 
         self.prepare_rpm(target)
         x = self.parse_target(target, urltemplate)
-
         setupfn(**x)
 
 

@@ -219,7 +219,6 @@ except (ExceptionOne, ExceptionTwo) ...
 turning off these errors
 -------------------------
 
-
 If in any of these cases you think: yes, I really needed to do this,
 I'm monkeypatching things, I'm adding extra functionality that does indeed have an extra(default) paramenter, etc, etc
 you can let pylint know to ignore this error in this one specific block of code
