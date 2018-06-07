@@ -155,7 +155,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.11.1'
+VERSION = '0.11.2'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -169,6 +169,7 @@ PYTHON_BDIST_RPM_PREFIX_MAP = {
     'pycrypto': 'python-crypto',
 }
 
+SHEBANG_BIN_BASH = "#!/bin/bash"
 SHEBANG_ENV_PYTHON = '#!/usr/bin/env python'
 SHEBANG_NOENV_PYTHON = '#!/usr/bin/python-noenv'
 SHEBANG_PYTHON_E = '#!/usr/bin/python -E'
