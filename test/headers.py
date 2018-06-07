@@ -160,9 +160,9 @@ class TestHeaders(TestCase):
 
         def compare(filename, content):
             log.info('mocked write does compare for %s ' % filename)
-            name = filename[:-len('.check')]
+            name = filename.replace('.check', '')
             compares.append(name)
-            new_filename = '%s.fixed' % name
+            new_filename = filename.replace('.check', '.fixed')
             self.assertEqual(content, open(new_filename).read(),
                              msg='new content is as expected for %s' % filename)
 
@@ -177,10 +177,12 @@ class TestHeaders(TestCase):
             't5': (True, True),  # encoding
             't6': (True, True),  # python + header
             't7': (True, True),  # python only
+            't8.py': (True, True),  # python script with missing shebang
+            't9.sh': (True, True),  # shell script with missing shebang/license header
         }
 
-        for filename in glob.glob(os.path.join(self.setup.REPO_TEST_DIR, 'headers', "*.check")):
-            name = os.path.basename(filename)[:-len('.check')]
+        for filename in glob.glob(os.path.join(self.setup.REPO_TEST_DIR, 'headers', "*.check*")):
+            name = os.path.basename(filename).replace('.check', '')
             self.assertEqual(check_header(filename, script=expected[name][0], write=True),
                              expected[name][1], msg='checked headers for filename %s' % filename)
 

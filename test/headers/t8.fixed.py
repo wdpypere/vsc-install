@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env python
 #
-# Copyright 2018-2018 Ghent University
+# Copyright 2345-2345 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -24,5 +24,7 @@
 # You should have received a copy of the GNU Library General Public License
 # along with vsc-install. If not, see <http://www.gnu.org/licenses/>.
 #
-### END OF HEADER
-env -i /usr/bin/python "$@"
+"""
+doc
+"""
+code

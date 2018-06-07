@@ -43,7 +43,7 @@ import re
 import sys
 
 from datetime import date
-from vsc.install.shared_setup import SHEBANG_ENV_PYTHON, log, vsc_setup
+from vsc.install.shared_setup import SHEBANG_BIN_BASH, SHEBANG_ENV_PYTHON, log, vsc_setup
 
 HEADER_REGEXP = re.compile(r'\A(.*?)^(?:\'\'\'|"""|### END OF HEADER)', re.M | re.S)
 ENCODING_REGEXP = re.compile(r'^(\s*#\s*.*?coding[:=]\s*([-\w.]+).*).*$', re.M)  # PEP0263, 1st or 2nd line
@@ -108,7 +108,7 @@ def get_header(filename, script=False):
 
     shebang = None
     if script:
-        log.info('get_header for script')
+        log.info('get_header for script %s', filename)
         lines = header.split("\n")
         if lines[0].startswith('#!/'):
             shebang = lines[0]
@@ -180,12 +180,39 @@ def check_header(filename, script=False, write=False):
     Return if header is different from expected or not
     """
 
-    header, shebang = get_header(filename, script=script)
+    header, orig_shebang = get_header(filename, script=script)
     header_end_pos = len(header)
+
     changed = False
-    if shebang is not None:
+
+    shebang = None
+    if script:
+        # scripts must have an appropriate shebang
+        shebang = orig_shebang
+        file_ext = os.path.splitext(filename)[1]
+        log.info("Shebang found in %s (ext: %s): %s", filename, file_ext, shebang)
+
+        if file_ext == '.py':
+            if shebang != SHEBANG_ENV_PYTHON:
+                log.info("Wrong shebang for Python script %s: found '%s', should be '%s'",
+                        filename, shebang, SHEBANG_ENV_PYTHON)
+                shebang = SHEBANG_ENV_PYTHON
+
+        elif file_ext in ['.sh', '']:
+            if shebang != SHEBANG_BIN_BASH:
+                log.info("Wrong shebang for shell script %s: found '%s', should be '%s'",
+                         filename, shebang, SHEBANG_BIN_BASH)
+                shebang = SHEBANG_BIN_BASH
+
+        else:
+            log.warn("Don't know expected shebang based on extension '%s' for script '%s', assuming it's OK...",
+                     file_ext, filename)
+
+        changed = shebang != orig_shebang
+
+    if orig_shebang is not None:
         # original position
-        header_end_pos += 1 + len(shebang)  # 1 is from splitted newline
+        header_end_pos += 1 + len(orig_shebang)  # 1 is from splitted newline
 
         if 'python' in shebang and shebang != SHEBANG_ENV_PYTHON:
             log.info('python in shebang, forcing env python (header modified)')
@@ -212,6 +239,13 @@ def check_header(filename, script=False, write=False):
         'url': name_url['url'],
     }
 
+    # reconstruct original header, incl. shebang (if any)
+    if orig_shebang:
+        orig_header = orig_shebang + '\n' + header
+    else:
+        orig_header = header
+
+    # generate header like it should be
     gen_header = gen_license_header(license_name, **data)
 
     # force encoding?
@@ -220,20 +254,21 @@ def check_header(filename, script=False, write=False):
         enc_line = reg_enc.group(1) + "\n"  # matches full line, but not newline
         gen_header = enc_line + gen_header
 
-    if header != gen_header:
-        log.info("Diff header vs gen_header\n" + "".join(nicediff(header, gen_header)))
+    # compose header like it should be, incl. shebang
+    if shebang:
+        new_header = shebang + '\n' + gen_header
+    else:
+        new_header = gen_header
+
+    if orig_header != new_header:
+        log.info("Diff orig_header vs new_header for %s\n" % filename + ''.join(nicediff(orig_header, new_header)))
         changed = True
 
     if write and changed:
         log.info('write enabled and different header. Going to modify file %s' % filename)
         with open(filename) as fh:
             wholetext = fh.read()
-        newtext = ''
-        if shebang is not None:
-            newtext += shebang + "\n"
-        newtext += gen_header
-        newtext += wholetext[header_end_pos:]
-        _write(filename, newtext)
+        _write(filename, new_header + wholetext[header_end_pos:])
 
     # return different or not
     return changed
