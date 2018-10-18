@@ -117,6 +117,7 @@ class CommonTest(TestCase):
         #'protected-access',
         #'logging-not-lazy',
         'duplicate-key',  # when a key appears twice in a dict definition
+        'duplicate-code', # when 4 or more lines of code show up several times
         'E501',  # 'line too long'when a line is longer then 120 chars
         # 'protected-access',
         # 'logging-not-lazy',
