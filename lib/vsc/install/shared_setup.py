@@ -155,7 +155,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.11.2'
+VERSION = '0.11.3'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1382,7 +1382,10 @@ class vsc_setup(object):
         else:
             log.info('adding prospector to tests_require')
             tests_requires = new_target.setdefault('tests_require', [])
-            tests_requires.extend(['prospector >= 0.12.1', 'pylint<2.0.0', 'pyflakes<1.7.0,>=1.5.0'])
+            tests_requires.append('prospector >= 1.1.4')
+            # Python 2.x requires pylint < 2.0, since pylint 2.0 or newer is Python 3 only
+            if sys.version_info < (2,):
+                tests_requires.append('pylint<2.0.0')
             new_target['tests_require'] = tests_requires
 
         if self.private_repo:
