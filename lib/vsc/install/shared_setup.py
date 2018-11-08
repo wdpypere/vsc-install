@@ -1383,9 +1383,6 @@ class vsc_setup(object):
             log.info('adding prospector to tests_require')
             tests_requires = new_target.setdefault('tests_require', [])
             tests_requires.append('prospector >= 1.1.4')
-            # Python 2.x requires pylint < 2.0, since pylint 2.0 or newer is Python 3 only
-            if sys.version_info < (2,):
-                tests_requires.append('pylint<2.0.0')
             new_target['tests_require'] = tests_requires
 
         if self.private_repo:
