@@ -1,6 +1,6 @@
 # -*- coding: latin-1 -*-
 #
-# Copyright 2011-2018 Ghent University
+# Copyright 2011-2019 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -1525,6 +1525,7 @@ if __name__ == '__main__':
     """
     install_requires = [
         'setuptools',
+        'mock',
     ]
 
     PACKAGE = {
