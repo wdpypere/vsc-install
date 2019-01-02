@@ -165,7 +165,7 @@ def _write(filename, content):
     """Simple wrapper around open().write for unittesting"""
     with open(filename, 'w') as fh:
         fh.write(content)
-    
+
 
 def check_header(filename, script=False, write=False):
     """
