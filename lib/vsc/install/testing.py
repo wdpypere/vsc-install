@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2018 Ghent University
+# Copyright 2014-2019 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -43,6 +43,8 @@ except ImportError:
 
 from unittest import TestCase as OrigTestCase
 from vsc.install.headers import nicediff
+from vsc.install.methodinspector import MethodInspector
+from mock import patch
 
 
 class TestCase(OrigTestCase):
@@ -66,7 +68,7 @@ class TestCase(OrigTestCase):
     # pylint: disable=arguments-differ
     def assertEqual(self, a, b, msg=None):
         """Make assertEqual always print useful messages"""
-  
+
         try:
             super(TestCase, self).assertEqual(a, b)
         except AssertionError as e:
@@ -198,6 +200,23 @@ class TestCase(OrigTestCase):
         Return the number of log messages for funcname in the logcache
         """
         return len(self.LOGCACHE.get(funcname, []))
+
+    def gen_inspector(self, *args, **kwargs):
+        """
+        Convenience method to generate MethodInspector instance.
+        All args are passed to the MethodInspector
+        """
+        return MethodInspector(*args, **kwargs)
+
+    def create_patch(self, *args, **kwargs):
+        """
+        Create patch and return mocked whatever. Patch is added to tearDown
+        All args are passed to patch
+        """
+        patcher = patch(*args, **kwargs)
+        thing = patcher.start()
+        self.addCleanup(patcher.stop)
+        return thing
 
     def tearDown(self):
         """Cleanup after running a test."""
