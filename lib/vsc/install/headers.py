@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Ghent University
+# Copyright 2015-2019 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -165,7 +165,7 @@ def _write(filename, content):
     """Simple wrapper around open().write for unittesting"""
     with open(filename, 'w') as fh:
         fh.write(content)
-    
+
 
 def check_header(filename, script=False, write=False):
     """

@@ -1,6 +1,6 @@
 # -*- coding: latin-1 -*-
 #
-# Copyright 2011-2018 Ghent University
+# Copyright 2011-2019 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -155,7 +155,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.11.3'
+VERSION = '0.11.4'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1525,6 +1525,7 @@ if __name__ == '__main__':
     """
     install_requires = [
         'setuptools',
+        'mock',
     ]
 
     PACKAGE = {
