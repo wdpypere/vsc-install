@@ -41,6 +41,7 @@ try:
 except ImportError:
     from io import StringIO  # Python 3
 
+from copy import deepcopy
 from unittest import TestCase as OrigTestCase
 from vsc.install.headers import nicediff
 from vsc.install.methodinspector import MethodInspector
@@ -103,6 +104,9 @@ class TestCase(OrigTestCase):
 
         self.orig_sys_stdout = sys.stdout
         self.orig_sys_stderr = sys.stderr
+
+        self.orig_sys_argv = sys.argv
+        sys.argv = deepcopy(self.orig_sys_argv)
 
     def convert_exception_to_str(self, err):
         """Convert an Exception instance to a string."""
@@ -223,6 +227,8 @@ class TestCase(OrigTestCase):
         self.mock_stdout(False)
         self.mock_stderr(False)
         self.reset_logcache()
+        sys.argv = self.orig_sys_argv
+
         super(TestCase, self).tearDown()
 
 
