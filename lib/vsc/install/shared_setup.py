@@ -155,7 +155,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.11.5'
+VERSION = '0.11.6'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -706,9 +706,9 @@ class vsc_setup(object):
             log.info("vsc_bdist_rpm = %s" % (self.__dict__))
             klass = _fvs('vsc_bdist_rpm egg_info')
             # changed to allow file removal
-            klass.SHARED_TARGET['cmdclass']['egg_info'] = klass.vsc_bdist_rpm_egg_info
+            self.distribution.cmdclass['egg_info'] = klass.vsc_bdist_rpm_egg_info
             # changed to allow modification of shebangs
-            klass.SHARED_TARGET['cmdclass']['sdist'] = klass.vsc_sdist_rpm
+            self.distribution.cmdclass['sdist'] = klass.vsc_sdist_rpm
             self.run_command('egg_info')  # ensure distro name is up-to-date
             orig_bdist_rpm.run(self)
 
