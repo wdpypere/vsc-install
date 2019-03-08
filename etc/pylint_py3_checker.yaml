@@ -1,0 +1,8 @@
+allow-shorthand: false
+
+inherits:
+  - strictness_medium
+
+pylint:
+  options:
+    enable: python3

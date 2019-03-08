@@ -137,10 +137,17 @@ class CommonTest(TestCase):
     ]
 
     # Prospector commandline options (positional path is added automatically)
+    cfg_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'etc')
     PROSPECTOR_OPTIONS = [
-        '--strictness', 'medium',
+        '--profile-path', cfg_path,
+        '--profile', 'pylint_py3_checker.yaml',
         '--max-line-length', '120',
         '--absolute-paths',
+        # If pylint dies, prospector will carry on, so seemingly all pylint tests will pass.
+        # pylint py3 checker might get into some kind of recursive import so either
+        # it might need higher recursion depth (sys.setrecursionlimit(x>1000),
+        # or the problem should be solved in another way.
+        '--die-on-tool-error',
     ]
 
     def setUp(self):
