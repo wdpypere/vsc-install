@@ -137,10 +137,16 @@ class CommonTest(TestCase):
     ]
 
     # Prospector commandline options (positional path is added automatically)
-    cfg_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'etc')
+    prospector_profile = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))),
+        'etc', 'pylint_py3_checker.yaml')
+    # The prospector_profile (in theory) should be in `lib/etc` in the distribution file and
+    # in `etc` after installation. (Chosen in a way to be the same place realtively to shared_setup.py
+    if not os.path.exists(prospector_profile):
+        log.error("File prospector_profile: '%s' not found" % prospector_profile)
+        raise Exception("File prospector_profile: '%s' not found" % prospector_profile)
+
     PROSPECTOR_OPTIONS = [
-        '--profile-path', cfg_path,
-        '--profile', 'pylint_py3_checker.yaml',
+        '--profile', prospector_profile,
         '--max-line-length', '120',
         '--absolute-paths',
         # If pylint dies, prospector will carry on, so seemingly all pylint tests will pass.
