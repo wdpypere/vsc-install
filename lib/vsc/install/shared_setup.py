@@ -155,7 +155,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.13.0'
+VERSION = '0.12.0'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1165,7 +1165,6 @@ class vsc_setup(object):
         'url': '',
         'dependency_links': [],
         'install_requires': [],
-        'data_files': [],
         'tests_require': [],
     }
 
@@ -1383,7 +1382,7 @@ class vsc_setup(object):
         else:
             log.info('adding prospector to tests_require')
             tests_requires = new_target.setdefault('tests_require', [])
-            tests_requires.append('prospector >= 1.1.4')
+            tests_requires.append('prospector >= 1.1.6.2')
             new_target['tests_require'] = tests_requires
 
         if self.private_repo:
@@ -1507,7 +1506,6 @@ class vsc_setup(object):
         x = self.parse_target(target, urltemplate)
         setupfn(**x)
 
-
 # here for backwards compatibility
 SHARED_TARGET = _fvs('SHARED_TARGET').SHARED_TARGET
 
@@ -1534,11 +1532,13 @@ if __name__ == '__main__':
         'author': [sdw, ag, jt],
         'maintainer': [sdw, ag, jt],
         'install_requires': install_requires,
-        'data_files': [('etc', glob.glob('lib/etc/*'))],
         'setup_requires': [
             'setuptools',
         ],
         'excluded_pkgs_rpm': [],  # vsc-install ships vsc package (the vsc package is removed by default)
+        'dependecy_links': [
+            "git+https://github.com/stdweird/prospector#egg=prospector-1.1.6.2",
+        ],
     }
 
     action_target(PACKAGE)
