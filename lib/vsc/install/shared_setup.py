@@ -155,7 +155,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.11.6'
+VERSION = '0.11.7'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1537,6 +1537,9 @@ if __name__ == '__main__':
             'setuptools',
         ],
         'excluded_pkgs_rpm': [],  # vsc-install ships vsc package (the vsc package is removed by default)
+        'dependency_links': [
+            "git+https://github.com/stdweird/prospector#egg=prospector-1.1.6.2",
+        ],
     }
 
     action_target(PACKAGE)
