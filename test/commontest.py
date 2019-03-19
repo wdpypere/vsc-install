@@ -43,6 +43,10 @@ class commontestTest(TestCase):
 
     def test_prospecrtorfail(self):
         """Test that whitelisted warnings actually fails"""
+        if not HAS_PROSPECTOR and sys.version_info >= (2, 7) and 'JENKINS_URL' in os.environ:
+            # This is fatal on jenkins/...
+            self.assertTrue(False, 'prospector must be installed in jenkins environment')
+
         base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'commontest')
         test_files = glob.glob(os.path.join(base_dir, 'lib', 'vsc', 'mockinstall', "*.py"))
         test_files = [ x for x in test_files if not '__init__.py' in x]
