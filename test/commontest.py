@@ -43,13 +43,34 @@ class commontestTest(TestCase):
 
     def test_prospecrtorfail(self):
         """Test that whitelisted warnings actually fails"""
-        base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'commontest', 'lib', 'vsc', 'mockinstall')
-        test_files = glob.glob(os.path.join(base_dir, "*.py"))
-        log.debug("base_dir = %s\n" % base_dir)
+        base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'commontest')
+        test_files = glob.glob(os.path.join(base_dir, 'lib', 'vsc', 'mockinstall', "*.py"))
+        test_files = [ x for x in test_files if not '__init__.py' in x]
+        log.debug("test_files = %s" % test_files) 
+        log.debug("base_dir = %s" % base_dir)
         
-        prospector = commontest.run_prospector(base_dir, clear_ignore_patterns = True)
-        log.info("prospector profile from prospector = %s" % prospector.config.profile.__dict__)
-        for msg in prospector.get_messages():
-            log.info("prospector messages %s" % msg.as_dict())
+        # For some reason, prospector does not check files if the path is given (probably becasue it contains "test"),
+        # even if ignore_patterns are cleraed. (so we give the individual files)
+        # prospector = commontest.run_prospector(base_dir, clear_ignore_patterns = True)
+        prospector = commontest.run_prospector(test_files, clear_ignore_patterns = True)
+        log.debug("prospector profile from prospector = %s" % prospector.config.profile.__dict__)
+        
+        failures = []
+        for testfile in test_files:
+            testfile_base = os.path.basename(testfile)[:-3].replace("_", "-")
+            if testfile_base not in commontest.PROSPECTOR_WHITELIST:
+                log.warn("'%s' is not in PROSPECTOR_WHITELIST" % testfile_base)
 
+            testfile_report = []
+            for msg in prospector.get_messages():
+                log.debug("prospector messages %s" % msg.as_dict())
+                if msg.location.path == testfile:
+                    testfile_report.extend([msg.code, msg.message])
 
+            log.debug("testfile_report = %s" % testfile_report)
+            if testfile_base not in testfile_report:
+                failures.append(testfile_base)
+            else:
+                log.info("prospector successfully detected '%s'" % testfile_base)
+        
+        self.assertFalse(failures, "\nprospector did not detect %s" % failures)

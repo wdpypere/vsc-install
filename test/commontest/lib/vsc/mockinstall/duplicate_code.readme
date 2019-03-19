@@ -1,0 +1,24 @@
+# Right now, it seems to be that prospector (1.1.6.2) with plyint (1.9.4, astroid 1.6.5) cannot detect
+# duplicate code even if it occurs in different files (so unittest is disabled)
+# (but you can try `pylint duplicate_code.py duplicate_code.py.`)
+"""Test duplicate-code"""
+
+
+def a_a(b_b):
+    """Function a_a"""
+    b_b += 2
+    b_b += 2
+    b_b += 2
+    b_b += 2
+    b_b += 2
+    return b_b
+
+
+def c_c(b_b):
+    """Function c_c"""
+    b_b += 2
+    b_b += 2
+    b_b += 2
+    b_b += 2
+    b_b += 2
+    return b_b

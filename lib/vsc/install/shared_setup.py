@@ -1536,7 +1536,7 @@ if __name__ == '__main__':
             'setuptools',
         ],
         'excluded_pkgs_rpm': [],  # vsc-install ships vsc package (the vsc package is removed by default)
-        'dependecy_links': [
+        'dependency_links': [
             "git+https://github.com/stdweird/prospector#egg=prospector-1.1.6.2",
         ],
     }

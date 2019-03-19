@@ -93,14 +93,17 @@ PROSPECTOR_WHITELIST = [
     'syntax-error',
     'E101',  # mixing tabs and spaces
     'bad-indentation',
+    'E111',  # pep8: E111 / indentation is not a multiple of four
     'bad-whitespace',
     'trailing-whitespace',
+    'W291',  # pep8: W291 / trailing whitespace
     #'protected-access',
     #'logging-not-lazy',
     'duplicate-key',  # when a key appears twice in a dict definition
+    # prospector cannot check duplicates across files, and pylint only detects duplicates across files (19/03/2019)
     'duplicate-code', # when 4 or more lines of code show up several times
     'E501',  # 'line too long'when a line is longer then 120 chars
-    'line-too-long' # use fail using pylint as well (not only pep8 above)
+    'line-too-long', # use fail using pylint as well (not only pep8 above)
     # 'protected-access',
     # 'logging-not-lazy',
     # will stop working in python3
@@ -123,6 +126,10 @@ PROSPECTOR_OPTIONS = [
     '--profile', 'strictness_none.yaml',
     '--max-line-length', '120',
     '--absolute-paths',
+    # We want to get messages from different tools even if they mean the same.
+    '--no-blending',
+    # Do not pick up any config for the tools
+    '--no-external-config',
     # If pylint dies, prospector will carry on, so seemingly all pylint tests will pass.
     # pylint py3 checker might get into some kind of recursive import so either
     # it might need higher recursion depth (sys.setrecursionlimit(x>1000),
@@ -130,7 +137,7 @@ PROSPECTOR_OPTIONS = [
     '--die-on-tool-error',
 ]
 
-def run_prospector(base_dir, clear_ignore_patterns = False):
+def run_prospector(base_dir, clear_ignore_patterns=False):
     """Run prospector.run.main"""
     orig_expand_default = optparse.HelpFormatter.expand_default
 
@@ -239,7 +246,7 @@ class CommonTest(TestCase):
                                  msg='check_header of %s' % scr)
 
     def test_prospector(self):
-        """Run pector and apply white/blacklists to the results"""
+        """Run prospector and apply white/blacklists to the results"""
 
         if not HAS_PROSPECTOR:
             if sys.version_info < (2, 7):
