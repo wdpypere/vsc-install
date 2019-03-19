@@ -141,6 +141,18 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
     """Run prospector.run.main"""
     orig_expand_default = optparse.HelpFormatter.expand_default
 
+    if not HAS_PROSPECTOR:
+        if sys.version_info < (2, 7):
+            log.info('No protector tests are ran on py26 or older.')
+        else:
+            log.info('No protector tests are ran, install prospector manually first')
+
+            # This is fatal on jenkins/...
+            if 'JENKINS_URL' in os.environ:
+                assertTrue(False, 'prospector must be installed in jenkins environment')
+
+        return
+
     sys.argv = ['fakename']
     sys.argv.extend(PROSPECTOR_OPTIONS)
     # add/set REPO_BASE_DIR as positional path
@@ -247,18 +259,6 @@ class CommonTest(TestCase):
 
     def test_prospector(self):
         """Run prospector and apply white/blacklists to the results"""
-
-        if not HAS_PROSPECTOR:
-            if sys.version_info < (2, 7):
-                log.info('No protector tests are ran on py26 or older.')
-            else:
-                log.info('No protector tests are ran, install prospector manually first')
-
-                # This is fatal on jenkins/...
-                if 'JENKINS_URL' in os.environ:
-                    self.assertTrue(False, 'prospector must be installed in jenkins environment')
-
-            return
 
         prospector = run_prospector(self.setup.REPO_BASE_DIR)
         log.debug("prospector profile form prospector = %s" % prospector.config.profile.__dict__)
