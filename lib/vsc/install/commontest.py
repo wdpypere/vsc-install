@@ -100,14 +100,13 @@ PROSPECTOR_WHITELIST = [
     #'protected-access',
     #'logging-not-lazy',
     'duplicate-key',  # when a key appears twice in a dict definition
-    # prospector cannot check duplicates across files, and pylint only detects duplicates across files (19/03/2019)
-    'duplicate-code', # when 4 or more lines of code show up several times
     'E501',  # 'line too long'when a line is longer then 120 chars
     'line-too-long', # use fail using pylint as well (not only pep8 above)
     # 'protected-access',
     # 'logging-not-lazy',
     # will stop working in python3
-    'unpacking-in-except', 'redefine-in-handler',  # except A, B -> except (A, B)
+    'unpacking-in-except',
+    'redefine-in-handler',  # except A, B -> except (A, B)
     'indexing-exception',  # indexing exceptions doesn't work in python3, use Exc.args[index] instead (but why?)
     'raising-string',  # don't raise strings, raise objects extending Exception
     'old-octal-literal',  # use 0o700 instead of 0700
@@ -116,7 +115,6 @@ PROSPECTOR_WHITELIST = [
     'backtick',  # don't use `variable` to turn a variable in a string, use the str() function
     'old-raise-syntax',  # sed when the alternate raise syntax raise foo, bar is used instead of raise foo(bar) .
     'redefined-builtin',
-    # once we get ready to really move to python3
     'print-statement',  # use print() and from future import __print__ instead of print
     'metaclass-assignment',  # __metaclass__ doesn't exist anymore in python3
 ]
@@ -138,7 +136,7 @@ PROSPECTOR_OPTIONS = [
 ]
 
 def run_prospector(base_dir, clear_ignore_patterns=False):
-    """Run prospector.run.main"""
+    """Run prospector and apply white/blacklists to the results"""
     orig_expand_default = optparse.HelpFormatter.expand_default
 
     if not HAS_PROSPECTOR:
@@ -146,15 +144,16 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
             log.info('No protector tests are ran on py26 or older.')
         else:
             log.info('No protector tests are ran, install prospector manually first')
+
+            # This is fatal on jenkins/...
+            # self.assertTrue(False, 'prospector must be installed in jenkins environment')
+
         return
 
     sys.argv = ['fakename']
     sys.argv.extend(PROSPECTOR_OPTIONS)
     # add/set REPO_BASE_DIR as positional path
-    if type(base_dir) is list:
-        sys.argv.extend(base_dir)
-    else:
-        sys.argv.append(base_dir)
+    sys.argv.append(base_dir)
 
     config = ProspectorConfig()
     # prospector will sometimes wrongly autodetect django
@@ -167,23 +166,43 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
     config.profile.autodetect = True
     config.profile.member_warnings = False
     if clear_ignore_patterns:
-        config.profile.ignore_patterns = ['dummyy-valueee']
+        config.profile.ignore_patterns = ['.^']
+        config.ignores = []
     else:
         config.profile.ignore_patterns.append('(^|/)\..+')
 
     # Enable pylint Python3 compatibility tests:
     config.profile.pylint['options']['enable'] = 'python3'
     log.debug("prospector argv = %s" % sys.argv)
-    log.debug("prospector profile from config = %s" % config.profile.__dict__)
+    log.debug("prospector profile from config = %s" % vars(config.profile))
 
     prospector.execute()
+    log.debug("prospector profile form prospector = %s" % vars(prospector.config.profile))
+
+    blacklist = map(re.compile, PROSPECTOR_BLACKLIST)
+    whitelist = map(re.compile, PROSPECTOR_WHITELIST)
+
+    failures = []
+    for msg in prospector.get_messages():
+        # example msg.as_dict():
+        #  {'source': 'pylint', 'message': 'Missing function docstring', 'code': 'missing-docstring',
+        #   'location': {'function': 'TestHeaders.test_check_header.lgpl', 'path': u'headers.py',
+        #                'line': 122, 'character': 8, 'module': 'headers'}}
+        log.debug("prospector message %s" % msg.as_dict())
+
+        if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in blacklist]):
+            continue
+
+        if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in whitelist]):
+            failures.append(msg.as_dict())
+
     # There is some ugly monkeypatch code in pylint
     #     (or logilab if no recent enough pylint is installed)
     # Make sure the original is restored
     # (before any errors are reported; no need to put this in setUp/tearDown)
     optparse.HelpFormatter.expand_default = orig_expand_default
 
-    return prospector
+    return failures
 
 class CommonTest(TestCase):
     """
@@ -253,31 +272,7 @@ class CommonTest(TestCase):
                                  msg='check_header of %s' % scr)
 
     def test_prospector(self):
-        """Run prospector and apply white/blacklists to the results"""
+        """Test prospector failures"""
 
-        if not HAS_PROSPECTOR and sys.version_info >= (2, 7) and 'JENKINS_URL' in os.environ:
-            # This is fatal on jenkins/...
-            self.assertTrue(False, 'prospector must be installed in jenkins environment')
-
-        prospector = run_prospector(self.setup.REPO_BASE_DIR)
-        log.debug("prospector profile form prospector = %s" % prospector.config.profile.__dict__)
-
-        blacklist = map(re.compile, PROSPECTOR_BLACKLIST)
-        whitelist = map(re.compile, PROSPECTOR_WHITELIST)
-
-        failures = []
-        for msg in prospector.get_messages():
-            # example msg.as_dict():
-            #  {'source': 'pylint', 'message': 'Missing function docstring', 'code': 'missing-docstring',
-            #   'location': {'function': 'TestHeaders.test_check_header.lgpl', 'path': u'headers.py',
-            #                'line': 122, 'character': 8, 'module': 'headers'}}
-            log.debug("prospector message %s" % msg.as_dict())
-
-            if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in blacklist]):
-                continue
-
-            if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in whitelist]):
-                failures.append(msg.as_dict())
-
-
+        failures = run_prospector(self.setup.REPO_BASE_DIR)
         self.assertFalse(failures, "prospector failures: %s" % pprint.pformat(failures))

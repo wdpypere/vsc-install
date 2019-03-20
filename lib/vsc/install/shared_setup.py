@@ -1382,7 +1382,9 @@ class vsc_setup(object):
         else:
             log.info('adding prospector to tests_require')
             tests_requires = new_target.setdefault('tests_require', [])
-            tests_requires.append('prospector >= 1.1.6.2')
+            tests_requires.append('prospector >= 1.1.6.3b')
+            deplinks = new_target.setdefault('dependency_links', [])
+            deplinks.append("git+https://github.com/stdweird/prospector#egg=prospector-1.1.6.3b")
             new_target['tests_require'] = tests_requires
 
         if self.private_repo:
@@ -1536,9 +1538,6 @@ if __name__ == '__main__':
             'setuptools',
         ],
         'excluded_pkgs_rpm': [],  # vsc-install ships vsc package (the vsc package is removed by default)
-        'dependency_links': [
-            "git+https://github.com/stdweird/prospector#egg=prospector-1.1.6.2",
-        ],
     }
 
     action_target(PACKAGE)

@@ -39,7 +39,7 @@ At least 'import vsc' can be used now without triggering an import of fancylogge
 
 # it's ok if this fails with only vsc-install installed.
 # we cannot introduce a dependency on vsc-base (and we do not care)
-from vsc.utils.fancylogger import *
+from vsc.utils.fancylogger import *  # noqa: F403
 # (re)import these not to confuse pylint (otherwsie seen as undefined)
 from vsc.utils.fancylogger import logToDevLog, getLogger
 
