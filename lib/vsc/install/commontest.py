@@ -40,6 +40,7 @@ import os
 import pprint
 import re
 import sys
+import unittest
 
 from distutils import log
 from vsc.install.shared_setup import vsc_setup
@@ -52,22 +53,15 @@ HAS_PROSPECTOR = False
 Prospector = None
 ProspectorConfig = None
 
-if sys.version_info >= (2, 7):
-    # Do not even try on py26
-    try:
-        _old_basicconfig = logging.basicConfig
-        from prospector.run import Prospector
-        from prospector.config import ProspectorConfig
-        HAS_PROSPECTOR = True
-        # restore in case pyroma is missing (see https://github.com/landscapeio/prospector/pull/156)
-        logging.basicConfig = _old_basicconfig
-    except ImportError:
-        pass
-
-# Prospector doesn't have support for 3.5 / 3.6
-# https://github.com/PyCQA/prospector/issues/233
-if sys.version_info >= (3, 5):
-    HAS_PROSPECTOR = False
+try:
+    _old_basicconfig = logging.basicConfig
+    from prospector.run import Prospector
+    from prospector.config import ProspectorConfig
+    HAS_PROSPECTOR = True
+    # restore in case pyroma is missing (see https://github.com/landscapeio/prospector/pull/156)
+    logging.basicConfig = _old_basicconfig
+except ImportError:
+    pass
 
 # List of regexps patterns applied to code or message of a prospector.message.Message
 #   Blacklist: if match, skip message, do not check whitelist
@@ -139,14 +133,6 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
     """Run prospector and apply white/blacklists to the results"""
     orig_expand_default = optparse.HelpFormatter.expand_default
 
-    if not HAS_PROSPECTOR:
-        if sys.version_info < (2, 7):
-            log.info('No protector tests are ran on py26 or older.')
-        else:
-            log.info('No protector tests are ran, install prospector manually first')
-
-        return
-
     sys.argv = ['fakename']
     sys.argv.extend(PROSPECTOR_OPTIONS)
     # add/set REPO_BASE_DIR as positional path
@@ -163,10 +149,12 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
     config.profile.autodetect = True
     config.profile.member_warnings = False
     if clear_ignore_patterns:
-        config.profile.ignore_patterns = ['.^']
+        config.profile.ignore_patterns = [r'.^']
         config.ignores = []
     else:
-        config.profile.ignore_patterns.append('(^|/)\..+')
+        append_pattern = r'(^|/)\..+'
+        config.profile.ignore_patterns.append(append_pattern)
+        config.ignores.append(re.compile(append_pattern))
 
     # Enable pylint Python3 compatibility tests:
     config.profile.pylint['options']['enable'] = 'python3'
@@ -268,6 +256,7 @@ class CommonTest(TestCase):
                 self.assertFalse(check_header(os.path.join(self.setup.REPO_BASE_DIR, scr), script=True, write=False),
                                  msg='check_header of %s' % scr)
 
+    @unittest.skipUnless(HAS_PROSPECTOR, "Prospector is not available, so prosprector tests were skipped")
     def test_prospector(self):
         """Test prospector failures"""
 

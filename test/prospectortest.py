@@ -52,12 +52,6 @@ class ProspectorTest(TestCase):
 
         failures = commontest.run_prospector(base_dir, clear_ignore_patterns=True)
         log.debug("Failures = %s" % failures)
-        if commontest.HAS_PROSPECTOR:
-            if failures == '':
-                self.assertTrue(False, "Prospector gave empty answer")
-        else:
-            log.info("Prospector did not run (HAS_PROSPECTOR is %s)" % commontest.HAS_PROSPECTOR)
-            return
 
         detected_tests = []
         all_tests = []
