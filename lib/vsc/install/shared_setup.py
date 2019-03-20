@@ -155,7 +155,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.11.7'
+VERSION = '0.12.0'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1382,7 +1382,9 @@ class vsc_setup(object):
         else:
             log.info('adding prospector to tests_require')
             tests_requires = new_target.setdefault('tests_require', [])
-            tests_requires.append('prospector >= 1.1.4')
+            tests_requires.append('prospector >= 1.1.6.3b')
+            deplinks = new_target.setdefault('dependency_links', [])
+            deplinks.append("git+https://github.com/stdweird/prospector#egg=prospector-1.1.6.3b")
             new_target['tests_require'] = tests_requires
 
         if self.private_repo:
@@ -1505,7 +1507,6 @@ class vsc_setup(object):
         self.prepare_rpm(target)
         x = self.parse_target(target, urltemplate)
         setupfn(**x)
-
 
 # here for backwards compatibility
 SHARED_TARGET = _fvs('SHARED_TARGET').SHARED_TARGET
