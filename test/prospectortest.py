@@ -69,7 +69,7 @@ class ProspectorTest(TestCase):
                     detected_tests.append(testfile_base)
 
         log.debug("All tests = %s" % all_tests)
-        log.debug("Detected prospector tests = %s" % detected_tests)
+        log.info("Detected prospector tests = %s" % detected_tests)
         undetected_tests = [x for x in all_tests if x not in detected_tests]
 
         self.assertFalse(undetected_tests, "\nprospector did not detect %s\n" % undetected_tests)
