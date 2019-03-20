@@ -145,9 +145,6 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
         else:
             log.info('No protector tests are ran, install prospector manually first')
 
-            # This is fatal on jenkins/...
-            # self.assertTrue(False, 'prospector must be installed in jenkins environment')
-
         return
 
     sys.argv = ['fakename']
