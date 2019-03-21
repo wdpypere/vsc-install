@@ -63,6 +63,11 @@ try:
 except ImportError:
     pass
 
+
+# this sets the --uses commandline
+PROSPECTOR_USE_LIBS = []
+
+
 # List of regexps patterns applied to code or message of a prospector.message.Message
 #   Blacklist: if match, skip message, do not check whitelist
 #   Whitelist: if match, fail test
@@ -135,8 +140,13 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
 
     sys.argv = ['fakename']
     sys.argv.extend(PROSPECTOR_OPTIONS)
+
+    if PROSPECTOR_USE_LIBS:
+        sys.argv.extend(["--uses", ",".join(PROSPECTOR_USE_LIBS)])
+
     # add/set REPO_BASE_DIR as positional path
     sys.argv.append(base_dir)
+    log.debug("prospector commandline %s" % sys.argv)
 
     config = ProspectorConfig()
     # prospector will sometimes wrongly autodetect django
