@@ -205,6 +205,28 @@ class VscGroup(object):
 => do you need the import? use import as
 did you mean to use the same name? ...
 
+Redefined builtin
+-----------------
+use different name, for example change
+
+```python
+def filter(b_b):
+    """Function filter"""
+    return b_b
+```
+=>
+```python
+def new_filter(b_b):
+    """Function filter"""
+    return b_b
+```
+
+Fix Python 3 failing tests
+==========================
+
+* We try to follow https://docs.python.org/3/howto/pyporting.html
+* some useful info can be found here as well https://portingguide.readthedocs.io/en/latest/index.html
+
 unpacking-in-except / redefine-in-handler
 -----------------------------------------
 
@@ -218,28 +240,10 @@ except (ExceptionOne, ExceptionTwo) ...
 
 (espcially when used like `except A, B:` which should be `except (A, B):`.
 
-
-Fix Python 3 failing tests
-==========================
-
-* We try to follow https://docs.python.org/3/howto/pyporting.html
-* some useful info can be found here as well https://portingguide.readthedocs.io/en/latest/index.html
-
 Fixing print statement
 ----------------------
 
-```python
-print foo,bar
-```
-=>
-```python
-import from __future__ import print_function
-
-
-print (foo,bar)
-```
-
-Eventually use the oneliner:
+Use the oneliner:
 ```bash
 find lib bin -name '*.py' | xargs futurize -w -f libfuturize.fixes.fix_print_with_import -n
 ```
@@ -257,22 +261,6 @@ class Foo(Bar):
 from future.utils import with_metaclass
 
 class Foo(with_metaclass(Baz,Bar):
-```
-
-Redefined builtin
------------------
-use different name, for example change
-
-```python
-def filter(b_b):
-    """Function filter"""
-    return b_b
-```
-=>
-```python
-def new_filter(b_b):
-    """Function filter"""
-    return b_b
 ```
 
 Old raise syntax
@@ -336,7 +324,7 @@ os.chmod(foo, 0o700)
 
 Import star module level
 ------------------------
-Do not import \*, be more specific. If it is impossible, import it in the top level.
+Do not import \*, be more specific. If it is impossible, import it in the top level (and suppress the pyflakes error F403.)
 ```python
 def coords(angle, distance):
     """Function coords"""
@@ -345,7 +333,7 @@ def coords(angle, distance):
 ```
 =>
 ```python
-from math import *
+from math import *  # noqa: F403
 def coords(angle, distance):
     """Function coords"""
     return distance * cos(angle), distance * sin(angle)
