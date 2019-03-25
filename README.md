@@ -307,7 +307,7 @@ Old ne operator
 if 2 <> 3:
 ```
 =>
-```
+```python
 if 2 != 3:
 ```
 
