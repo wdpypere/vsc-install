@@ -232,7 +232,6 @@ Fixing print statement
 print foo,bar
 ```
 =>
-
 ```python
 import from __future__ import print_function
 
@@ -297,7 +296,7 @@ raise NameError, "Error", some_traceback
 raise NameError("Error")
 
 e = NameError("Error")
-e.__traceback__ = some+traceback
+e.__traceback__ = some_traceback
 ```
 
 backtick
