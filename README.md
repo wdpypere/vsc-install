@@ -218,6 +218,162 @@ except (ExceptionOne, ExceptionTwo) ...
 
 (espcially when used like `except A, B:` which should be `except (A, B):`.
 
+
+Fix Python 3 failing tests
+==========================
+
+* We try to follow https://docs.python.org/3/howto/pyporting.html
+* some useful info can be found here as well https://portingguide.readthedocs.io/en/latest/index.html
+
+Fixing print statement
+----------------------
+
+```python
+print foo,bar
+```
+=>
+
+```python
+import from __future__ import print_function
+
+
+print (foo,bar)
+```
+
+Eventually use the oneliner:
+```bash
+find lib bin -name '*.py' | xargs futurize -w -f libfuturize.fixes.fix_print_with_import -n
+```
+
+Metaclass assignment
+--------------------
+
+```python
+class Foo(Bar):
+
+    __metaclass__ = Baz
+```
+=>
+```python
+from future.utils import with_metaclass
+
+class Foo(with_metaclass(Baz,Bar):
+```
+
+Redefined builtin
+-----------------
+use different name, for example change
+
+```python
+def filter(b_b):
+    """Function filter"""
+    return b_b
+```
+=>
+```python
+def new_filter(b_b):
+    """Function filter"""
+    return b_b
+```
+
+Old raise syntax
+----------------
+Python 2’s **raise** statement was designed at a time when exceptions weren’t classes, and an exception’s _type_, _value_, and _traceback_ components were three separate objects. In Python 3, one single object includes all information about an exception.
+
+```python
+raise NameError, "Error"
+```
+=>
+```python
+raise NameError("Error")
+```
+
+or change
+```python
+raise NameError, "Error", some_traceback
+```
+=>
+```python
+raise NameError("Error")
+
+e = NameError("Error")
+e.__traceback__ = some+traceback
+```
+
+backtick
+--------
+
+```python
+A = 2
+B = `A`
+```
+=>
+```python
+A = 2
+B = str(A)
+```
+
+Old ne operator
+---------------
+
+```python
+if 2 <> 3:
+```
+=>
+```
+if 2 != 3:
+```
+
+Octal literal
+-------------
+
+```python
+os.chmod(foo, 0700)
+```
+=>
+```python
+os.chmod(foo, 0o700)
+```
+
+Import star module level
+------------------------
+Do not import \*, be more specific. If it is impossible, import it in the top level.
+```python
+def coords(angle, distance):
+    """Function coords"""
+    from math import *
+    return distance * cos(angle), distance * sin(angle)
+```
+=>
+```python
+from math import *
+def coords(angle, distance):
+    """Function coords"""
+    return distance * cos(angle), distance * sin(angle)
+```
+
+Raising string
+--------------
+```python
+raise ValueError, 'message'
+```
+=>
+```python
+raise ValueError('message')
+```
+
+Indexing exception
+------------------
+```python
+except IndexError as err:
+    err[0]
+```
+=>
+```python
+except IndexError as err:
+    IndexError.args[0]
+```
+
 turning off these errors
 -------------------------
 
