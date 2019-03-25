@@ -247,6 +247,7 @@ Use the oneliner:
 ```bash
 find lib bin -name '*.py' | xargs futurize -w -f libfuturize.fixes.fix_print_with_import -n
 ```
+Note: You need to install `python(2)-future` if you want to use `futurize` (or you have to have the `future` Python package).
 
 Metaclass assignment
 --------------------
