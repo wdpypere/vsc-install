@@ -63,7 +63,7 @@ def nicediff(txta, txtb, offset=5):
     res_idx = []
     # very bruteforce
     for didx in different_idx:
-        for idx in range(max(didx-offset, 0), min(didx+offset, len(diff)-1)):
+        for idx in range(max(didx - offset, 0), min(didx + offset, len(diff) - 1)):
             if idx not in res_idx:
                 res_idx.append(idx)
     res_idx.sort()
@@ -195,7 +195,7 @@ def check_header(filename, script=False, write=False):
         if file_ext == '.py':
             if shebang != SHEBANG_ENV_PYTHON:
                 log.info("Wrong shebang for Python script %s: found '%s', should be '%s'",
-                        filename, shebang, SHEBANG_ENV_PYTHON)
+                         filename, shebang, SHEBANG_ENV_PYTHON)
                 shebang = SHEBANG_ENV_PYTHON
 
         elif file_ext in ['.sh', '']:
@@ -272,6 +272,7 @@ def check_header(filename, script=False, write=False):
 
     # return different or not
     return changed
+
 
 #
 # Only template headers below
