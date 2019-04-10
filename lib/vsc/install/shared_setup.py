@@ -325,8 +325,8 @@ class vsc_setup(object):
             ],
             'url': [
                 r'^Home-page:\s*(.*?)\s*$',
-                r'^\s*url\s*=\s*((?:https?|ssh).*?github.*?[:/]hpcugent/.*?)\.git\s*$',
-                r'^\s*url\s*=\s*(git[:@].*?github.*?[:/]hpcugent/.*?)(?:\.git)?\s*$',
+                r'^\s*url\s*=\s*((?:https?|ssh).*?github.*?[:/](?:hpcugent|sisc-hpc)/.*?)\.git\s*$',
+                r'^\s*url\s*=\s*(git[:@].*?github.*?[:/](?:hpcugent|sisc-hpc)/.*?)(?:\.git)?\s*$',
             ],
             'download_url': [
                 r'^Download-URL:\s*(.*?)\s*$',
@@ -350,7 +350,7 @@ class vsc_setup(object):
             self.private_repo = True
 
         if 'url' not in res:
-            raise KeyError("Missing url in git config %s. (Missing mandatory hpcugent (upstream) remote?)" % (res))
+            raise KeyError("Missing url in git config %s. (Missing mandatory hpcugent or sisc-hpc remote?)" % (res))
 
         # handle git://server/user/project
         reg = re.search(r'^(git|ssh)://', res.get('url', ''))
