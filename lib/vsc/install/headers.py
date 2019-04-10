@@ -102,7 +102,7 @@ def get_header(filename, script=False):
         blocks = ['', '']
     elif blocks[0] != '':
         # the block before the begin of text is always empty
-        raise Exception('unexpected non-emtpy block with get_header %s: %s' % (filename, blocks))
+        raise Exception('unexpected non-empty block with get_header %s: %s' % (filename, blocks))
 
     header = blocks[1]
 
@@ -115,6 +115,21 @@ def get_header(filename, script=False):
             header = "\n".join(lines[1:])
 
     return header, shebang
+
+
+def gen_license_header_brussel(license_template):
+    """
+    This adjusts the license template for use in Brussel
+    :param license_template: a license template
+    """
+    # replace university name
+    new_license_template = re.sub("Ghent University", "Vrije Universiteit Brussel", license_template)
+    # replace URL of HPC team
+    new_license_template = re.sub(r"http://ugent.be/hpc/en", "https://hpc.vub.be", new_license_template)
+    # replace URL of university
+    new_license_template = re.sub(r"http://ugent.be/hpc", "https://www.vub.be", new_license_template)
+
+    return new_license_template
 
 
 def gen_license_header(license_name, **kwargs):
@@ -132,6 +147,9 @@ def gen_license_header(license_name, **kwargs):
     template = globals().get(template_name, None)
     if template is None:
         raise Exception('gen_license_header cannot find template name %s' % template_name)
+
+    if 'sisc-hpc/' in kwargs.get('url', ''):
+        template = gen_license_header_brussel(template)
 
     return template.format(**kwargs)
 
