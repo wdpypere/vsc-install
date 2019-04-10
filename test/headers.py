@@ -109,6 +109,12 @@ class TestHeaders(TestCase):
             'endyear': 5678,
             'url': 'https://example.com/projectname',
         }
+        data_brussel = {
+            'name': 'projectname',
+            'beginyear': 1234,
+            'endyear': 5678,
+            'url': 'https://github.com/sisc-hpc/projectname',
+        }
         for license in KNOWN_LICENSES.keys():
             res_fn = os.path.join(self.setup.REPO_TEST_DIR, 'headers', license)
             with open(res_fn) as fh:
@@ -116,6 +122,16 @@ class TestHeaders(TestCase):
             gen_txt = gen_license_header(license, **data)
             self.assertEqual(gen_txt, result, msg='generated header for license %s as expected' % license)
             log.info('generated license header %s' % license)
+
+            gen_txt_bru = gen_license_header(license, **data_brussel)
+            self.assertNotRegexpMatches(gen_txt_bru, 'Ghent University',
+                                        msg='No reference to Ghent University in header')
+            self.assertNotRegexpMatches(gen_txt_bru, r'ugent\.be',
+                                        msg='No reference to ugent.be University in header')
+            self.assertRegexpMatches(gen_txt_bru, r'the HPC team of Vrije Universiteit Brussel \(https://hpc.vub.be\)',
+                                     msg='generted header for Brussel is correct for %s' % license)
+            self.assertRegexpMatches(gen_txt_bru, r'support of Vrije Universiteit Brussel \(https://www.vub.be\)',
+                                     msg='generted header for Brussel is correct for %s' % license)
 
     def test_begin_end_from_header(self):
         """Test begin_end_from_header method"""

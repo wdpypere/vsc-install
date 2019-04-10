@@ -63,6 +63,16 @@ class TestSetup(TestCase):
                          license_name='LGPLv2+'), res,
                          msg='determined name and url from %s file with license' % fn)
 
+        fn = 'git_config_6'
+        res_brussel = {
+            'name': 'vsc-jobs-brussel',
+            'url': 'https://github.com/sisc-hpc/vsc-jobs-brussel',
+            'download_url': 'https://github.com/sisc-hpc/vsc-jobs-brussel/archive/0.1.0.tar.gz',
+        }
+        self.assertEqual(self.setup.get_name_url(os.path.join(self.setup.REPO_TEST_DIR, 'setup', fn), version='0.1.0'),
+                         res_brussel,
+                         msg='determined name and url from %s file with license' % fn)
+
     def test_sanitize(self):
         """Test sanitize function"""
         os.environ['VSC_RPM_PYTHON'] = '1'
@@ -124,7 +134,7 @@ class TestSetup(TestCase):
     def test_import(self):
         """Test importing things from shared_setup.py, these should not be broken for backward compatibility."""
         from vsc.install.shared_setup import SHARED_TARGET
-        from vsc.install.shared_setup import ag, eh, jt, kh, kw, lm, sdw, wdp, wp
+        from vsc.install.shared_setup import ag, eh, jt, kh, kw, lm, sdw, wdp, wp, sm
 
     def test_action_target(self):
         """Test action_target function, mostly w.r.t. backward compatibility."""
