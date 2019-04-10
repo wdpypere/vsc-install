@@ -63,7 +63,7 @@ def nicediff(txta, txtb, offset=5):
     res_idx = []
     # very bruteforce
     for didx in different_idx:
-        for idx in range(max(didx-offset, 0), min(didx+offset, len(diff)-1)):
+        for idx in range(max(didx - offset, 0), min(didx + offset, len(diff) - 1)):
             if idx not in res_idx:
                 res_idx.append(idx)
     res_idx.sort()
@@ -102,7 +102,7 @@ def get_header(filename, script=False):
         blocks = ['', '']
     elif blocks[0] != '':
         # the block before the begin of text is always empty
-        raise Exception('unexpected non-emtpy block with get_header %s: %s' % (filename, blocks))
+        raise Exception('unexpected non-empty block with get_header %s: %s' % (filename, blocks))
 
     header = blocks[1]
 
@@ -132,6 +132,16 @@ def gen_license_header(license_name, **kwargs):
     template = globals().get(template_name, None)
     if template is None:
         raise Exception('gen_license_header cannot find template name %s' % template_name)
+
+    found = False
+    for github_organ in institute_details.keys():
+        if github_organ in kwargs.get('url', ''):
+            kwargs.update(institute_details[github_organ])
+            found = True
+            break
+
+    if not found:
+        raise Exception('Unable to find a known github organization in url %s' % kwargs.get('url'))
 
     return template.format(**kwargs)
 
@@ -195,7 +205,7 @@ def check_header(filename, script=False, write=False):
         if file_ext == '.py':
             if shebang != SHEBANG_ENV_PYTHON:
                 log.info("Wrong shebang for Python script %s: found '%s', should be '%s'",
-                        filename, shebang, SHEBANG_ENV_PYTHON)
+                         filename, shebang, SHEBANG_ENV_PYTHON)
                 shebang = SHEBANG_ENV_PYTHON
 
         elif file_ext in ['.sh', '']:
@@ -273,16 +283,32 @@ def check_header(filename, script=False, write=False):
     # return different or not
     return changed
 
+
+# mapping of the github organization to the details
+# to fill in the license templates
+institute_details = {
+    'hpcugent': {
+        'university_name': 'Ghent University',
+        'university_url': 'http://ugent.be/hpc',
+        'university_team_url': 'http://ugent.be/hpc/en',
+    },
+    'sisc-hpc': {
+        'university_name': 'Vrije Universiteit Brussel',
+        'university_url': 'https://www.vub.be',
+        'university_team_url': 'https://hpc.vub.be',
+    },
+}
+
 #
 # Only template headers below
 #
 
 LGPLv2_plus__TEMPLATE = """#
-# Copyright {beginyear}-{endyear} Ghent University
+# Copyright {beginyear}-{endyear} {university_name}
 #
 # This file is part of {name},
-# originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
-# with support of Ghent University (http://ugent.be/hpc),
+# originally created by the HPC team of {university_name} ({university_team_url}),
+# with support of {university_name} ({university_url}),
 # the Flemish Supercomputer Centre (VSC) (https://www.vscentrum.be),
 # the Flemish Research Foundation (FWO) (http://www.fwo.be/en)
 # and the Department of Economy, Science and Innovation (EWI) (http://www.ewi-vlaanderen.be/en).
@@ -305,11 +331,11 @@ LGPLv2_plus__TEMPLATE = """#
 """
 
 GPLv2_TEMPLATE = """#
-# Copyright {beginyear}-{endyear} Ghent University
+# Copyright {beginyear}-{endyear} {university_name}
 #
 # This file is part of {name},
-# originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
-# with support of Ghent University (http://ugent.be/hpc),
+# originally created by the HPC team of {university_name} ({university_team_url}),
+# with support of {university_name} ({university_url}),
 # the Flemish Supercomputer Centre (VSC) (https://www.vscentrum.be),
 # the Flemish Research Foundation (FWO) (http://www.fwo.be/en)
 # and the Department of Economy, Science and Innovation (EWI) (http://www.ewi-vlaanderen.be/en).
@@ -331,11 +357,11 @@ GPLv2_TEMPLATE = """#
 """
 
 ARR_TEMPLATE = """#
-# Copyright {beginyear}-{endyear} Ghent University
+# Copyright {beginyear}-{endyear} {university_name}
 #
 # This file is part of {name},
-# originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
-# with support of Ghent University (http://ugent.be/hpc),
+# originally created by the HPC team of {university_name} ({university_team_url}),
+# with support of {university_name} ({university_url}),
 # the Flemish Supercomputer Centre (VSC) (https://www.vscentrum.be),
 # the Flemish Research Foundation (FWO) (http://www.fwo.be/en)
 # and the Department of Economy, Science and Innovation (EWI) (http://www.ewi-vlaanderen.be/en).

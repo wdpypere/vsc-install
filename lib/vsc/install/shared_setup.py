@@ -137,7 +137,8 @@ kw = ('Kenneth Waegeman', 'Kenneth.Waegeman@UGent.be')
 lm = ('Luis Fernando Munoz Meji?as', 'luis.munoz@ugent.be')
 sdw = ('Stijn De Weirdt', 'stijn.deweirdt@ugent.be')
 wdp = ('Wouter Depypere', 'wouter.depypere@ugent.be')
-wp = ('Ward Poelmans', 'Ward.Poelmans@UGent.be')
+wp = ('Ward Poelmans', 'ward.poelmans@vub.be')
+sm = ('Samuel Moors', 'samuel.moors@vub.be')
 
 # Regexp used to remove suffixes from scripts when installing(/packaging)
 REGEXP_REMOVE_SUFFIX = re.compile(r'(\.(?:py|sh|pl))$')
@@ -155,7 +156,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.12.2'
+VERSION = '0.12.3'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -324,8 +325,8 @@ class vsc_setup(object):
             ],
             'url': [
                 r'^Home-page:\s*(.*?)\s*$',
-                r'^\s*url\s*=\s*((?:https?|ssh).*?github.*?[:/]hpcugent/.*?)\.git\s*$',
-                r'^\s*url\s*=\s*(git[:@].*?github.*?[:/]hpcugent/.*?)(?:\.git)?\s*$',
+                r'^\s*url\s*=\s*((?:https?|ssh).*?github.*?[:/](?:hpcugent|sisc-hpc)/.*?)\.git\s*$',
+                r'^\s*url\s*=\s*(git[:@].*?github.*?[:/](?:hpcugent|sisc-hpc)/.*?)(?:\.git)?\s*$',
             ],
             'download_url': [
                 r'^Download-URL:\s*(.*?)\s*$',
@@ -349,7 +350,7 @@ class vsc_setup(object):
             self.private_repo = True
 
         if 'url' not in res:
-            raise KeyError("Missing url in git config %s. (Missing mandatory hpcugent (upstream) remote?)" % (res))
+            raise KeyError("Missing url in git config %s. (Missing mandatory hpcugent or sisc-hpc remote?)" % (res))
 
         # handle git://server/user/project
         reg = re.search(r'^(git|ssh)://', res.get('url', ''))
