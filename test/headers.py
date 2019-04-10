@@ -107,7 +107,7 @@ class TestHeaders(TestCase):
             'name': 'projectname',
             'beginyear': 1234,
             'endyear': 5678,
-            'url': 'https://example.com/projectname',
+            'url': 'https://github.com/hpcugent/projectname',
         }
         data_brussel = {
             'name': 'projectname',
