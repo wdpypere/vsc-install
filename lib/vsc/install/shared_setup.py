@@ -156,7 +156,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.12.3'
+VERSION = '0.12.4'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -437,7 +437,7 @@ class vsc_setup(object):
                 # Force vsc shared packages/namespace
                 if '__init__.py' in files and (package == 'vsc' or package.startswith('vsc.')):
                     init = open(os.path.join(root, '__init__.py')).read()
-                    if not re.search(r'^import\s+pkg_resources\npkg_resources.declare_namespace\(__name__\)$',
+                    if not re.search(r'^import\s+pkg_resources\n{1,3}pkg_resources.declare_namespace\(__name__\)$',
                                      init, re.M):
                         raise Exception(('vsc namespace packages do not allow non-shared namespace in dir %s.'
                                          'Fix with pkg_resources.declare_namespace') % root)
