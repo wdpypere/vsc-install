@@ -156,7 +156,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.12.5'
+VERSION = '0.12.6'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 
@@ -1118,8 +1118,9 @@ class vsc_setup(object):
             log.info('Register with pypi')
             # do actually do this, use self.run_command()
             # you can only upload what you just created
-            self._print(['# Run command below to register with pypi (testpypi %s)' % self.testpypi])
-            self._print(setup + ['register'] + test + ['sdist', 'upload'] + test)
+            self._print(['# Run commands below to upload to PyPI (testpypi %s)' % self.testpypi])
+            self._print(setup + ['register'] + test + ['sdist'])
+            self._print(['twine', 'upload', '--verbose', 'dist/%s.tar.gz' % self.distribution.get_fullname()])
 
         def run(self):
             """Print list of thinigs to do"""
@@ -1337,6 +1338,20 @@ class vsc_setup(object):
             log.info('using long_description %s' % descr)
             new_target['description'] = descr  # summary in PKG-INFO
             new_target['long_description'] = readmetxt  # description in PKG-INFO
+
+            readme_ext = os.path.splitext(readme)[-1]
+            # see https://packaging.python.org/guides/making-a-pypi-friendly-readme/
+            readme_content_types = {
+                '.md': 'text/markdown',
+                '.rst': 'text/x-rst',
+                '.txt': 'text/plain',
+                # fallback in case README file has no extension
+                '': 'text/plain',
+            }
+            if readme_ext in readme_content_types:
+                new_target['long_description_content_type'] = readme_content_types[readme_ext]
+            else:
+                raise Exception("Failed to derive content type for README file '%s' based on extension" % readme)
 
         vsc_scripts = target.pop('vsc_scripts', True)
         if vsc_scripts:
