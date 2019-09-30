@@ -25,4 +25,9 @@
 # along with vsc-install. If not, see <http://www.gnu.org/licenses/>.
 #
 ### END OF HEADER
-env -i /usr/bin/python "$@"
+#
+# env -i: start with an empty environment
+# -s: ignore $HOME/.local/python*/site-packages
+# see https://docs.python.org/2/using/cmdline.html#cmdoption-s
+# and https://docs.python.org/2/library/site.html#site.USER_SITE
+env -i /usr/bin/python -s "$@"
