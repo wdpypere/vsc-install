@@ -1168,7 +1168,7 @@ class vsc_setup(object):
         'url': '',
         'dependency_links': [],
         'install_requires': [],
-        'tests_require': [],
+        'tests_require': ['tox'],
     }
 
     def cleanup(self, prefix=''):
