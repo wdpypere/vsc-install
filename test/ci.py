@@ -58,12 +58,14 @@ class CITest(TestCase):
         """Test setup"""
         super(CITest, self).setUp()
 
+        self.cwd = os.getcwd()
         self.tmpdir = tempfile.mkdtemp()
         self.tmpdir_name = os.path.basename(self.tmpdir)
 
     def tearDown(self):
         """Test cleanup"""
         shutil.rmtree(self.tmpdir)
+        os.chdir(self.cwd)
 
         super(CITest, self).tearDown()
 
