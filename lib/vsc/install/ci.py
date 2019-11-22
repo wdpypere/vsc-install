@@ -83,7 +83,7 @@ def gen_tox_ini(force=False):
     header = [
         "%s: configuration file for tox" % TOX_INI,
         "[revision: %s]" % TOX_INI_REVISION,
-        "This file was automatically generated using 'python -c vsc.install.ci -f'",
+        "This file was automatically generated using 'python -m vsc.install.ci -f'",
         "DO NOT EDIT MANUALLY",
     ]
     header = ['# ' + l for l in header]
@@ -149,7 +149,7 @@ def gen_jenkinsfile(force=False):
     header = [
         "%s: scripted Jenkins pipefile" % JENKINSFILE,
         "[revision: %s]" % JENKINSFILE_REVISION,
-        "This file was automatically generated using 'python -c vsc.install.ci -f'",
+        "This file was automatically generated using 'python -m vsc.install.ci -f'",
         "DO NOT EDIT MANUALLY",
     ]
     header = ['// ' + l for l in header]

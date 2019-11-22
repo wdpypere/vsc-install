@@ -103,7 +103,7 @@ class CITest(TestCase):
             expected = [
                 "// Jenkinsfile: scripted Jenkins pipefile",
                 "// [revision: %s]" % JENKINSFILE_REVISION,
-                "// This file was automatically generated using 'python -c vsc.install.ci -f'",
+                "// This file was automatically generated using 'python -m vsc.install.ci -f'",
                 "// DO NOT EDIT MANUALLY",
                 '',
                 "node {",
@@ -149,7 +149,7 @@ class CITest(TestCase):
             expected = [
                 "# tox.ini: configuration file for tox",
                 "# [revision: %s]" % TOX_INI_REVISION,
-                "# This file was automatically generated using 'python -c vsc.install.ci -f'",
+                "# This file was automatically generated using 'python -m vsc.install.ci -f'",
                 "# DO NOT EDIT MANUALLY",
                 '',
                 "[tox]",
