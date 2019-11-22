@@ -96,6 +96,9 @@ def gen_tox_ini(force=False):
         '',
         "[tox]",
         "envlist = %s" % ','.join(envs),
+        # ignore failures due to missing Python version
+        # python2.7 must always be available though, see Jenkinsfile
+        "skip_missing_interpreters = true",
     ]
     for env in envs:
         lines.extend([
@@ -125,7 +128,12 @@ def gen_jenkinsfile(force=False):
         """Indent string value with level*4 spaces."""
         return ' ' * 4 * level + line
 
-    test_cmds = ['tox -v']
+    test_cmds = [
+        # make very sure Python 2.7 is available,
+        # since tox ignores failures due to missing Python versions
+        'python2.7 -V',
+        'tox -v',
+    ]
 
     header = [
         "%s: scripted Jenkins pipefile" % JENKINSFILE,

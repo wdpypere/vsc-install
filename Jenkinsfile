@@ -7,5 +7,6 @@ node {
     stage 'checkout git'
     checkout scm
     stage 'test'
+    sh 'python2.7 -V'
     sh 'tox -v'
 }
