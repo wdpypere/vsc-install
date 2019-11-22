@@ -109,18 +109,11 @@ class CITest(TestCase):
                 "node {",
                 "    stage 'checkout git'",
                 "    checkout scm",
-            ]
-            if pkg != 'vsc-install':
-                expected.extend([
-                    "    stage 'install vsc-install dependency'",
-                    "    sh 'python -m easy_install -U --user vsc-install'",
-                ])
-            expected.extend([
                 "    stage 'test'",
                 "    sh 'python2.7 -V'",
                 "    sh 'tox -v'",
                 '}',
-            ])
+            ]
             expected = '\n'.join(expected)
 
             self.assertEqual(read_file('Jenkinsfile'), expected)
@@ -153,7 +146,7 @@ class CITest(TestCase):
             check_stdout(self.run_function(gen_tox_ini))
             self.assertTrue(os.path.exists('tox.ini'))
 
-            expected = '\n'.join([
+            expected = [
                 "# tox.ini: configuration file for tox",
                 "# [revision: %s]" % TOX_INI_REVISION,
                 "# This file was automatically generated using 'python -c vsc.install.ci -f'",
@@ -161,15 +154,23 @@ class CITest(TestCase):
                 '',
                 "[tox]",
                 "envlist = py27,py36",
+                "skipsdist = true",
                 "skip_missing_interpreters = true",
-                "",
-                "[testenv:py27]",
+                '',
+                "[testenv]",
+            ]
+
+            if pkg != 'vsc-install':
+                expected.append("commands_pre = python -m easy_install -U vsc-install")
+
+            expected.extend([
                 "commands = python setup.py test",
-                "",
+                '',
                 "[testenv:py36]",
-                "commands = python setup.py test",
                 "ignore_outcome = true",
             ])
+            expected = '\n'.join(expected)
+
             self.assertEqual(read_file('tox.ini'), expected)
 
             # overwriting requires force

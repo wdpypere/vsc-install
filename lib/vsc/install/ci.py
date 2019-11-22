@@ -88,7 +88,6 @@ def gen_tox_ini(force=False):
     ]
     header = ['# ' + l for l in header]
 
-    test_cmd = "python setup.py test"
     py3_env = 'py36'
     envs = ['py27', py3_env]
 
@@ -96,19 +95,31 @@ def gen_tox_ini(force=False):
         '',
         "[tox]",
         "envlist = %s" % ','.join(envs),
+        # instruct tox not to run sdist prior to installing the package in the tox environment
+        # (setup.py requires vsc-install, which is not installed yet when 'python setup.py sdist' is run)
+        "skipsdist = true",
         # ignore failures due to missing Python version
         # python2.7 must always be available though, see Jenkinsfile
         "skip_missing_interpreters = true",
+        '',
+        '[testenv]',
     ]
-    for env in envs:
+
+    # install let tox install vsc-install, except in tox.ini for vsc--install itself
+    if os.path.basename(cwd) != 'vsc-install':
         lines.extend([
-            '',
-            '[testenv:%s]' % env,
-            "commands = %s" % test_cmd,
+            # use easy_install rather than pip to install vsc-install dependency
+            # (vsc-* packages may not work when installed with pip due to use of namespace package vsc.*)
+            'commands_pre = python -m easy_install -U vsc-install',
         ])
+
+    lines.extend([
+        "commands = python setup.py test",
+        '',
         # allow failing tests in Python 3, for now...
-        if env == py3_env:
-            lines.append("ignore_outcome = true")
+        '[testenv:%s]' % py3_env,
+        "ignore_outcome = true"
+    ])
 
     txt = '\n'.join(lines)
     write_file(tox_ini, txt, force=force)
@@ -148,17 +159,8 @@ def gen_jenkinsfile(force=False):
         "node {",
         indent("stage 'checkout git'"),
         indent("checkout scm"),
+        indent("stage 'test'")
     ]
-
-    # install vsc-install, except for Jenkinsfile for vsc-install (well duh)
-    if os.path.basename(cwd) != 'vsc-install':
-        lines.extend([
-            indent("stage 'install vsc-install dependency'"),
-            # assume that setuptools is installed, so 'python -m easy_install' works
-            indent("sh 'python -m easy_install -U --user vsc-install'")
-        ])
-
-    lines.append(indent("stage 'test'"))
     lines.extend([indent("sh '%s'" % c) for c in test_cmds])
     lines.append('}')
 
