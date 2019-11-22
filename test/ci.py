@@ -90,7 +90,8 @@ class CITest(TestCase):
 
         error_pattern = r"File .*/%s/Jenkinsfile already exists" % os.path.basename(self.tmpdir)
         error_pattern += ", use --force to overwrite"
-        self.assertErrorRegex(OSError, error_pattern, self.run_function, gen_jenkinsfile)
+        # could be either IOError or OSError, depending on the Python version being used, so check for Exception
+        self.assertErrorRegex(Exception, error_pattern, self.run_function, gen_jenkinsfile)
 
         # overwrite existing tox.ini, so we can check contents after re-generating it
         fake_txt = "This is not a valid Jenkinsfile file"
@@ -117,7 +118,8 @@ class CITest(TestCase):
         # overwriting requires force
         error_pattern = r"File .*/%s/tox.ini already exists" % self.tmpdir_name
         error_pattern += ", use --force to overwrite"
-        self.assertErrorRegex(OSError, error_pattern, self.run_function, gen_tox_ini)
+        # could be either IOError or OSError, depending on the Python version being used, so check for Exception
+        self.assertErrorRegex(Exception, error_pattern, self.run_function, gen_tox_ini)
 
         # overwrite existing tox.ini, so we can check contents after re-generating it
         fake_txt = "This is not a valid tox.ini file"
