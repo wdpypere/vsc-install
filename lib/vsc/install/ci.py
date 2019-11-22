@@ -89,8 +89,8 @@ def gen_tox_ini(force=False):
     header = ['# ' + l for l in header]
 
     test_cmd = "python setup.py test"
-    # use py3 env to allow testing in different environments (Python 3.5, 3.6, ...)
-    envs = ['py27', 'py3']
+    py3_env = 'py36'
+    envs = ['py27', py3_env]
 
     lines = header + [
         '',
@@ -104,7 +104,7 @@ def gen_tox_ini(force=False):
             "commands = %s" % test_cmd,
         ])
         # allow failing tests in Python 3, for now...
-        if env == 'py3':
+        if env == py3_env:
             lines.append("ignore_outcome = true")
 
     txt = '\n'.join(lines)

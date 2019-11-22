@@ -1,9 +1,10 @@
+dist: bionic
 language: generic
 addons:
   apt:
     packages:
       - python2.7
-      - python3
+      - python3.6
 before_install:
     # virtualenv 16.0.0 upgraded vendored pip to 10.0.1,
     # which includes a sufficiently recent setuptools to avoid
