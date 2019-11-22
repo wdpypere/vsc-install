@@ -63,15 +63,15 @@ class CITest(TestCase):
 
     def run_function(self, function, *args, **kwargs):
         """Run specified function with specified arguments, and capture generated stdout/stderr."""
-        orig_handlers = vsc.install.ci.log.handlers[:]
+        orig_handlers = vsc.install.ci.LOG.handlers[:]
         stringio = StringIO()
         handler = logging.StreamHandler(stringio)
-        vsc.install.ci.log.handlers = [handler]
+        vsc.install.ci.LOG.handlers = [handler]
 
         function(*args, **kwargs)
 
         stdout = stringio.getvalue()
-        vsc.install.ci.log.handlers = orig_handlers
+        vsc.install.ci.LOG.handlers = orig_handlers
 
         return stdout
 
