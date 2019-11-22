@@ -43,8 +43,9 @@ import sys
 import unittest
 
 from distutils import log
-from vsc.install.shared_setup import vsc_setup
+from vsc.install.ci import JENKINSFILE_REVISION, TOX_INI_REVISION
 from vsc.install.headers import check_header
+from vsc.install.shared_setup import vsc_setup
 from vsc.install.testing import TestCase
 
 # No prospector in py26 or earlier
@@ -134,6 +135,7 @@ PROSPECTOR_OPTIONS = [
     # or the problem should be solved in another way.
     '--die-on-tool-error',
 ]
+
 
 def run_prospector(base_dir, clear_ignore_patterns=False):
     """Run prospector and apply white/blacklists to the results"""
@@ -273,3 +275,23 @@ class CommonTest(TestCase):
 
         failures = run_prospector(self.setup.REPO_BASE_DIR)
         self.assertFalse(failures, "prospector failures: %s" % pprint.pformat(failures))
+
+    def test_jenkinsfile(self):
+        """Test whether Jenkinsfile is in place, and was auto-generated with correct revision."""
+
+        self.assertTrue(os.path.exists('Jenkinsfile'))
+        with open('Jenkinsfile') as fh:
+            txt = fh.read()
+
+        regex = re.compile(r'^// \[revision: %s\]$' % JENKINSFILE_REVISION, re.M)
+        self.assertTrue(regex.search(txt), "Pattern '%s' found in tox.ini: %s" % (regex.pattern, txt))
+
+    def test_tox_ini(self):
+        """Test whether tox.ini is in place, and was auto-generated with correct revision."""
+
+        self.assertTrue(os.path.exists('tox.ini'))
+        with open('tox.ini') as fh:
+            txt = fh.read()
+
+        regex = re.compile(r'^# \[revision: %s\]$' % TOX_INI_REVISION, re.M)
+        self.assertTrue(regex.search(txt), "Pattern '%s' found in tox.ini: %s" % (regex.pattern, txt))
