@@ -85,12 +85,16 @@ class CITest(TestCase):
 
     def test_gen_jenkinsfile(self):
         """Test generating of Jenkinsfile."""
-        os.chdir(self.tmpdir)
+
+        pkg = 'vsc-install'
+        testdir = os.path.join(self.tmpdir, pkg)
+        os.makedirs(testdir)
+        os.chdir(testdir)
 
         def check_stdout(stdout):
             """Helper function to check stdout output."""
             self.assertTrue(stdout.startswith('[Jenkinsfile]'))
-            regex = re.compile(r"^Wrote .*/%s/Jenkinsfile$" % self.tmpdir_name, re.M)
+            regex = re.compile(r"^Wrote .*/%s/%s/Jenkinsfile$" % (self.tmpdir_name, pkg), re.M)
             self.assertTrue(regex.search(stdout), "Pattern '%s' found in: %s" % (regex.pattern, stdout))
 
         check_stdout(self.run_function(gen_jenkinsfile))
@@ -111,7 +115,7 @@ class CITest(TestCase):
         ])
         self.assertEqual(read_file('Jenkinsfile'), expected)
 
-        error_pattern = r"File .*/%s/Jenkinsfile already exists" % os.path.basename(self.tmpdir)
+        error_pattern = r"File .*/%s/%s/Jenkinsfile already exists" % (self.tmpdir_name, pkg)
         error_pattern += ", use --force to overwrite"
         # could be either IOError or OSError, depending on the Python version being used, so check for Exception
         self.assertErrorRegex(Exception, error_pattern, self.run_function, gen_jenkinsfile)
@@ -124,12 +128,16 @@ class CITest(TestCase):
 
     def test_tox_ini(self):
         """Test generating of tox.ini."""
-        os.chdir(self.tmpdir)
+
+        pkg = 'vsc-install'
+        testdir = os.path.join(self.tmpdir, pkg)
+        os.makedirs(testdir)
+        os.chdir(testdir)
 
         def check_stdout(stdout):
             """Helper function to check stdout output."""
             self.assertTrue(stdout.startswith('[tox.ini]'))
-            regex = re.compile(r"^Wrote .*/%s/tox\.ini$" % self.tmpdir_name, re.M)
+            regex = re.compile(r"^Wrote .*/%s/%s/tox\.ini$" % (self.tmpdir_name, pkg), re.M)
             self.assertTrue(regex.search(stdout), "Pattern '%s' found in: %s" % (regex.pattern, stdout))
 
         check_stdout(self.run_function(gen_tox_ini))
@@ -154,7 +162,7 @@ class CITest(TestCase):
         self.assertEqual(read_file('tox.ini'), expected)
 
         # overwriting requires force
-        error_pattern = r"File .*/%s/tox.ini already exists" % self.tmpdir_name
+        error_pattern = r"File .*/%s/%s/tox.ini already exists" % (self.tmpdir_name, pkg)
         error_pattern += ", use --force to overwrite"
         # could be either IOError or OSError, depending on the Python version being used, so check for Exception
         self.assertErrorRegex(Exception, error_pattern, self.run_function, gen_tox_ini)
