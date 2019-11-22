@@ -40,6 +40,7 @@ import sys
 JENKINSFILE = 'Jenkinsfile'
 TOX_INI = 'tox.ini'
 
+logging.basicConfig(format="%(message)s", level=logging.INFO)
 log = logging.getLogger()
 
 
@@ -55,16 +56,22 @@ def parse_options(args):
 def write_file(path, txt, force=False):
     """Write specified contents to specified path."""
     try:
-        if os.path.exists(path) and not force:
-            raise IOError("File %s already exists, use --force to overwrite" % path)
+        if os.path.exists(path):
+            if force:
+                log.info("Found existing file %s, overwriting it since --force is used!" % path)
+            else:
+                raise IOError("File %s already exists, use --force to overwrite!" % path)
         with open(path, 'w') as fh:
             fh.write(txt)
+        log.info("Wrote %s" % path)
     except (IOError, OSError) as err:
         raise IOError("Failed to write %s in %s: %s" % (path, os.getcwd(), err))
 
 
 def gen_tox_ini(force=False):
     """Generate tox.ini"""
+    log.info('[' + TOX_INI + ']')
+
     cwd = os.getcwd()
     tox_ini = os.path.join(cwd, TOX_INI)
 
@@ -74,6 +81,8 @@ def gen_tox_ini(force=False):
 
 def gen_jenkinsfile(force=False):
     """Generate Jenkinsfile."""
+    log.info('[' + JENKINSFILE + ']')
+
     cwd = os.getcwd()
     jenkinsfile = os.path.join(cwd, JENKINSFILE)
 
