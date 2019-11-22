@@ -45,6 +45,12 @@ from vsc.install.ci import gen_jenkinsfile, gen_tox_ini, write_file
 from vsc.install.testing import TestCase
 
 
+def read_file(path):
+    """Read file at specified path, and return contents."""
+    with open(path, 'r') as handle:
+        return handle.read()
+
+
 class CITest(TestCase):
     """License related tests"""
 
@@ -88,19 +94,26 @@ class CITest(TestCase):
         check_stdout(self.run_function(gen_jenkinsfile))
         self.assertTrue(os.path.exists('Jenkinsfile'))
 
+        expected = '\n'.join([
+            "node {",
+            "    stage 'checkout git'",
+            "    checkout scm",
+            "    stage 'test'",
+            "    sh 'tox -v'",
+            "}",
+        ])
+        self.assertEqual(read_file('Jenkinsfile'), expected)
+
         error_pattern = r"File .*/%s/Jenkinsfile already exists" % os.path.basename(self.tmpdir)
         error_pattern += ", use --force to overwrite"
         # could be either IOError or OSError, depending on the Python version being used, so check for Exception
         self.assertErrorRegex(Exception, error_pattern, self.run_function, gen_jenkinsfile)
 
         # overwrite existing tox.ini, so we can check contents after re-generating it
-        fake_txt = "This is not a valid Jenkinsfile file"
-        write_file('Jenkinsfile', fake_txt, force=True)
+        write_file('Jenkinsfile', "This is not a valid Jenkinsfile file", force=True)
 
         check_stdout(self.run_function(gen_jenkinsfile, force=True))
-        with open('Jenkinsfile') as fp:
-            txt = fp.read()
-        self.assertTrue(txt != fake_txt)
+        self.assertEqual(read_file('Jenkinsfile'), expected)
 
     def test_tox_ini(self):
         """Test generating of tox.ini."""
@@ -115,6 +128,19 @@ class CITest(TestCase):
         check_stdout(self.run_function(gen_tox_ini))
         self.assertTrue(os.path.exists('tox.ini'))
 
+        expected = '\n'.join([
+            "[tox]",
+            "envlist = py27,py3",
+            "",
+            "[testenv:py27]",
+            "commands = python setup.py test",
+            "",
+            "[testenv:py3]",
+            "commands = python setup.py test",
+            "ignore_outcome = true",
+        ])
+        self.assertEqual(read_file('tox.ini'), expected)
+
         # overwriting requires force
         error_pattern = r"File .*/%s/tox.ini already exists" % self.tmpdir_name
         error_pattern += ", use --force to overwrite"
@@ -122,10 +148,7 @@ class CITest(TestCase):
         self.assertErrorRegex(Exception, error_pattern, self.run_function, gen_tox_ini)
 
         # overwrite existing tox.ini, so we can check contents after re-generating it
-        fake_txt = "This is not a valid tox.ini file"
-        write_file('tox.ini', fake_txt, force=True)
+        write_file('tox.ini', "This is not a valid tox.ini file", force=True)
 
         check_stdout(self.run_function(gen_tox_ini, force=True))
-        with open('tox.ini') as fp:
-            txt = fp.read()
-        self.assertTrue(txt != fake_txt)
+        self.assertEqual(read_file('tox.ini'), expected)
