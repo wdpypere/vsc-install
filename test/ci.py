@@ -86,89 +86,100 @@ class CITest(TestCase):
     def test_gen_jenkinsfile(self):
         """Test generating of Jenkinsfile."""
 
-        pkg = 'vsc-install'
-        testdir = os.path.join(self.tmpdir, pkg)
-        os.makedirs(testdir)
-        os.chdir(testdir)
+        for pkg in ['vsc-install', 'vsc-base']:
+            testdir = os.path.join(self.tmpdir, pkg)
+            os.makedirs(testdir)
+            os.chdir(testdir)
 
-        def check_stdout(stdout):
-            """Helper function to check stdout output."""
-            self.assertTrue(stdout.startswith('[Jenkinsfile]'))
-            regex = re.compile(r"^Wrote .*/%s/%s/Jenkinsfile$" % (self.tmpdir_name, pkg), re.M)
-            self.assertTrue(regex.search(stdout), "Pattern '%s' found in: %s" % (regex.pattern, stdout))
+            def check_stdout(stdout):
+                """Helper function to check stdout output."""
+                self.assertTrue(stdout.startswith('[Jenkinsfile]'))
+                regex = re.compile(r"^Wrote .*/%s/%s/Jenkinsfile$" % (self.tmpdir_name, pkg), re.M)
+                self.assertTrue(regex.search(stdout), "Pattern '%s' found in: %s" % (regex.pattern, stdout))
 
-        check_stdout(self.run_function(gen_jenkinsfile))
-        self.assertTrue(os.path.exists('Jenkinsfile'))
+            check_stdout(self.run_function(gen_jenkinsfile))
+            self.assertTrue(os.path.exists('Jenkinsfile'))
 
-        expected = '\n'.join([
-            "// Jenkinsfile: scripted Jenkins pipefile",
-            "// [revision: %s]" % JENKINSFILE_REVISION,
-            "// This file was automatically generated using 'python -c vsc.install.ci -f'",
-            "// DO NOT EDIT MANUALLY",
-            '',
-            "node {",
-            "    stage 'checkout git'",
-            "    checkout scm",
-            "    stage 'test'",
-            "    sh 'tox -v'",
-            '}',
-        ])
-        self.assertEqual(read_file('Jenkinsfile'), expected)
+            expected = [
+                "// Jenkinsfile: scripted Jenkins pipefile",
+                "// [revision: %s]" % JENKINSFILE_REVISION,
+                "// This file was automatically generated using 'python -c vsc.install.ci -f'",
+                "// DO NOT EDIT MANUALLY",
+                '',
+                "node {",
+                "    stage 'checkout git'",
+                "    checkout scm",
+            ]
+            if pkg != 'vsc-install':
+                expected.extend([
+                    "    stage 'install vsc-install dependency'",
+                    "    sh 'python -m easy_install -U --user vsc-install'",
+                ])
+            expected.extend([
+                "    stage 'test'",
+                "    sh 'python2.7 -V'",
+                "    sh 'tox -v'",
+                '}',
+            ])
+            expected = '\n'.join(expected)
 
-        error_pattern = r"File .*/%s/%s/Jenkinsfile already exists" % (self.tmpdir_name, pkg)
-        error_pattern += ", use --force to overwrite"
-        # could be either IOError or OSError, depending on the Python version being used, so check for Exception
-        self.assertErrorRegex(Exception, error_pattern, self.run_function, gen_jenkinsfile)
+            self.assertEqual(read_file('Jenkinsfile'), expected)
 
-        # overwrite existing tox.ini, so we can check contents after re-generating it
-        write_file('Jenkinsfile', "This is not a valid Jenkinsfile file", force=True)
+            error_pattern = r"File .*/%s/%s/Jenkinsfile already exists" % (self.tmpdir_name, pkg)
+            error_pattern += ", use --force to overwrite"
+            # could be either IOError or OSError, depending on the Python version being used, so check for Exception
+            self.assertErrorRegex(Exception, error_pattern, self.run_function, gen_jenkinsfile)
 
-        check_stdout(self.run_function(gen_jenkinsfile, force=True))
-        self.assertEqual(read_file('Jenkinsfile'), expected)
+            # overwrite existing tox.ini, so we can check contents after re-generating it
+            write_file('Jenkinsfile', "This is not a valid Jenkinsfile file", force=True)
+
+            check_stdout(self.run_function(gen_jenkinsfile, force=True))
+            self.assertEqual(read_file('Jenkinsfile'), expected)
 
     def test_tox_ini(self):
         """Test generating of tox.ini."""
 
-        pkg = 'vsc-install'
-        testdir = os.path.join(self.tmpdir, pkg)
-        os.makedirs(testdir)
-        os.chdir(testdir)
+        for pkg in ['vsc-install', 'vsc-base']:
+            testdir = os.path.join(self.tmpdir, pkg)
+            os.makedirs(testdir)
+            os.chdir(testdir)
 
-        def check_stdout(stdout):
-            """Helper function to check stdout output."""
-            self.assertTrue(stdout.startswith('[tox.ini]'))
-            regex = re.compile(r"^Wrote .*/%s/%s/tox\.ini$" % (self.tmpdir_name, pkg), re.M)
-            self.assertTrue(regex.search(stdout), "Pattern '%s' found in: %s" % (regex.pattern, stdout))
+            def check_stdout(stdout):
+                """Helper function to check stdout output."""
+                self.assertTrue(stdout.startswith('[tox.ini]'))
+                regex = re.compile(r"^Wrote .*/%s/%s/tox\.ini$" % (self.tmpdir_name, pkg), re.M)
+                self.assertTrue(regex.search(stdout), "Pattern '%s' found in: %s" % (regex.pattern, stdout))
 
-        check_stdout(self.run_function(gen_tox_ini))
-        self.assertTrue(os.path.exists('tox.ini'))
+            check_stdout(self.run_function(gen_tox_ini))
+            self.assertTrue(os.path.exists('tox.ini'))
 
-        expected = '\n'.join([
-            "# tox.ini: configuration file for tox",
-            "# [revision: %s]" % TOX_INI_REVISION,
-            "# This file was automatically generated using 'python -c vsc.install.ci -f'",
-            "# DO NOT EDIT MANUALLY",
-            '',
-            "[tox]",
-            "envlist = py27,py36",
-            "",
-            "[testenv:py27]",
-            "commands = python setup.py test",
-            "",
-            "[testenv:py36]",
-            "commands = python setup.py test",
-            "ignore_outcome = true",
-        ])
-        self.assertEqual(read_file('tox.ini'), expected)
+            expected = '\n'.join([
+                "# tox.ini: configuration file for tox",
+                "# [revision: %s]" % TOX_INI_REVISION,
+                "# This file was automatically generated using 'python -c vsc.install.ci -f'",
+                "# DO NOT EDIT MANUALLY",
+                '',
+                "[tox]",
+                "envlist = py27,py36",
+                "skip_missing_interpreters = true",
+                "",
+                "[testenv:py27]",
+                "commands = python setup.py test",
+                "",
+                "[testenv:py36]",
+                "commands = python setup.py test",
+                "ignore_outcome = true",
+            ])
+            self.assertEqual(read_file('tox.ini'), expected)
 
-        # overwriting requires force
-        error_pattern = r"File .*/%s/%s/tox.ini already exists" % (self.tmpdir_name, pkg)
-        error_pattern += ", use --force to overwrite"
-        # could be either IOError or OSError, depending on the Python version being used, so check for Exception
-        self.assertErrorRegex(Exception, error_pattern, self.run_function, gen_tox_ini)
+            # overwriting requires force
+            error_pattern = r"File .*/%s/%s/tox.ini already exists" % (self.tmpdir_name, pkg)
+            error_pattern += ", use --force to overwrite"
+            # could be either IOError or OSError, depending on the Python version being used, so check for Exception
+            self.assertErrorRegex(Exception, error_pattern, self.run_function, gen_tox_ini)
 
-        # overwrite existing tox.ini, so we can check contents after re-generating it
-        write_file('tox.ini', "This is not a valid tox.ini file", force=True)
+            # overwrite existing tox.ini, so we can check contents after re-generating it
+            write_file('tox.ini', "This is not a valid tox.ini file", force=True)
 
-        check_stdout(self.run_function(gen_tox_ini, force=True))
-        self.assertEqual(read_file('tox.ini'), expected)
+            check_stdout(self.run_function(gen_tox_ini, force=True))
+            self.assertEqual(read_file('tox.ini'), expected)
