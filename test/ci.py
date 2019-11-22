@@ -41,7 +41,7 @@ except ImportError:
     from io import StringIO  # Python 3
 
 import vsc.install.ci
-from vsc.install.ci import gen_jenkinsfile, gen_tox_ini, write_file
+from vsc.install.ci import JENKINSFILE_REVISION, TOX_INI_REVISION, gen_jenkinsfile, gen_tox_ini, write_file
 from vsc.install.testing import TestCase
 
 
@@ -95,12 +95,17 @@ class CITest(TestCase):
         self.assertTrue(os.path.exists('Jenkinsfile'))
 
         expected = '\n'.join([
+            "// Jenkinsfile: scripted Jenkins pipefile",
+            "// [revision: %s]" % JENKINSFILE_REVISION,
+            "// This file was automatically generated using 'python -c vsc.install.ci -f'",
+            "// DO NOT EDIT MANUALLY",
+            '',
             "node {",
             "    stage 'checkout git'",
             "    checkout scm",
             "    stage 'test'",
             "    sh 'tox -v'",
-            "}",
+            '}',
         ])
         self.assertEqual(read_file('Jenkinsfile'), expected)
 
@@ -129,6 +134,11 @@ class CITest(TestCase):
         self.assertTrue(os.path.exists('tox.ini'))
 
         expected = '\n'.join([
+            "# tox.ini: configuration file for tox",
+            "# [revision: %s]" % TOX_INI_REVISION,
+            "# This file was automatically generated using 'python -c vsc.install.ci -f'",
+            "# DO NOT EDIT MANUALLY",
+            '',
             "[tox]",
             "envlist = py27,py3",
             "",

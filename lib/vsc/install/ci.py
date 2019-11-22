@@ -38,7 +38,9 @@ import sys
 
 
 JENKINSFILE = 'Jenkinsfile'
+JENKINSFILE_REVISION = 'Jenkinsfile|20191122.01'
 TOX_INI = 'tox.ini'
+TOX_INI_REVISION = 'tox.ini|20191122.01'
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 LOG = logging.getLogger()
@@ -78,11 +80,20 @@ def gen_tox_ini(force=False):
     cwd = os.getcwd()
     tox_ini = os.path.join(cwd, TOX_INI)
 
+    header = [
+        "%s: configuration file for tox" % TOX_INI,
+        "[revision: %s]" % TOX_INI_REVISION,
+        "This file was automatically generated using 'python -c vsc.install.ci -f'",
+        "DO NOT EDIT MANUALLY",
+    ]
+    header = ['# ' + l for l in header]
+
     test_cmd = "python setup.py test"
     # use py3 env to allow testing in different environments (Python 3.5, 3.6, ...)
     envs = ['py27', 'py3']
 
-    lines = [
+    lines = header + [
+        '',
         "[tox]",
         "envlist = %s" % ','.join(envs),
     ]
@@ -116,14 +127,23 @@ def gen_jenkinsfile(force=False):
 
     test_cmds = ['tox -v']
 
-    lines = [
+    header = [
+        "%s: scripted Jenkins pipefile" % JENKINSFILE,
+        "[revision: %s]" % JENKINSFILE_REVISION,
+        "This file was automatically generated using 'python -c vsc.install.ci -f'",
+        "DO NOT EDIT MANUALLY",
+    ]
+    header = ['// ' + l for l in header]
+
+    lines = header + [
+        '',
         "node {",
         indent("stage 'checkout git'"),
         indent("checkout scm"),
         indent("stage 'test'"),
     ]
     lines.extend([indent("sh '%s'" % c) for c in test_cmds])
-    lines.append("}")
+    lines.append('}')
 
     txt = '\n'.join(lines)
     write_file(jenkinsfile, txt, force=force)
