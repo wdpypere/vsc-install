@@ -283,7 +283,7 @@ class CommonTest(TestCase):
         with open('Jenkinsfile') as fh:
             txt = fh.read()
 
-        regex = re.compile(r'^// \[revision: %s\]$' % JENKINSFILE_REVISION, re.M)
+        regex = re.compile(r'^// \[revision: %s\]$' % re.escape(JENKINSFILE_REVISION), re.M)
         self.assertTrue(regex.search(txt), "Pattern '%s' found in tox.ini: %s" % (regex.pattern, txt))
 
     def test_tox_ini(self):
@@ -293,5 +293,5 @@ class CommonTest(TestCase):
         with open('tox.ini') as fh:
             txt = fh.read()
 
-        regex = re.compile(r'^# \[revision: %s\]$' % TOX_INI_REVISION, re.M)
+        regex = re.compile(r'^# \[revision: %s\]$' % re.escape(TOX_INI_REVISION), re.M)
         self.assertTrue(regex.search(txt), "Pattern '%s' found in tox.ini: %s" % (regex.pattern, txt))

@@ -38,9 +38,9 @@ import sys
 
 
 JENKINSFILE = 'Jenkinsfile'
-JENKINSFILE_REVISION = 'Jenkinsfile|20191122.01'
+JENKINSFILE_REVISION = 'Jenkinsfile@20191122-01'
 TOX_INI = 'tox.ini'
-TOX_INI_REVISION = 'tox.ini|20191122.01'
+TOX_INI_REVISION = 'tox.ini@20191122-01'
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 LOG = logging.getLogger()
@@ -140,8 +140,17 @@ def gen_jenkinsfile(force=False):
         "node {",
         indent("stage 'checkout git'"),
         indent("checkout scm"),
-        indent("stage 'test'"),
     ]
+
+    # install vsc-install, except for Jenkinsfile for vsc-install (well duh)
+    if os.path.basename(cwd) != 'vsc-install':
+        lines.extend([
+            indent("stage 'install vsc-install dependency'"),
+            # assume that setuptools is installed, so 'python -m easy_install' works
+            indent("sh 'python -m easy_install -U --user vsc-install'")
+        ])
+
+    lines.append(indent("stage 'test'"))
     lines.extend([indent("sh '%s'" % c) for c in test_cmds])
     lines.append('}')
 
