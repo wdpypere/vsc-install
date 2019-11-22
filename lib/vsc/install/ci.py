@@ -69,24 +69,63 @@ def write_file(path, txt, force=False):
 
 
 def gen_tox_ini(force=False):
-    """Generate tox.ini"""
+    """
+    Generate tox.ini configuration file for tox
+    see also https://tox.readthedocs.io/en/latest/config.html
+    """
     LOG.info('[%s]', TOX_INI)
 
     cwd = os.getcwd()
     tox_ini = os.path.join(cwd, TOX_INI)
 
-    txt = ''
+    test_cmd = "python setup.py test"
+    # use py3 env to allow testing in different environments (Python 3.5, 3.6, ...)
+    envs = ['py27', 'py3']
+
+    lines = [
+        "[tox]",
+        "envlist = %s" % ','.join(envs),
+    ]
+    for env in envs:
+        lines.extend([
+            '',
+            '[testenv:%s]' % env,
+            "commands = %s" % test_cmd,
+        ])
+        # allow failing tests in Python 3, for now...
+        if env == 'py3':
+            lines.append("ignore_outcome = true")
+
+    txt = '\n'.join(lines)
     write_file(tox_ini, txt, force=force)
 
 
 def gen_jenkinsfile(force=False):
-    """Generate Jenkinsfile."""
+    """
+    Generate Jenkinsfile (in Groovy syntax),
+    see also https://jenkins.io/doc/book/pipeline/syntax/#scripted-pipeline
+    """
     LOG.info('[%s]', JENKINSFILE)
 
     cwd = os.getcwd()
     jenkinsfile = os.path.join(cwd, JENKINSFILE)
 
-    txt = ''
+    def indent(line, level=1):
+        """Indent string value with level*4 spaces."""
+        return ' ' * 4 * level + line
+
+    test_cmds = ['tox -v']
+
+    lines = [
+        "node {",
+        indent("stage 'checkout git'"),
+        indent("checkout scm"),
+        indent("stage 'test'"),
+    ]
+    lines.extend([indent("sh '%s'" % c) for c in test_cmds])
+    lines.append("}")
+
+    txt = '\n'.join(lines)
     write_file(jenkinsfile, txt, force=force)
 
 
@@ -94,8 +133,8 @@ def main():
     """Main function: generate tox.ini and Jenkinsfile (in current directory)."""
 
     (options, args) = parse_options(sys.argv)
-    if args:
-        raise ValueError("Unexpected arguments found: %s" % args)
+    if args[1:]:
+        raise ValueError("Unexpected arguments found: %s" % args[1:])
 
     gen_tox_ini(force=options.force)
 
