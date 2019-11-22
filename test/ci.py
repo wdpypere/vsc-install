@@ -111,6 +111,7 @@ class CITest(TestCase):
                 "    checkout scm",
                 "    stage 'test'",
                 "    sh 'python2.7 -V'",
+                "    sh 'python -m easy_install -U --user tox'",
                 "    sh 'tox -v'",
                 '}',
             ]

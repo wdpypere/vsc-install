@@ -38,7 +38,7 @@ import sys
 
 
 JENKINSFILE = 'Jenkinsfile'
-JENKINSFILE_REVISION = 'Jenkinsfile@20191122-01'
+JENKINSFILE_REVISION = 'Jenkinsfile@20191122-02'
 TOX_INI = 'tox.ini'
 TOX_INI_REVISION = 'tox.ini@20191122-01'
 
@@ -143,6 +143,7 @@ def gen_jenkinsfile(force=False):
         # make very sure Python 2.7 is available,
         # since tox ignores failures due to missing Python versions
         'python2.7 -V',
+        'python -m easy_install -U --user tox',
         'tox -v',
     ]
 
