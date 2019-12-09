@@ -140,6 +140,7 @@ wdp = ('Wouter Depypere', 'wouter.depypere@ugent.be')
 wp = ('Ward Poelmans', 'ward.poelmans@vub.be')
 sm = ('Samuel Moors', 'samuel.moors@vub.be')
 bh = ('Balazs Hajgato', 'Balazs.Hajgato@UGent.be')
+ad = ('Alex Domingo', 'alex.domingo.toro@vub.be')
 
 # Regexp used to remove suffixes from scripts when installing(/packaging)
 REGEXP_REMOVE_SUFFIX = re.compile(r'(\.(?:py|sh|pl))$')
