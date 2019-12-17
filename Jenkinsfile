@@ -1,6 +1,5 @@
 // Jenkinsfile: scripted Jenkins pipefile
-// [revision: Jenkinsfile@20191122-02]
-// This file was automatically generated using 'python -m vsc.install.ci -f'
+// This file was automatically generated using 'python -m vsc.install.ci'
 // DO NOT EDIT MANUALLY
 
 node {

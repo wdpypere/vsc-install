@@ -43,7 +43,7 @@ import sys
 import unittest
 
 from distutils import log
-from vsc.install.ci import JENKINSFILE_REVISION, TOX_INI_REVISION
+from vsc.install.ci import JENKINSFILE, TOX_INI, gen_jenkinsfile, gen_tox_ini
 from vsc.install.headers import check_header
 from vsc.install.shared_setup import vsc_setup
 from vsc.install.testing import TestCase
@@ -279,19 +279,25 @@ class CommonTest(TestCase):
     def test_jenkinsfile(self):
         """Test whether Jenkinsfile is in place, and was auto-generated with correct revision."""
 
-        self.assertTrue(os.path.exists('Jenkinsfile'))
-        with open('Jenkinsfile') as fh:
-            txt = fh.read()
+        self.assertTrue(os.path.exists(JENKINSFILE))
+        with open(JENKINSFILE) as fh:
+            current_jenkinsfile = fh.read()
 
-        regex = re.compile(r'^// \[revision: %s\]$' % re.escape(JENKINSFILE_REVISION), re.M)
-        self.assertTrue(regex.search(txt), "Pattern '%s' found in tox.ini: %s" % (regex.pattern, txt))
+        expected_jenkinsfile = gen_jenkinsfile()
+
+        error_msg = "Contents of %s does not match expected contents, " % JENKINSFILE
+        error_msg += "you should run 'pyton -m vsc.install.ci' again to re-generate %s" % JENKINSFILE
+        self.assertEqual(current_jenkinsfile, expected_jenkinsfile, error_msg)
 
     def test_tox_ini(self):
         """Test whether tox.ini is in place, and was auto-generated with correct revision."""
 
-        self.assertTrue(os.path.exists('tox.ini'))
-        with open('tox.ini') as fh:
-            txt = fh.read()
+        self.assertTrue(os.path.exists(TOX_INI))
+        with open(TOX_INI) as fh:
+            current_tox_ini = fh.read()
 
-        regex = re.compile(r'^# \[revision: %s\]$' % re.escape(TOX_INI_REVISION), re.M)
-        self.assertTrue(regex.search(txt), "Pattern '%s' found in tox.ini: %s" % (regex.pattern, txt))
+        expected_tox_ini = gen_tox_ini(os.getcwd())
+
+        error_msg = "Contents of %s does not match expected contents, " % TOX_INI
+        error_msg += "you should run 'pyton -m vsc.install.ci' again to re-generate %s" % TOX_INI
+        self.assertEqual(current_tox_ini, expected_tox_ini, error_msg)

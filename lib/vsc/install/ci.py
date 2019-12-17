@@ -31,59 +31,36 @@ Run with: python -m vsc.install.ci
 @author: Kenneth Hoste (Ghent University)
 """
 from __future__ import print_function
-from optparse import OptionParser
 import logging
 import os
-import sys
 
 
 JENKINSFILE = 'Jenkinsfile'
-JENKINSFILE_REVISION = 'Jenkinsfile@20191122-02'
 TOX_INI = 'tox.ini'
-TOX_INI_REVISION = 'tox.ini@20191122-01'
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
-LOG = logging.getLogger()
 
 
-def parse_options(args):
-    """Parse options."""
-    parser = OptionParser()
-
-    parser.add_option('-f', '--force', dest='force', action='store_true', help="Use force to overwrite existing files")
-
-    return parser.parse_args(args=args)
-
-
-def write_file(path, txt, force=False):
+def write_file(path, txt):
     """Write specified contents to specified path."""
     try:
-        if os.path.exists(path):
-            if force:
-                LOG.info("Found existing file %s, overwriting it since --force is used!", path)
-            else:
-                raise IOError("File %s already exists, use --force to overwrite!" % path)
         with open(path, 'w') as handle:
             handle.write(txt)
-        LOG.info("Wrote %s", path)
+        logging.info("Wrote %s", path)
     except (IOError, OSError) as err:
         raise IOError("Failed to write %s in %s: %s" % (path, os.getcwd(), err))
 
 
-def gen_tox_ini(force=False):
+def gen_tox_ini(tox_ini_path):
     """
     Generate tox.ini configuration file for tox
     see also https://tox.readthedocs.io/en/latest/config.html
     """
-    LOG.info('[%s]', TOX_INI)
-
-    cwd = os.getcwd()
-    tox_ini = os.path.join(cwd, TOX_INI)
+    logging.info('[%s]', TOX_INI)
 
     header = [
         "%s: configuration file for tox" % TOX_INI,
-        "[revision: %s]" % TOX_INI_REVISION,
-        "This file was automatically generated using 'python -m vsc.install.ci -f'",
+        "This file was automatically generated using 'python -m vsc.install.ci'",
         "DO NOT EDIT MANUALLY",
     ]
     header = ['# ' + l for l in header]
@@ -106,7 +83,7 @@ def gen_tox_ini(force=False):
     ]
 
     # install let tox install vsc-install, except in tox.ini for vsc--install itself
-    if os.path.basename(cwd) != 'vsc-install':
+    if os.path.basename(tox_ini_path) != 'vsc-install':
         lines.extend([
             # use easy_install rather than pip to install vsc-install dependency
             # (vsc-* packages may not work when installed with pip due to use of namespace package vsc.*)
@@ -121,19 +98,15 @@ def gen_tox_ini(force=False):
         "ignore_outcome = true"
     ])
 
-    txt = '\n'.join(lines)
-    write_file(tox_ini, txt, force=force)
+    return '\n'.join(lines) + '\n'
 
 
-def gen_jenkinsfile(force=False):
+def gen_jenkinsfile():
     """
     Generate Jenkinsfile (in Groovy syntax),
     see also https://jenkins.io/doc/book/pipeline/syntax/#scripted-pipeline
     """
-    LOG.info('[%s]', JENKINSFILE)
-
-    cwd = os.getcwd()
-    jenkinsfile = os.path.join(cwd, JENKINSFILE)
+    logging.info('[%s]', JENKINSFILE)
 
     def indent(line, level=1):
         """Indent string value with level*4 spaces."""
@@ -141,7 +114,8 @@ def gen_jenkinsfile(force=False):
 
     test_cmds = [
         # make very sure Python 2.7 is available,
-        # since tox ignores failures due to missing Python versions
+        # since we've configured tox to ignore failures due to missing Python interpreters
+        # (see skip_missing_interpreters in gen_tox_ini)
         'python2.7 -V',
         'python -m easy_install -U --user tox',
         'tox -v',
@@ -149,8 +123,7 @@ def gen_jenkinsfile(force=False):
 
     header = [
         "%s: scripted Jenkins pipefile" % JENKINSFILE,
-        "[revision: %s]" % JENKINSFILE_REVISION,
-        "This file was automatically generated using 'python -m vsc.install.ci -f'",
+        "This file was automatically generated using 'python -m vsc.install.ci'",
         "DO NOT EDIT MANUALLY",
     ]
     header = ['// ' + l for l in header]
@@ -165,20 +138,21 @@ def gen_jenkinsfile(force=False):
     lines.extend([indent("sh '%s'" % c) for c in test_cmds])
     lines.append('}')
 
-    txt = '\n'.join(lines)
-    write_file(jenkinsfile, txt, force=force)
+    return '\n'.join(lines) + '\n'
 
 
 def main():
-    """Main function: generate tox.ini and Jenkinsfile (in current directory)."""
+    """Main function: re-generate tox.ini and Jenkinsfile (in current directory)."""
 
-    (options, args) = parse_options(sys.argv)
-    if args[1:]:
-        raise ValueError("Unexpected arguments found: %s" % args[1:])
+    cwd = os.getcwd()
 
-    gen_tox_ini(force=options.force)
+    tox_ini = os.path.join(cwd, TOX_INI)
+    tox_ini_txt = gen_tox_ini(cwd)
+    write_file(tox_ini, tox_ini_txt)
 
-    gen_jenkinsfile(force=options.force)
+    jenkinsfile = os.path.join(cwd, JENKINSFILE)
+    jenkinsfile_txt = gen_jenkinsfile()
+    write_file(jenkinsfile, jenkinsfile_txt)
 
 
 if __name__ == '__main__':
