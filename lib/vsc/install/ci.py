@@ -118,7 +118,8 @@ def gen_jenkinsfile():
         # (see skip_missing_interpreters in gen_tox_ini)
         'python2.7 -V',
         'python -m easy_install -U --user tox',
-        'tox -v',
+        # make sure 'tox' command installed with --user is available via $PATH
+        'export PATH=$HOME/.local/bin:$PATH && tox -v',
     ]
 
     header = [

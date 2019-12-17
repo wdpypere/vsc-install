@@ -8,5 +8,5 @@ node {
     stage 'test'
     sh 'python2.7 -V'
     sh 'python -m easy_install -U --user tox'
-    sh 'tox -v'
+    sh 'export PATH=$HOME/.local/bin:$PATH && tox -v'
 }
