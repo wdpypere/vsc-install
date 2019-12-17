@@ -3,10 +3,12 @@
 // DO NOT EDIT MANUALLY
 
 node {
-    stage 'checkout git'
-    checkout scm
-    stage 'test'
-    sh 'python2.7 -V'
-    sh 'python -m easy_install -U --user tox'
-    sh 'export PATH=$HOME/.local/bin:$PATH && tox -v'
+    stage('checkout git') {
+        checkout scm
+    }
+    stage('test') {
+        sh 'python2.7 -V'
+        sh 'python -m easy_install -U --user tox'
+        sh 'export PATH=$HOME/.local/bin:$PATH && tox -v'
+    }
 }

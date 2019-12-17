@@ -30,7 +30,6 @@ Run with: python -m vsc.install.ci
 
 @author: Kenneth Hoste (Ghent University)
 """
-from __future__ import print_function
 import logging
 import os
 
@@ -131,12 +130,15 @@ def gen_jenkinsfile():
     lines = header + [
         '',
         "node {",
-        indent("stage 'checkout git'"),
-        indent("checkout scm"),
-        indent("stage 'test'")
+        indent("stage('checkout git') {"),
+        indent("checkout scm", level=2),
+        indent('}'),
+        indent("stage('test') {"),
     ]
-    lines.extend([indent("sh '%s'" % c) for c in test_cmds])
-    lines.append('}')
+    lines.extend([indent("sh '%s'" % c, level=2) for c in test_cmds] + [
+        indent('}'),
+        '}',
+    ])
 
     return '\n'.join(lines) + '\n'
 
