@@ -51,7 +51,7 @@ def write_file(path, txt):
         raise IOError("Failed to write %s in %s: %s" % (path, os.getcwd(), err))
 
 
-def gen_tox_ini(tox_ini_path):
+def gen_tox_ini(install_vsc_install):
     """
     Generate tox.ini configuration file for tox
     see also https://tox.readthedocs.io/en/latest/config.html
@@ -82,8 +82,7 @@ def gen_tox_ini(tox_ini_path):
         '[testenv]',
     ]
 
-    # install let tox install vsc-install, except in tox.ini for vsc--install itself
-    if os.path.basename(tox_ini_path) != 'vsc-install':
+    if install_vsc_install:
         lines.extend([
             # use easy_install rather than pip to install vsc-install dependency
             # (vsc-* packages may not work when installed with pip due to use of namespace package vsc.*)
@@ -148,7 +147,9 @@ def main():
     cwd = os.getcwd()
 
     tox_ini = os.path.join(cwd, TOX_INI)
-    tox_ini_txt = gen_tox_ini(cwd)
+    # let tox install vsc-install, except in tox.ini for vsc-install itself
+    install_vsc_install = os.path.basename(cwd) != 'vsc-install'
+    tox_ini_txt = gen_tox_ini(install_vsc_install)
     write_file(tox_ini, tox_ini_txt)
 
     jenkinsfile = os.path.join(cwd, JENKINSFILE)

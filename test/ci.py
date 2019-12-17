@@ -94,4 +94,4 @@ class CITest(TestCase):
             ])
             expected = '\n'.join(expected) + '\n'
 
-            self.assertEqual(gen_tox_ini(pkg), expected)
+            self.assertEqual(gen_tox_ini(pkg != 'vsc-install'), expected)

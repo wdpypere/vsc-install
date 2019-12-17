@@ -296,7 +296,10 @@ class CommonTest(TestCase):
         with open(TOX_INI) as fh:
             current_tox_ini = fh.read()
 
-        expected_tox_ini = gen_tox_ini(os.getcwd())
+        # determine whether tests are run for vsc-install based on presence of lib/vsc/install/shared_setup.py
+        # (can't rely on directory name since tests in Jenkins are run from a 'workspace' directory)
+        is_vsc_install = os.path.exists(os.path.join('lib', 'vsc', 'install', 'shared_setup.py'))
+        expected_tox_ini = gen_tox_ini(not is_vsc_install)
 
         error_msg = "Contents of %s does not match expected contents, " % TOX_INI
         error_msg += "you should run 'pyton -m vsc.install.ci' again to re-generate %s" % TOX_INI
