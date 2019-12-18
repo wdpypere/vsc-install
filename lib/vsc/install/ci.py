@@ -83,6 +83,9 @@ def gen_tox_ini():
         # (vsc-* packages may not work when installed with pip due to use of namespace package vsc.*)
         'commands_pre = python -m easy_install -U vsc-install',
         "commands = python setup.py test",
+        # $USER is not defined in tox environment, so pass it
+        # see https://tox.readthedocs.io/en/latest/example/basic.html#passing-down-environment-variables
+        'passenv = USER',
         '',
         # allow failing tests in Python 3, for now...
         '[testenv:%s]' % py3_env,
