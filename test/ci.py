@@ -78,6 +78,7 @@ class CITest(TestCase):
                 "[testenv]",
                 "commands_pre = python -m easy_install -U vsc-install",
                 "commands = python setup.py test",
+                "passenv = USER",
                 '',
                 "[testenv:py36]",
                 "ignore_outcome = true",
