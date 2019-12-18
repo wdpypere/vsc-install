@@ -33,8 +33,11 @@ TestCase: use instead of unittest TestCase
 @author: Kenneth Hoste (Ghent University)
 """
 import pprint
+import os
 import re
+import shutil
 import sys
+import tempfile
 
 try:
     from cStringIO import StringIO  # Python 2
@@ -64,7 +67,6 @@ class TestCase(OrigTestCase):
             return isinstance(x, basestring)
         except NameError:
             return isinstance(x, str)
-
 
     # pylint: disable=arguments-differ
     def assertEqual(self, a, b, msg=None):
@@ -107,6 +109,9 @@ class TestCase(OrigTestCase):
 
         self.orig_sys_argv = sys.argv
         sys.argv = deepcopy(self.orig_sys_argv)
+
+        self.orig_workdir = os.getcwd()
+        self.tmpdir = tempfile.mkdtemp()
 
     def convert_exception_to_str(self, err):
         """Convert an Exception instance to a string."""
@@ -228,6 +233,8 @@ class TestCase(OrigTestCase):
         self.mock_stderr(False)
         self.reset_logcache()
         sys.argv = self.orig_sys_argv
+        os.chdir(self.orig_workdir)
+        shutil.rmtree(self.tmpdir)
 
         super(TestCase, self).tearDown()
 
