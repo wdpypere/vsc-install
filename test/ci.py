@@ -29,7 +29,7 @@ Test CI functionality
 @author: Kenneth Hoste (Ghent University)
 """
 
-from vsc.install.ci import gen_jenkinsfile, gen_tox_ini
+from vsc.install.ci import TOX_INI, gen_jenkinsfile, gen_tox_ini
 from vsc.install.testing import TestCase
 
 
@@ -52,7 +52,7 @@ class CITest(TestCase):
                 "    stage('test') {",
                 "        sh 'python2.7 -V'",
                 "        sh 'python -m easy_install -U --user tox'",
-                "        sh 'export PATH=$HOME/.local/bin:$PATH && tox -v'",
+                "        sh 'export PATH=$HOME/.local/bin:$PATH && tox -v -c %s'" % TOX_INI,
                 "    }",
                 '}',
             ]

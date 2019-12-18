@@ -113,7 +113,7 @@ def gen_jenkinsfile():
         'python2.7 -V',
         'python -m easy_install -U --user tox',
         # make sure 'tox' command installed with --user is available via $PATH
-        'export PATH=$HOME/.local/bin:$PATH && tox -v',
+        'export PATH=$HOME/.local/bin:$PATH && tox -v -c %s' % TOX_INI,
     ]
 
     header = [
