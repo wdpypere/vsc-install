@@ -28,13 +28,6 @@ Test CI functionality
 
 @author: Kenneth Hoste (Ghent University)
 """
-import logging
-import mock
-import os
-import re
-import shutil
-import sys
-import tempfile
 
 from vsc.install.ci import gen_jenkinsfile, gen_tox_ini
 from vsc.install.testing import TestCase
