@@ -13,4 +13,4 @@ before_install:
 script:
   # 'hpcugent' is a mandatory remote for setup.py to work (because of get_name_url)
   - git remote add hpcugent https://github.com/hpcugent/vsc-install.git
-  - tox -v
+  - tox -v -c tox.ini
