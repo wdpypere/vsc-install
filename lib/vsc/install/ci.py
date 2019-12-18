@@ -47,10 +47,10 @@ def write_file(path, txt):
             handle.write(txt)
         logging.info("Wrote %s", path)
     except (IOError, OSError) as err:
-        raise IOError("Failed to write %s in %s: %s" % (path, os.getcwd(), err))
+        raise IOError("Failed to write %s: %s" % (path, err))
 
 
-def gen_tox_ini(install_vsc_install):
+def gen_tox_ini():
     """
     Generate tox.ini configuration file for tox
     see also https://tox.readthedocs.io/en/latest/config.html
@@ -79,22 +79,15 @@ def gen_tox_ini(install_vsc_install):
         "skip_missing_interpreters = true",
         '',
         '[testenv]',
-    ]
-
-    if install_vsc_install:
-        lines.extend([
-            # use easy_install rather than pip to install vsc-install dependency
-            # (vsc-* packages may not work when installed with pip due to use of namespace package vsc.*)
-            'commands_pre = python -m easy_install -U vsc-install',
-        ])
-
-    lines.extend([
+        # use easy_install rather than pip to install vsc-install dependency
+        # (vsc-* packages may not work when installed with pip due to use of namespace package vsc.*)
+        'commands_pre = python -m easy_install -U vsc-install',
         "commands = python setup.py test",
         '',
         # allow failing tests in Python 3, for now...
         '[testenv:%s]' % py3_env,
         "ignore_outcome = true"
-    ])
+    ]
 
     return '\n'.join(lines) + '\n'
 
@@ -149,9 +142,7 @@ def main():
     cwd = os.getcwd()
 
     tox_ini = os.path.join(cwd, TOX_INI)
-    # let tox install vsc-install, except in tox.ini for vsc-install itself
-    install_vsc_install = os.path.basename(cwd) != 'vsc-install'
-    tox_ini_txt = gen_tox_ini(install_vsc_install)
+    tox_ini_txt = gen_tox_ini()
     write_file(tox_ini, tox_ini_txt)
 
     jenkinsfile = os.path.join(cwd, JENKINSFILE)

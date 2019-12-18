@@ -83,17 +83,12 @@ class CITest(TestCase):
                 "skip_missing_interpreters = true",
                 '',
                 "[testenv]",
-            ]
-
-            if pkg != 'vsc-install':
-                expected.append("commands_pre = python -m easy_install -U vsc-install")
-
-            expected.extend([
+                "commands_pre = python -m easy_install -U vsc-install",
                 "commands = python setup.py test",
                 '',
                 "[testenv:py36]",
                 "ignore_outcome = true",
-            ])
+            ]
             expected = '\n'.join(expected) + '\n'
 
-            self.assertEqual(gen_tox_ini(pkg != 'vsc-install'), expected)
+            self.assertEqual(gen_tox_ini(), expected)
