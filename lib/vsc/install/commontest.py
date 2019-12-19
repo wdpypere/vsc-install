@@ -58,6 +58,7 @@ try:
     _old_basicconfig = logging.basicConfig
     from prospector.run import Prospector
     from prospector.config import ProspectorConfig
+    from prospector.__pkginfo__ import __version__ as prospector_version
     HAS_PROSPECTOR = True
     # restore in case pyroma is missing (see https://github.com/landscapeio/prospector/pull/156)
     logging.basicConfig = _old_basicconfig
@@ -140,6 +141,8 @@ PROSPECTOR_OPTIONS = [
 def run_prospector(base_dir, clear_ignore_patterns=False):
     """Run prospector and apply white/blacklists to the results"""
     orig_expand_default = optparse.HelpFormatter.expand_default
+
+    log.info("Using prosector version %s", prospector_version)
 
     sys.argv = ['fakename']
     sys.argv.extend(PROSPECTOR_OPTIONS)

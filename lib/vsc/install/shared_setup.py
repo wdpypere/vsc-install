@@ -1416,7 +1416,8 @@ class vsc_setup(object):
             tests_requires = new_target.setdefault('tests_require', [])
             # Python 2.x support was removed in pydocstyle 4.0, so stick to latest release before 4.0
             tests_requires.append('pydocstyle < 4.0')
-            tests_requires.append('prospector >= 1.1.6.3b')
+            # fix from https://github.com/PyCQA/prospector/pull/323 required to avoid infinite recursion
+            tests_requires.append('prospector >= 1.1.6.4')
             deplinks = new_target.setdefault('dependency_links', [])
             deplinks.append("git+https://github.com/stdweird/prospector#egg=prospector-1.1.6.3b")
             new_target['tests_require'] = tests_requires
@@ -1575,9 +1576,6 @@ if __name__ == '__main__':
             'setuptools',
         ],
         'excluded_pkgs_rpm': [],  # vsc-install ships vsc package (the vsc package is removed by default)
-        'dependency_links': [
-            "git+https://github.com/stdweird/prospector#egg=prospector-1.1.6.2",
-        ],
     }
 
     action_target(PACKAGE)
