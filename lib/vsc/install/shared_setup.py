@@ -47,6 +47,7 @@ import os
 import shutil
 import re
 
+import setuptools
 import setuptools.command.test
 
 from distutils import log  # also for setuptools
@@ -158,9 +159,10 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.13.3'
+VERSION = '0.13.4'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
+log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
 
 # list of non-vsc packages that do not need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
@@ -1557,7 +1559,10 @@ if __name__ == '__main__':
     This main is the setup.py for vsc-install
     """
     install_requires = [
-        'setuptools',
+        # setuptools 42.0 changed easy_install to use pip if it's available,
+        # but vsc-install relies on the setuptools' behaviour of ignoring failing dependency installations and
+        # just continuing with the next entry in dependency_links
+        'setuptools<42.0',
         'mock',
     ]
 
