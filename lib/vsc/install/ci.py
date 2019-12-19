@@ -33,6 +33,8 @@ Run with: python -m vsc.install.ci
 import logging
 import os
 
+from vsc.install.shared_setup import MAX_SETUPTOOLS_VERSION
+
 
 JENKINSFILE = 'Jenkinsfile'
 TOX_INI = 'tox.ini'
@@ -79,10 +81,17 @@ def gen_tox_ini():
         "skip_missing_interpreters = true",
         '',
         '[testenv]',
+        "commands_pre =",
+        # install required setuptools version;
+        # we need a setuptools < 42.0 for now, since in 42.0 easy_install was changed to use pip when available;
+        # it's important to use pip (not easy_install) here, since only pip will actually remove an older
+        # already installed setuptools version
+        "    pip install 'setuptools<%s'" % MAX_SETUPTOOLS_VERSION,
         # install latest vsc-install release from PyPI;
-        # it's important to use pip (not easy_install) here, because vsc-install may require a specific
-        # version of setuptools for example (and only pip will actually remove an older already installed version)
-        "commands_pre = pip install -U vsc-install",
+        # we can't use 'pip install' here, because then we end up with a broken installation because
+        # vsc/__init__.py is not installed because we're using pkg_resources.declare_namespace
+        # (see https://github.com/pypa/pip/issues/1924)
+        "    python -m easy_install -U vsc-install",
         "commands = python setup.py test",
         # $USER is not defined in tox environment, so pass it
         # see https://tox.readthedocs.io/en/latest/example/basic.html#passing-down-environment-variables
