@@ -47,6 +47,7 @@ import os
 import shutil
 import re
 
+import setuptools
 import setuptools.command.test
 
 from distutils import log  # also for setuptools
@@ -158,9 +159,10 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.13.3'
+VERSION = '0.13.4'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
+log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
 
 # list of non-vsc packages that do not need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
@@ -1414,7 +1416,8 @@ class vsc_setup(object):
             tests_requires = new_target.setdefault('tests_require', [])
             # Python 2.x support was removed in pydocstyle 4.0, so stick to latest release before 4.0
             tests_requires.append('pydocstyle < 4.0')
-            tests_requires.append('prospector >= 1.1.6.3b')
+            # fix from https://github.com/PyCQA/prospector/pull/323 required to avoid infinite recursion
+            tests_requires.append('prospector >= 1.1.6.4')
             deplinks = new_target.setdefault('dependency_links', [])
             deplinks.append("git+https://github.com/stdweird/prospector#egg=prospector-1.1.6.3b")
             new_target['tests_require'] = tests_requires
@@ -1557,7 +1560,10 @@ if __name__ == '__main__':
     This main is the setup.py for vsc-install
     """
     install_requires = [
-        'setuptools',
+        # setuptools 42.0 changed easy_install to use pip if it's available,
+        # but vsc-install relies on the setuptools' behaviour of ignoring failing dependency installations and
+        # just continuing with the next entry in dependency_links
+        'setuptools<42.0',
         'mock',
     ]
 
@@ -1570,9 +1576,6 @@ if __name__ == '__main__':
             'setuptools',
         ],
         'excluded_pkgs_rpm': [],  # vsc-install ships vsc package (the vsc package is removed by default)
-        'dependency_links': [
-            "git+https://github.com/stdweird/prospector#egg=prospector-1.1.6.2",
-        ],
     }
 
     action_target(PACKAGE)

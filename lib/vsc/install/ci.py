@@ -79,9 +79,10 @@ def gen_tox_ini():
         "skip_missing_interpreters = true",
         '',
         '[testenv]',
-        # use easy_install rather than pip to install vsc-install dependency
-        # (vsc-* packages may not work when installed with pip due to use of namespace package vsc.*)
-        'commands_pre = python -m easy_install -U vsc-install',
+        # install latest vsc-install release from PyPI;
+        # it's important to use pip (not easy_install) here, because vsc-install may require a specific
+        # version of setuptools for example (and only pip will actually remove an older already installed version)
+        "commands_pre = pip install -U vsc-install",
         "commands = python setup.py test",
         # $USER is not defined in tox environment, so pass it
         # see https://tox.readthedocs.io/en/latest/example/basic.html#passing-down-environment-variables
