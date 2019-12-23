@@ -28,9 +28,60 @@ Test CI functionality
 
 @author: Kenneth Hoste (Ghent University)
 """
+import os
 
 from vsc.install.ci import TOX_INI, gen_jenkinsfile, gen_tox_ini
 from vsc.install.testing import TestCase
+
+
+EXPECTED_JENKINSFILE = """// Jenkinsfile: scripted Jenkins pipefile
+// This file was automatically generated using 'python -m vsc.install.ci'
+// DO NOT EDIT MANUALLY
+
+node {
+    stage('checkout git') {
+        checkout scm
+    }
+    stage('test') {
+        sh 'python2.7 -V'
+        sh 'python -m easy_install -U --user tox'
+        sh 'export PATH=$HOME/.local/bin:$PATH && tox -v -c %s'
+    }
+}
+""" % TOX_INI
+
+EXPECTED_JENKINSFILE_JIRA = EXPECTED_JENKINSFILE[:-2] + """    stage('PR title JIRA link') {
+        if (env.CHANGE_ID) {
+            if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?$/) {
+                echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."
+            } else {
+                echo "ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'."
+                error("malformed PR title ${env.CHANGE_TITLE}.")
+            }
+        }
+    }
+}
+"""
+
+EXPECTED_TOX_INI = """# tox.ini: configuration file for tox
+# This file was automatically generated using 'python -m vsc.install.ci'
+# DO NOT EDIT MANUALLY
+
+[tox]
+envlist = py27,py36
+skipsdist = true
+skip_missing_interpreters = true
+
+[testenv]
+commands_pre =
+    pip install 'setuptools<42.0'
+    python -m easy_install -U vsc-install
+commands = python setup.py test
+passenv = USER
+
+[testenv:py36]
+ignore_outcome = true
+"""
 
 
 class CITest(TestCase):
@@ -38,53 +89,20 @@ class CITest(TestCase):
 
     def test_gen_jenkinsfile(self):
         """Test generating of Jenkinsfile."""
+        self.assertEqual(gen_jenkinsfile(), EXPECTED_JENKINSFILE)
 
-        for pkg in ['vsc-install', 'vsc-base']:
-            expected = [
-                "// Jenkinsfile: scripted Jenkins pipefile",
-                "// This file was automatically generated using 'python -m vsc.install.ci'",
-                "// DO NOT EDIT MANUALLY",
-                '',
-                "node {",
-                "    stage('checkout git') {",
-                "        checkout scm",
-                "    }",
-                "    stage('test') {",
-                "        sh 'python2.7 -V'",
-                "        sh 'python -m easy_install -U --user tox'",
-                "        sh 'export PATH=$HOME/.local/bin:$PATH && tox -v -c %s'" % TOX_INI,
-                "    }",
-                '}',
-            ]
-            expected = '\n'.join(expected) + '\n'
+    def test_gen_jenkinsfile_jira_issue_id_in_pr_title(self):
+        """Test generating of Jenkinsfile incl. check for JIRA issue in PR title."""
 
-            self.assertEqual(gen_jenkinsfile(), expected)
+        os.chdir(self.tmpdir)
+        fh = open('vsc-ci.ini', 'w')
+        fh.write('[vsc-ci]\n')
+        fh.write('jira_issue_id_in_pr_title=1\n')
+        fh.close()
+
+        jenkinsfile_txt = gen_jenkinsfile()
+        self.assertEqual(jenkinsfile_txt, EXPECTED_JENKINSFILE_JIRA)
 
     def test_tox_ini(self):
         """Test generating of tox.ini."""
-
-        for pkg in ['vsc-install', 'vsc-base']:
-
-            expected = [
-                "# tox.ini: configuration file for tox",
-                "# This file was automatically generated using 'python -m vsc.install.ci'",
-                "# DO NOT EDIT MANUALLY",
-                '',
-                "[tox]",
-                "envlist = py27,py36",
-                "skipsdist = true",
-                "skip_missing_interpreters = true",
-                '',
-                "[testenv]",
-                "commands_pre =",
-                "    pip install 'setuptools<42.0'",
-                "    python -m easy_install -U vsc-install",
-                "commands = python setup.py test",
-                "passenv = USER",
-                '',
-                "[testenv:py36]",
-                "ignore_outcome = true",
-            ]
-            expected = '\n'.join(expected) + '\n'
-
-            self.assertEqual(gen_tox_ini(), expected)
+        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI)
