@@ -65,7 +65,7 @@ class CommontestTest(TestCase):
         mocked_self.reset_mock()
 
         expected_error_msg = "Contents of Jenkinsfile does not match expected contents, "
-        expected_error_msg += "you should run 'pyton -m vsc.install.ci' again to re-generate %s" % test_fn
+        expected_error_msg += "you should run 'python -m vsc.install.ci' again to re-generate %s" % test_fn
 
         # check using existing test file => assertEqual should be called with found + expected contents
         open(test_fn, 'w').write('foobar')

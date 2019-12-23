@@ -32,12 +32,25 @@ Run with: python -m vsc.install.ci
 """
 import logging
 import os
+import sys
+
+try:
+    # Python 3
+    import configparser
+except ImportError:
+    # Python 2
+    import ConfigParser as configparser
 
 from vsc.install.shared_setup import MAX_SETUPTOOLS_VERSION
 
 
 JENKINSFILE = 'Jenkinsfile'
 TOX_INI = 'tox.ini'
+
+VSC_CI = 'vsc-ci'
+VSC_CI_INI = VSC_CI + '.ini'
+
+JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
@@ -105,6 +118,27 @@ def gen_tox_ini():
     return '\n'.join(lines) + '\n'
 
 
+def parse_vsc_ci_cfg():
+    """Parse vsc-ci.ini configuration file (if any)."""
+    vsc_ci_cfg = {
+        JIRA_ISSUE_ID_IN_PR_TITLE: False,
+    }
+
+    if os.path.exists(VSC_CI_INI):
+        try:
+            cfgparser = configparser.SafeConfigParser()
+            cfgparser.read(VSC_CI_INI)
+            cfgparser.items(VSC_CI)  # just to make sure vsc-ci section is there
+        except (configparser.NoSectionError, configparser.ParsingError) as err:
+            logging.error("ERROR: Failed to parse %s: %s" % (VSC_CI_INI, err))
+            sys.exit(1)
+
+        if cfgparser.has_option(VSC_CI, JIRA_ISSUE_ID_IN_PR_TITLE):
+            vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE] = cfgparser.getboolean(VSC_CI, JIRA_ISSUE_ID_IN_PR_TITLE)
+
+    return vsc_ci_cfg
+
+
 def gen_jenkinsfile():
     """
     Generate Jenkinsfile (in Groovy syntax),
@@ -115,6 +149,8 @@ def gen_jenkinsfile():
     def indent(line, level=1):
         """Indent string value with level*4 spaces."""
         return ' ' * 4 * level + line
+
+    vsc_ci_cfg = parse_vsc_ci_cfg()
 
     test_cmds = [
         # make very sure Python 2.7 is available,
@@ -143,8 +179,23 @@ def gen_jenkinsfile():
     ]
     lines.extend([indent("sh '%s'" % c, level=2) for c in test_cmds] + [
         indent('}'),
-        '}',
     ])
+
+    if vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE]:
+        lines.extend([
+            indent("stage('PR title JIRA link') {"),
+            indent("if (env.CHANGE_ID) {", level=2),
+            indent("if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?$/) {", level=3),
+            indent('echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."', level=4),
+            indent("} else {", level=3),
+            indent("echo \"ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'.\"", level=4),
+            indent('error("malformed PR title ${env.CHANGE_TITLE}.")', level=4),
+            indent('}', level=3),
+            indent('}', level=2),
+            indent('}'),
+        ])
+
+    lines.append('}')
 
     return '\n'.join(lines) + '\n'
 
