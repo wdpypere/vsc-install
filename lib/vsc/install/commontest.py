@@ -180,8 +180,10 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
     prospector.execute()
     log.debug("prospector profile form prospector = %s" % vars(prospector.config.profile))
 
-    blacklist = map(re.compile, PROSPECTOR_BLACKLIST)
-    whitelist = map(re.compile, PROSPECTOR_WHITELIST)
+    # map yields a generator object in Python 3, but since we want to iterate over the whitelist/blacklist
+    # multiple times, we need to make sure it's a list (since you can only iterate once over a generator)
+    blacklist = list(map(re.compile, PROSPECTOR_BLACKLIST))
+    whitelist = list(map(re.compile, PROSPECTOR_WHITELIST))
 
     failures = []
     for msg in prospector.get_messages():
