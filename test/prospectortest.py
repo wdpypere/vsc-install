@@ -41,7 +41,7 @@ class ProspectorTest(TestCase):
         super(ProspectorTest, self).setUp()
         self.setup = vsc_setup()
 
-    def test_prospecrtorfail(self):
+    def test_prospectorfail(self):
         """Test that whitelisted warnings actually fails"""
 
         base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'prospectortest')
