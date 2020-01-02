@@ -424,3 +424,15 @@ add a configuration file for `python -m vsc.install.ci` named `vsc-ci.ini` like 
 [vsc-ci]
 jira_issue_id_in_pr_title=1
 ```
+
+
+Requiring that tests pass using Python 3
+----------------------------------------
+
+To require that the test suite passes when run with Python 3, you must opt-in to generating a tox configuration file
+(tox.ini) that does not ignore a missing interpreter or failing tests, using a `vsc-ci.ini` configuration file like:
+
+```ini
+[vsc-ci]
+py3_tests_must_pass=1
+```

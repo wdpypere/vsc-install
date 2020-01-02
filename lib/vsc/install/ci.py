@@ -51,6 +51,7 @@ VSC_CI = 'vsc-ci'
 VSC_CI_INI = VSC_CI + '.ini'
 
 JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
+PY3_TESTS_MUST_PASS = 'py3_tests_must_pass'
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
@@ -72,6 +73,8 @@ def gen_tox_ini():
     """
     logging.info('[%s]', TOX_INI)
 
+    vsc_ci_cfg = parse_vsc_ci_cfg()
+
     header = [
         "%s: configuration file for tox" % TOX_INI,
         "This file was automatically generated using 'python -m vsc.install.ci'",
@@ -89,9 +92,16 @@ def gen_tox_ini():
         # instruct tox not to run sdist prior to installing the package in the tox environment
         # (setup.py requires vsc-install, which is not installed yet when 'python setup.py sdist' is run)
         "skipsdist = true",
-        # ignore failures due to missing Python version
-        # python2.7 must always be available though, see Jenkinsfile
-        "skip_missing_interpreters = true",
+    ]
+
+    if not vsc_ci_cfg[PY3_TESTS_MUST_PASS]:
+        lines.extend([
+            # ignore failures due to missing Python version
+            # python2.7 must always be available though, see Jenkinsfile
+            "skip_missing_interpreters = true",
+        ])
+
+    lines.extend([
         '',
         '[testenv]',
         "commands_pre =",
@@ -109,11 +119,15 @@ def gen_tox_ini():
         # $USER is not defined in tox environment, so pass it
         # see https://tox.readthedocs.io/en/latest/example/basic.html#passing-down-environment-variables
         'passenv = USER',
-        '',
-        # allow failing tests in Python 3, for now...
-        '[testenv:%s]' % py3_env,
-        "ignore_outcome = true"
-    ]
+    ])
+
+    if not vsc_ci_cfg[PY3_TESTS_MUST_PASS]:
+        lines.extend([
+            '',
+            # allow failing tests in Python 3, for now...
+            '[testenv:%s]' % py3_env,
+            "ignore_outcome = true"
+        ])
 
     return '\n'.join(lines) + '\n'
 
@@ -122,6 +136,7 @@ def parse_vsc_ci_cfg():
     """Parse vsc-ci.ini configuration file (if any)."""
     vsc_ci_cfg = {
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
+        PY3_TESTS_MUST_PASS: False,
     }
 
     if os.path.exists(VSC_CI_INI):
@@ -133,8 +148,12 @@ def parse_vsc_ci_cfg():
             logging.error("ERROR: Failed to parse %s: %s" % (VSC_CI_INI, err))
             sys.exit(1)
 
-        if cfgparser.has_option(VSC_CI, JIRA_ISSUE_ID_IN_PR_TITLE):
-            vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE] = cfgparser.getboolean(VSC_CI, JIRA_ISSUE_ID_IN_PR_TITLE)
+        # every entry in the vsc-ci section is expected to be a known setting
+        for key, _ in cfgparser.items(VSC_CI):
+            if key in vsc_ci_cfg:
+                vsc_ci_cfg[key] = cfgparser.getboolean(VSC_CI, key)
+            else:
+                raise ValueError("Unknown key in %s: %s" % (VSC_CI_INI, key))
 
     return vsc_ci_cfg
 

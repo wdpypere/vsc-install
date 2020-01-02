@@ -30,7 +30,7 @@ Test CI functionality
 """
 import os
 
-from vsc.install.ci import TOX_INI, gen_jenkinsfile, gen_tox_ini
+from vsc.install.ci import TOX_INI, gen_jenkinsfile, gen_tox_ini, parse_vsc_ci_cfg
 from vsc.install.testing import TestCase
 
 
@@ -78,7 +78,9 @@ commands_pre =
     python -m easy_install -U vsc-install
 commands = python setup.py test
 passenv = USER
+"""
 
+EXPECTED_TOX_INI_PY36_IGNORE = """
 [testenv:py36]
 ignore_outcome = true
 """
@@ -86,6 +88,38 @@ ignore_outcome = true
 
 class CITest(TestCase):
     """License related tests"""
+
+    def write_vsc_ci_ini(self, txt):
+        """Write vsc-ci.ini file in current directory with specified contents."""
+        fh = open('vsc-ci.ini', 'w')
+        fh.write('[vsc-ci]\n')
+        fh.write(txt)
+        fh.write('\n')
+        fh.close()
+
+    def test_parse_vsc_ci_cfg(self):
+        """Test parse_vsc_ci_cfg function."""
+        os.chdir(self.tmpdir)
+
+        # (basically) empty vsc-ci.ini
+        self.write_vsc_ci_ini('')
+        expected = {
+            'jira_issue_id_in_pr_title': False,
+            'py3_tests_must_pass': False,
+        }
+        self.assertEqual(parse_vsc_ci_cfg(), expected)
+
+        # vsc-ci.ini with unknown keys is trouble
+        self.write_vsc_ci_ini("unknown_key=1")
+        error_msg = "Unknown key in vsc-ci.ini: unknown_key"
+        self.assertErrorRegex(ValueError, error_msg, parse_vsc_ci_cfg)
+
+        self.write_vsc_ci_ini('jira_issue_id_in_pr_title=1\npy3_tests_must_pass=true')
+        expected = {
+            'jira_issue_id_in_pr_title': True,
+            'py3_tests_must_pass': True,
+        }
+        self.assertEqual(parse_vsc_ci_cfg(), expected)
 
     def test_gen_jenkinsfile(self):
         """Test generating of Jenkinsfile."""
@@ -95,14 +129,20 @@ class CITest(TestCase):
         """Test generating of Jenkinsfile incl. check for JIRA issue in PR title."""
 
         os.chdir(self.tmpdir)
-        fh = open('vsc-ci.ini', 'w')
-        fh.write('[vsc-ci]\n')
-        fh.write('jira_issue_id_in_pr_title=1\n')
-        fh.close()
+        self.write_vsc_ci_ini('jira_issue_id_in_pr_title=1')
 
         jenkinsfile_txt = gen_jenkinsfile()
         self.assertEqual(jenkinsfile_txt, EXPECTED_JENKINSFILE_JIRA)
 
     def test_tox_ini(self):
         """Test generating of tox.ini."""
-        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI)
+        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE)
+
+    def test_tox_ini_py3_tests(self):
+        """Test generation of tox.ini when Python 3 tests are expected to pass."""
+
+        os.chdir(self.tmpdir)
+        self.write_vsc_ci_ini('py3_tests_must_pass=1')
+
+        expected = EXPECTED_TOX_INI.replace('skip_missing_interpreters = true\n', '')
+        self.assertEqual(gen_tox_ini(), expected)
