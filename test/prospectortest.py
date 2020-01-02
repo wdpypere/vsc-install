@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Ghent University
+# Copyright 2016-2020 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -27,6 +27,7 @@
 
 import glob
 import os
+import sys
 
 from vsc.install import commontest
 from vsc.install.shared_setup import log, vsc_setup
@@ -41,7 +42,7 @@ class ProspectorTest(TestCase):
         super(ProspectorTest, self).setUp()
         self.setup = vsc_setup()
 
-    def test_prospecrtorfail(self):
+    def test_prospectorfail(self):
         """Test that whitelisted warnings actually fails"""
 
         base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'prospectortest')
@@ -65,5 +66,12 @@ class ProspectorTest(TestCase):
         log.debug("All tests = %s" % all_tests)
         log.info("Detected prospector tests = %s" % detected_tests)
         undetected_tests = [x for x in all_tests if x not in detected_tests]
+
+        if sys.version_info[0] >= 3:
+            # some of the prospector test cases don't make sense in Python 3 because they yield syntax errors,
+            # or are no longer a problem in Python 3
+            py3_invalid_tests = ['backtick', 'old-octal-literal', 'import-star-module-level', 'redefine-in-handler',
+                                 'old-raise-syntax', 'print-statement', 'unpacking-in-except', 'old-ne-operator']
+            undetected_tests = [x for x in undetected_tests if x not in py3_invalid_tests]
 
         self.assertFalse(undetected_tests, "\nprospector did not detect %s\n" % undetected_tests)

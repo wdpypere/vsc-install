@@ -1,6 +1,6 @@
 # -*- coding: latin-1 -*-
 #
-# Copyright 2011-2019 Ghent University
+# Copyright 2011-2020 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -159,7 +159,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.13.6'
+VERSION = '0.14.0'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1418,8 +1418,6 @@ class vsc_setup(object):
             tests_requires.append('pydocstyle < 4.0')
             # fix from https://github.com/PyCQA/prospector/pull/323 required to avoid infinite recursion
             tests_requires.append('prospector >= 1.1.6.4')
-            deplinks = new_target.setdefault('dependency_links', [])
-            deplinks.append("git+https://github.com/stdweird/prospector#egg=prospector-1.1.6.3b")
             new_target['tests_require'] = tests_requires
 
         if self.private_repo:

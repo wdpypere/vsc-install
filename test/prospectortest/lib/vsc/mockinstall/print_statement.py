@@ -1,4 +1,4 @@
 """Test print_statement"""
 
 
-print
+print 1
