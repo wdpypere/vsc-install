@@ -113,12 +113,3 @@ class TestTesting(TestCase):
         myerror("Error")
         myerror("Moar error")
         self.assertEqual(self.count_logcache('error'), 2)
-
-
-def suite():
-    """ return all the tests"""
-    return TestLoader().loadTestsFromTestCase(TestTesting)
-
-
-if __name__ == '__main__':
-    main()
