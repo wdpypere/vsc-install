@@ -142,7 +142,7 @@ class TestCase(OrigTestCase):
         try:
             call(*args, **kwargs)
             str_kwargs = ['='.join([k, str(v)]) for (k, v) in kwargs.items()]
-            str_args = ', '.join(map(str, args) + str_kwargs)
+            str_args = ', '.join(list(map(str, args)) + str_kwargs)
             self.assertTrue(False, "Expected errors with %s(%s) call should occur" % (call.__name__, str_args))
         except error as err:
             msg = self.convert_exception_to_str(err)
@@ -185,6 +185,8 @@ class TestCase(OrigTestCase):
                 funcname = logmethod_func.func_name
             elif hasattr(logmethod_func, 'im_func'):
                 funcname = logmethod_func.im_func.__name__
+            elif hasattr(logmethod_func, '__name__'):
+                funcname = logmethod_func.__name__
             else:
                 raise Exception("Unknown logmethod %s" % (dir(logmethod_func)))
             logcache = self.LOGCACHE.setdefault(funcname, [])
