@@ -89,6 +89,12 @@ ignore_outcome = true
 class CITest(TestCase):
     """License related tests"""
 
+    def setUp(self):
+        """Test setup."""
+        super(CITest, self).setUp()
+
+        os.chdir(self.tmpdir)
+
     def write_vsc_ci_ini(self, txt):
         """Write vsc-ci.ini file in current directory with specified contents."""
         fh = open('vsc-ci.ini', 'w')
@@ -99,7 +105,6 @@ class CITest(TestCase):
 
     def test_parse_vsc_ci_cfg(self):
         """Test parse_vsc_ci_cfg function."""
-        os.chdir(self.tmpdir)
 
         # (basically) empty vsc-ci.ini
         self.write_vsc_ci_ini('')
@@ -128,7 +133,6 @@ class CITest(TestCase):
     def test_gen_jenkinsfile_jira_issue_id_in_pr_title(self):
         """Test generating of Jenkinsfile incl. check for JIRA issue in PR title."""
 
-        os.chdir(self.tmpdir)
         self.write_vsc_ci_ini('jira_issue_id_in_pr_title=1')
 
         jenkinsfile_txt = gen_jenkinsfile()
@@ -141,7 +145,6 @@ class CITest(TestCase):
     def test_tox_ini_py3_tests(self):
         """Test generation of tox.ini when Python 3 tests are expected to pass."""
 
-        os.chdir(self.tmpdir)
         self.write_vsc_ci_ini('py3_tests_must_pass=1')
 
         expected = EXPECTED_TOX_INI.replace('skip_missing_interpreters = true\n', '')
