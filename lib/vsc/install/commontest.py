@@ -77,6 +77,7 @@ PROSPECTOR_BLACKLIST = [
     # 'wrong-import-position',  # not sure about this, these usually have a good reason
     'Locally disabling',  # shows up when you locally disable a warning, this is the point
     'Useless suppression',  # shows up when you locally disable/suppress a warning, this is the point
+    "Redefining built-in 'reduce'",  # allow importing reduce from functools, required for Python 3 compatibility
 ]
 # to dissable any of these warnings in a block, you can do things like add a comment # pylint: disable=C0321
 PROSPECTOR_WHITELIST = [
