@@ -174,6 +174,8 @@ def gen_jenkinsfile():
         "node {",
         indent("stage('checkout git') {"),
         indent("checkout scm", level=2),
+        indent("// remove untracked files (*.pyc for example)", level=2),
+        indent("sh 'git clean -fxd'", level=2),
         indent('}'),
         indent("stage('test') {"),
     ]
