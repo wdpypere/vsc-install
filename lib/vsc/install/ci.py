@@ -51,6 +51,7 @@ VSC_CI = 'vsc-ci'
 VSC_CI_INI = VSC_CI + '.ini'
 
 JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
+RUN_SHELLCHECK = 'run_shellcheck'
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
@@ -122,6 +123,7 @@ def parse_vsc_ci_cfg():
     """Parse vsc-ci.ini configuration file (if any)."""
     vsc_ci_cfg = {
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
+        RUN_SHELLCHECK: False,
     }
 
     if os.path.exists(VSC_CI_INI):
@@ -133,8 +135,12 @@ def parse_vsc_ci_cfg():
             logging.error("ERROR: Failed to parse %s: %s" % (VSC_CI_INI, err))
             sys.exit(1)
 
-        if cfgparser.has_option(VSC_CI, JIRA_ISSUE_ID_IN_PR_TITLE):
-            vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE] = cfgparser.getboolean(VSC_CI, JIRA_ISSUE_ID_IN_PR_TITLE)
+        # every entry in the vsc-ci section is expected to be a known setting
+        for key, _ in cfgparser.items(VSC_CI):
+            if key in vsc_ci_cfg:
+                vsc_ci_cfg[key] = cfgparser.getboolean(VSC_CI, key)
+            else:
+                raise ValueError("Unknown key in %s: %s" % (VSC_CI_INI, key))
 
     return vsc_ci_cfg
 
@@ -177,11 +183,24 @@ def gen_jenkinsfile():
         indent("// remove untracked files (*.pyc for example)", level=2),
         indent("sh 'git clean -fxd'", level=2),
         indent('}'),
-        indent("stage('test') {"),
     ]
-    lines.extend([indent("sh '%s'" % c, level=2) for c in test_cmds] + [
-        indent('}'),
-    ])
+
+    if vsc_ci_cfg[RUN_SHELLCHECK]:
+        # see https://github.com/koalaman/shellcheck#installing
+        shellcheck_url = 'https://storage.googleapis.com/shellcheck/shellcheck-latest.linux.x86_64.tar.xz'
+        lines.extend([indent("stage ('shellcheck') {"),
+            indent("sh 'curl --silent %s --output - | tar -xJv'" % shellcheck_url, level=2),
+            indent("sh 'cp shellcheck-latest/shellcheck .'", level=2),
+            indent("sh 'rm -r shellcheck-latest'", level=2),
+            indent("sh './shellcheck --version'", level=2),
+            indent("sh './shellcheck bin/*.sh'", level=2),
+            indent('}')
+        ])
+
+
+    lines.append(indent("stage('test') {"))
+    lines.extend([indent("sh '%s'" % c, level=2) for c in test_cmds])
+    lines.append(indent('}'))
 
     if vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE]:
         lines.extend([
