@@ -424,3 +424,13 @@ add a configuration file for `python -m vsc.install.ci` named `vsc-ci.ini` like 
 [vsc-ci]
 jira_issue_id_in_pr_title=1
 ```
+
+Running shellcheck
+------------------
+
+To also run `shellcheck` in the generated `Jenkinsfile`, specify this via a `vsc-ci.ini` configuration file:
+
+```ini
+[vsc-ci]
+run_shellcheck=1
+```
