@@ -34,23 +34,29 @@ from vsc.install.ci import TOX_INI, gen_jenkinsfile, gen_tox_ini, parse_vsc_ci_c
 from vsc.install.testing import TestCase
 
 
-EXPECTED_JENKINSFILE = """// Jenkinsfile: scripted Jenkins pipefile
+JENKINSFILE_INIT = """// Jenkinsfile: scripted Jenkins pipefile
 // This file was automatically generated using 'python -m vsc.install.ci'
 // DO NOT EDIT MANUALLY
 
 node {
     stage('checkout git') {
         checkout scm
+        // remove untracked files (*.pyc for example)
+        sh 'git clean -fxd'
     }
-    stage('test') {
+"""
+
+JENKINSFILE_TEST_STAGE = """    stage('test') {
         sh 'python2.7 -V'
         sh 'python -m easy_install -U --user tox'
         sh 'export PATH=$HOME/.local/bin:$PATH && tox -v -c %s'
     }
-}
 """ % TOX_INI
 
-EXPECTED_JENKINSFILE_JIRA = EXPECTED_JENKINSFILE[:-2] + """    stage('PR title JIRA link') {
+
+EXPECTED_JENKINSFILE_DEFAULT = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE + '}\n'
+
+EXPECTED_JENKINSFILE_JIRA = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE + """    stage('PR title JIRA link') {
         if (env.CHANGE_ID) {
             if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?$/) {
                 echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."
@@ -62,6 +68,17 @@ EXPECTED_JENKINSFILE_JIRA = EXPECTED_JENKINSFILE[:-2] + """    stage('PR title J
     }
 }
 """
+
+JENKINSFILE_SHELLCHECK_STAGE = """    stage ('shellcheck') {
+        sh 'curl --silent https://storage.googleapis.com/shellcheck/shellcheck-latest.linux.x86_64.tar.xz --output - | tar -xJv'
+        sh 'cp shellcheck-latest/shellcheck .'
+        sh 'rm -r shellcheck-latest'
+        sh './shellcheck --version'
+        sh './shellcheck bin/*.sh'
+    }
+"""
+
+EXPECTED_JENKINSFILE_SHELLCHECK = JENKINSFILE_INIT + JENKINSFILE_SHELLCHECK_STAGE + JENKINSFILE_TEST_STAGE + '}\n'
 
 EXPECTED_TOX_INI = """# tox.ini: configuration file for tox
 # This file was automatically generated using 'python -m vsc.install.ci'
@@ -111,6 +128,7 @@ class CITest(TestCase):
         expected = {
             'jira_issue_id_in_pr_title': False,
             'py3_tests_must_pass': False,
+            'run_shellcheck': False,
         }
         self.assertEqual(parse_vsc_ci_cfg(), expected)
 
@@ -119,16 +137,21 @@ class CITest(TestCase):
         error_msg = "Unknown key in vsc-ci.ini: unknown_key"
         self.assertErrorRegex(ValueError, error_msg, parse_vsc_ci_cfg)
 
-        self.write_vsc_ci_ini('jira_issue_id_in_pr_title=1\npy3_tests_must_pass=true')
+        self.write_vsc_ci_ini('\n'.join([
+            'jira_issue_id_in_pr_title=1',
+            'py3_tests_must_pass=1',
+            'run_shellcheck=true',
+        ]))
         expected = {
             'jira_issue_id_in_pr_title': True,
             'py3_tests_must_pass': True,
+            'run_shellcheck': True,
         }
         self.assertEqual(parse_vsc_ci_cfg(), expected)
 
     def test_gen_jenkinsfile(self):
         """Test generating of Jenkinsfile."""
-        self.assertEqual(gen_jenkinsfile(), EXPECTED_JENKINSFILE)
+        self.assertEqual(gen_jenkinsfile(), EXPECTED_JENKINSFILE_DEFAULT)
 
     def test_gen_jenkinsfile_jira_issue_id_in_pr_title(self):
         """Test generating of Jenkinsfile incl. check for JIRA issue in PR title."""
@@ -137,6 +160,13 @@ class CITest(TestCase):
 
         jenkinsfile_txt = gen_jenkinsfile()
         self.assertEqual(jenkinsfile_txt, EXPECTED_JENKINSFILE_JIRA)
+
+    def test_gen_jenkinsfile_shellcheck(self):
+        """Test generating of Jenkinsfile incl. running of shellcheck."""
+
+        self.write_vsc_ci_ini('run_shellcheck=1')
+        jenkinsfile_txt = gen_jenkinsfile()
+        self.assertEqual(jenkinsfile_txt, EXPECTED_JENKINSFILE_SHELLCHECK)
 
     def test_tox_ini(self):
         """Test generating of tox.ini."""

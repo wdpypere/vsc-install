@@ -52,6 +52,7 @@ VSC_CI_INI = VSC_CI + '.ini'
 
 JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
 PY3_TESTS_MUST_PASS = 'py3_tests_must_pass'
+RUN_SHELLCHECK = 'run_shellcheck'
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
@@ -137,6 +138,7 @@ def parse_vsc_ci_cfg():
     vsc_ci_cfg = {
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
         PY3_TESTS_MUST_PASS: False,
+        RUN_SHELLCHECK: False,
     }
 
     if os.path.exists(VSC_CI_INI):
@@ -193,12 +195,27 @@ def gen_jenkinsfile():
         "node {",
         indent("stage('checkout git') {"),
         indent("checkout scm", level=2),
+        indent("// remove untracked files (*.pyc for example)", level=2),
+        indent("sh 'git clean -fxd'", level=2),
         indent('}'),
-        indent("stage('test') {"),
     ]
-    lines.extend([indent("sh '%s'" % c, level=2) for c in test_cmds] + [
-        indent('}'),
-    ])
+
+    if vsc_ci_cfg[RUN_SHELLCHECK]:
+        # see https://github.com/koalaman/shellcheck#installing
+        shellcheck_url = 'https://storage.googleapis.com/shellcheck/shellcheck-latest.linux.x86_64.tar.xz'
+        lines.extend([indent("stage ('shellcheck') {"),
+            indent("sh 'curl --silent %s --output - | tar -xJv'" % shellcheck_url, level=2),
+            indent("sh 'cp shellcheck-latest/shellcheck .'", level=2),
+            indent("sh 'rm -r shellcheck-latest'", level=2),
+            indent("sh './shellcheck --version'", level=2),
+            indent("sh './shellcheck bin/*.sh'", level=2),
+            indent('}')
+        ])
+
+
+    lines.append(indent("stage('test') {"))
+    lines.extend([indent("sh '%s'" % c, level=2) for c in test_cmds])
+    lines.append(indent('}'))
 
     if vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE]:
         lines.extend([
