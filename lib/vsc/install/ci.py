@@ -50,6 +50,7 @@ TOX_INI = 'tox.ini'
 VSC_CI = 'vsc-ci'
 VSC_CI_INI = VSC_CI + '.ini'
 
+INSTALL_SCRIPTS_PREFIX_OVERRIDE = 'install_scripts_prefix_override'
 JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
 RUN_SHELLCHECK = 'run_shellcheck'
 
@@ -83,6 +84,15 @@ def gen_tox_ini():
     py3_env = 'py36'
     envs = ['py27', py3_env]
 
+    vsc_ci_cfg = parse_vsc_ci_cfg()
+
+    if vsc_ci_cfg[INSTALL_SCRIPTS_PREFIX_OVERRIDE]:
+        pip_args = '--install-option="--install-scripts={envdir}/bin" '
+        easy_install_args = '--script-dir={envdir}/bin '
+    else:
+        pip_args = ''
+        easy_install_args = ''
+
     lines = header + [
         '',
         "[tox]",
@@ -100,12 +110,12 @@ def gen_tox_ini():
         # we need a setuptools < 42.0 for now, since in 42.0 easy_install was changed to use pip when available;
         # it's important to use pip (not easy_install) here, since only pip will actually remove an older
         # already installed setuptools version
-        "    pip install 'setuptools<%s'" % MAX_SETUPTOOLS_VERSION,
+        "    pip install %s'setuptools<%s'" % (pip_args, MAX_SETUPTOOLS_VERSION),
         # install latest vsc-install release from PyPI;
         # we can't use 'pip install' here, because then we end up with a broken installation because
         # vsc/__init__.py is not installed because we're using pkg_resources.declare_namespace
         # (see https://github.com/pypa/pip/issues/1924)
-        "    python -m easy_install -U vsc-install",
+        "    python -m easy_install -U %svsc-install" % easy_install_args,
         "commands = python setup.py test",
         # $USER is not defined in tox environment, so pass it
         # see https://tox.readthedocs.io/en/latest/example/basic.html#passing-down-environment-variables
@@ -122,6 +132,7 @@ def gen_tox_ini():
 def parse_vsc_ci_cfg():
     """Parse vsc-ci.ini configuration file (if any)."""
     vsc_ci_cfg = {
+        INSTALL_SCRIPTS_PREFIX_OVERRIDE: False,
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
         RUN_SHELLCHECK: False,
     }
