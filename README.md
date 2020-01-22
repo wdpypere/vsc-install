@@ -434,3 +434,18 @@ To also run `shellcheck` in the generated `Jenkinsfile`, specify this via a `vsc
 [vsc-ci]
 run_shellcheck=1
 ```
+
+Overriding install location of scripts
+--------------------------------------
+
+In some repositories we specify a system-wide install location for scripts via `setup.cfg`
+(see for example the `icinga-checks` repository), which causes problems when installing `vsc-install` in the tox
+environment.
+
+To override the installation prefix for scripts (only in the tox environment where the tests are run),
+specify this via a `vsc-ci.ini` configuration file:
+
+```ini
+[vsc-ci]
+install_scripts_prefix_override=1
+```

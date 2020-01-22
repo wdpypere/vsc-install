@@ -29,6 +29,7 @@ Test CI functionality
 @author: Kenneth Hoste (Ghent University)
 """
 import os
+import re
 
 from vsc.install.ci import TOX_INI, gen_jenkinsfile, gen_tox_ini, parse_vsc_ci_cfg
 from vsc.install.testing import TestCase
@@ -124,6 +125,7 @@ class CITest(TestCase):
         # (basically) empty vsc-ci.ini
         self.write_vsc_ci_ini('')
         expected = {
+            'install_scripts_prefix_override': False,
             'jira_issue_id_in_pr_title': False,
             'run_shellcheck': False,
         }
@@ -135,10 +137,12 @@ class CITest(TestCase):
         self.assertErrorRegex(ValueError, error_msg, parse_vsc_ci_cfg)
 
         self.write_vsc_ci_ini('\n'.join([
+            'install_scripts_prefix_override=1',
             'jira_issue_id_in_pr_title=1',
             'run_shellcheck=true',
         ]))
         expected = {
+            'install_scripts_prefix_override': True,
             'jira_issue_id_in_pr_title': True,
             'run_shellcheck': True,
         }
@@ -166,3 +170,16 @@ class CITest(TestCase):
     def test_tox_ini(self):
         """Test generating of tox.ini."""
         self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI)
+
+    def test_tox_ini_install_script(self):
+        """Test generating of tox.ini when install_scripts_prefix_override is set."""
+
+        self.write_vsc_ci_ini('install_scripts_prefix_override=1')
+
+        expected = EXPECTED_TOX_INI
+        pip_regex = re.compile('pip install')
+        expected = pip_regex.sub('pip install --install-option="--install-scripts={envdir}/bin"', expected)
+        easy_install_regex = re.compile('easy_install -U')
+        expected = easy_install_regex.sub('easy_install -U --script-dir={envdir}/bin', expected)
+
+        self.assertEqual(gen_tox_ini(), expected)
