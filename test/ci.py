@@ -29,6 +29,7 @@ Test CI functionality
 @author: Kenneth Hoste (Ghent University)
 """
 import os
+import re
 
 from vsc.install.ci import TOX_INI, gen_jenkinsfile, gen_tox_ini, parse_vsc_ci_cfg
 from vsc.install.testing import TestCase
@@ -58,7 +59,7 @@ EXPECTED_JENKINSFILE_DEFAULT = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE + '}\n'
 
 EXPECTED_JENKINSFILE_JIRA = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE + """    stage('PR title JIRA link') {
         if (env.CHANGE_ID) {
-            if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?$/) {
+            if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?/) {
                 echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."
             } else {
                 echo "ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'."
@@ -126,6 +127,7 @@ class CITest(TestCase):
         # (basically) empty vsc-ci.ini
         self.write_vsc_ci_ini('')
         expected = {
+            'install_scripts_prefix_override': False,
             'jira_issue_id_in_pr_title': False,
             'py3_tests_must_pass': False,
             'run_shellcheck': False,
@@ -138,11 +140,13 @@ class CITest(TestCase):
         self.assertErrorRegex(ValueError, error_msg, parse_vsc_ci_cfg)
 
         self.write_vsc_ci_ini('\n'.join([
+            'install_scripts_prefix_override=1',
             'jira_issue_id_in_pr_title=1',
             'py3_tests_must_pass=1',
             'run_shellcheck=true',
         ]))
         expected = {
+            'install_scripts_prefix_override': True,
             'jira_issue_id_in_pr_title': True,
             'py3_tests_must_pass': True,
             'run_shellcheck': True,
@@ -178,4 +182,17 @@ class CITest(TestCase):
         self.write_vsc_ci_ini('py3_tests_must_pass=1')
 
         expected = EXPECTED_TOX_INI.replace('skip_missing_interpreters = true\n', '')
+        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI)
+
+    def test_tox_ini_install_script(self):
+        """Test generating of tox.ini when install_scripts_prefix_override is set."""
+
+        self.write_vsc_ci_ini('install_scripts_prefix_override=1')
+
+        expected = EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE
+        pip_regex = re.compile('pip install')
+        expected = pip_regex.sub('pip install --install-option="--install-scripts={envdir}/bin"', expected)
+        easy_install_regex = re.compile('easy_install -U')
+        expected = easy_install_regex.sub('easy_install -U --script-dir={envdir}/bin', expected)
+
         self.assertEqual(gen_tox_ini(), expected)
