@@ -59,7 +59,7 @@ EXPECTED_JENKINSFILE_DEFAULT = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE + '}\n'
 
 EXPECTED_JENKINSFILE_JIRA = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE + """    stage('PR title JIRA link') {
         if (env.CHANGE_ID) {
-            if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?$/) {
+            if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?/) {
                 echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."
             } else {
                 echo "ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'."

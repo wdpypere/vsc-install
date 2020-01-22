@@ -217,7 +217,7 @@ def gen_jenkinsfile():
         lines.extend([
             indent("stage('PR title JIRA link') {"),
             indent("if (env.CHANGE_ID) {", level=2),
-            indent("if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?$/) {", level=3),
+            indent("if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?/) {", level=3),
             indent('echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."', level=4),
             indent("} else {", level=3),
             indent("echo \"ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'.\"", level=4),
