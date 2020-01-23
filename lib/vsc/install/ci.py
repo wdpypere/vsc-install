@@ -52,6 +52,7 @@ VSC_CI_INI = VSC_CI + '.ini'
 
 INSTALL_SCRIPTS_PREFIX_OVERRIDE = 'install_scripts_prefix_override'
 JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
+PIP3_INSTALL_TOX = 'pip3_install_tox'
 PY3_TESTS_MUST_PASS = 'py3_tests_must_pass'
 RUN_SHELLCHECK = 'run_shellcheck'
 
@@ -148,6 +149,7 @@ def parse_vsc_ci_cfg():
     vsc_ci_cfg = {
         INSTALL_SCRIPTS_PREFIX_OVERRIDE: False,
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
+        PIP3_INSTALL_TOX: False,
         PY3_TESTS_MUST_PASS: False,
         RUN_SHELLCHECK: False,
     }
@@ -189,10 +191,15 @@ def gen_jenkinsfile():
         # since we've configured tox to ignore failures due to missing Python interpreters
         # (see skip_missing_interpreters in gen_tox_ini)
         'python2.7 -V',
-        'python -m easy_install -U --user tox',
-        # make sure 'tox' command installed with --user is available via $PATH
-        'export PATH=$HOME/.local/bin:$PATH && tox -v -c %s' % TOX_INI,
     ]
+
+    if vsc_ci_cfg[PIP3_INSTALL_TOX]:
+        test_cmds.append('pip3 install --user tox')
+    else:
+        test_cmds.append('python -m easy_install -U --user tox')
+
+    # make sure 'tox' command installed with --user is available via $PATH
+    test_cmds.append('export PATH=$HOME/.local/bin:$PATH && tox -v -c %s' % TOX_INI)
 
     header = [
         "%s: scripted Jenkins pipefile" % JENKINSFILE,

@@ -460,3 +460,13 @@ To require that the test suite passes when run with Python 3, you must opt-in to
 [vsc-ci]
 py3_tests_must_pass=1
 ```
+
+Use 'pip3' to install tox
+-------------------------
+
+On systems that have Python 3 and `pip3` installed, it is recommended to opt-in to use `pip3 install` to install tox:
+
+```ini
+[vsc-ci]
+pip3_install_tox=1
+```

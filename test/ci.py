@@ -124,14 +124,17 @@ class CITest(TestCase):
     def test_parse_vsc_ci_cfg(self):
         """Test parse_vsc_ci_cfg function."""
 
+        keys = [
+            'install_scripts_prefix_override',
+            'jira_issue_id_in_pr_title',
+            'pip3_install_tox',
+            'py3_tests_must_pass',
+            'run_shellcheck',
+        ]
+
         # (basically) empty vsc-ci.ini
         self.write_vsc_ci_ini('')
-        expected = {
-            'install_scripts_prefix_override': False,
-            'jira_issue_id_in_pr_title': False,
-            'py3_tests_must_pass': False,
-            'run_shellcheck': False,
-        }
+        expected = dict((key, False) for key in keys)
         self.assertEqual(parse_vsc_ci_cfg(), expected)
 
         # vsc-ci.ini with unknown keys is trouble
@@ -139,18 +142,8 @@ class CITest(TestCase):
         error_msg = "Unknown key in vsc-ci.ini: unknown_key"
         self.assertErrorRegex(ValueError, error_msg, parse_vsc_ci_cfg)
 
-        self.write_vsc_ci_ini('\n'.join([
-            'install_scripts_prefix_override=1',
-            'jira_issue_id_in_pr_title=1',
-            'py3_tests_must_pass=1',
-            'run_shellcheck=true',
-        ]))
-        expected = {
-            'install_scripts_prefix_override': True,
-            'jira_issue_id_in_pr_title': True,
-            'py3_tests_must_pass': True,
-            'run_shellcheck': True,
-        }
+        self.write_vsc_ci_ini('\n'.join('%s=1' % key for key in keys))
+        expected = dict((key, True) for key in keys)
         self.assertEqual(parse_vsc_ci_cfg(), expected)
 
     def test_gen_jenkinsfile(self):
@@ -182,7 +175,7 @@ class CITest(TestCase):
         self.write_vsc_ci_ini('py3_tests_must_pass=1')
 
         expected = EXPECTED_TOX_INI.replace('skip_missing_interpreters = true\n', '')
-        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI)
+        self.assertEqual(gen_tox_ini(), expected)
 
     def test_tox_ini_install_script(self):
         """Test generating of tox.ini when install_scripts_prefix_override is set."""
