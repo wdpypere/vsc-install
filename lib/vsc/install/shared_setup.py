@@ -1433,7 +1433,7 @@ class vsc_setup(object):
             if dependency.startswith('vsc'):
                 dep = dependency.split(' ')[0]
                 depversion = ''
-                for comp in ['=', '<']:
+                for comp in ['==', '<', '<=']:
                     try:
                         depversion = "-" + dependency.split(comp)[1].strip()
                     except IndexError:
