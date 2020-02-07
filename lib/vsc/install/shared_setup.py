@@ -159,7 +159,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.14.10'
+VERSION = '0.14.11'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1564,7 +1564,9 @@ if __name__ == '__main__':
         # but vsc-install relies on the setuptools' behaviour of ignoring failing dependency installations and
         # just continuing with the next entry in dependency_links
         'setuptools < %s' % MAX_SETUPTOOLS_VERSION,
-        'mock',
+        # mock 4.0 only supports Python 3+
+        "mock<4.0;python_version<'3.0'",
+        "mock;python_version>='3.0'",
     ]
 
     PACKAGE = {
