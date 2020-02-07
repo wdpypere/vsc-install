@@ -72,6 +72,9 @@ try:
 except ImportError:
     have_xmlrunner = False
 
+# see https://docs.python.org/3/reference/expressions.html#comparisons
+COMPARISON_OPERATORS = ['<=', '<', '>=', '>', '==', '!=']
+
 # Test that these are matched by a .gitignore pattern
 GITIGNORE_PATTERNS = ['.pyc', '.pyo', '~']
 # .gitnore needs to contain these exactly
@@ -159,7 +162,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.14.10'
+VERSION = '0.14.11'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1442,6 +1445,13 @@ class vsc_setup(object):
                         new_target['dependency_links'] += [''.join([git_scheme, url, '/hpcugent/', dep, '.git#egg=',
                                                            dep, depversion])]
 
+        for dep in new_target['install_requires']:
+            for comp in COMPARISON_OPERATORS:
+                if comp in dep:
+                    if (' %s ' % comp) not in dep:
+                        raise ValueError("Missing spaces around comparison operator in '%s'" % dep)
+                    break
+
         log.debug("New target = %s" % (new_target))
         print(new_target)
         return new_target
@@ -1564,8 +1574,13 @@ if __name__ == '__main__':
         # but vsc-install relies on the setuptools' behaviour of ignoring failing dependency installations and
         # just continuing with the next entry in dependency_links
         'setuptools < %s' % MAX_SETUPTOOLS_VERSION,
-        'mock',
     ]
+
+    # mock 4.0 only supports Python 3+
+    if sys.version_info < (3, 0):
+        install_requires.append('mock < 4.0')
+    else:
+        install_requires.append('mock')
 
     PACKAGE = {
         'version': VERSION,
