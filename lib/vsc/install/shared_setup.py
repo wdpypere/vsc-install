@@ -162,7 +162,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.14.11'
+VERSION = '0.14.12'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1436,7 +1436,7 @@ class vsc_setup(object):
             if dependency.startswith('vsc'):
                 dep = dependency.split(' ')[0]
                 depversion = ''
-                for comp in ['==', '<', '<=']:
+                for comp in ['==', '<=', '>=']:
                     try:
                         depversion = "-" + dependency.split(comp)[1].strip()
                     except IndexError:
