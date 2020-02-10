@@ -1437,7 +1437,7 @@ class vsc_setup(object):
                 dep = dependency.split(' ')[0]
                 depversion = ''
                 # if you specify any kind of version on a dependency, the depedency_links also needs a version or
-                # else it's ignored.
+                # else it's ignored: https://setuptools.readthedocs.io/en/latest/setuptools.html#id14
                 for comp in COMPARISON_OPERATORS:
                     try:
                         depversion = "-" + dependency.split(comp)[1].strip()
