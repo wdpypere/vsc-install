@@ -1436,7 +1436,9 @@ class vsc_setup(object):
             if dependency.startswith('vsc'):
                 dep = dependency.split(' ')[0]
                 depversion = ''
-                for comp in ['==', '<=', '>=']:
+                # if you specify any kind of version on a dependency, the depedency_links also needs a version or
+                # else it's ignored.
+                for comp in COMPARISON_OPERATORS:
                     try:
                         depversion = "-" + dependency.split(comp)[1].strip()
                     except IndexError:
