@@ -219,3 +219,33 @@ class TestSetup(TestCase):
         self.assertTrue(new_target['long_description'].startswith("Description\n==========="))
 
         klass.SHARED_TARGET = orig_target
+
+    def test_parse_target_dependencies(self):
+        """Test injecting dependency_links in parse_target"""
+        package = {
+            'name': 'vsc-test',
+            'excluded_pkgs_rpm': [],
+            'version': '1.0',
+            'install_requires': [
+                'vsc-config >= 2.0.0',
+                'vsc-accountpage-clients',
+                'vsc-base > 1.0.0'
+            ],
+        }
+        setup = vsc_setup()
+        new_target = setup.parse_target(package)
+
+        dep_links_urls = [
+            'git+ssh://git@github.com/hpcugent/vsc-accountpage-clients.git#egg=vsc-accountpage-clients',
+            'git+ssh://git@github.ugent.be/hpcugent/vsc-accountpage-clients.git#egg=vsc-accountpage-clients',
+            'git+ssh://git@github.com/hpcugent/vsc-config.git#egg=vsc-config-2.0.0',
+            'git+ssh://git@github.ugent.be/hpcugent/vsc-config.git#egg=vsc-config-2.0.0',
+            'git+ssh://git@github.com/hpcugent/vsc-base.git#egg=vsc-base-1.0.0',
+            'git+ssh://git@github.ugent.be/hpcugent/vsc-base.git#egg=vsc-base-1.0.0',
+        ]
+
+        for url in dep_links_urls:
+            self.assertIn(url, new_target['dependency_links'])
+
+        package['install_requires'].append('vsc-utils<=1.0.0')
+        self.assertRaises(ValueError, setup.parse_target, package)
