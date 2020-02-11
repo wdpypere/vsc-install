@@ -1433,15 +1433,15 @@ class vsc_setup(object):
             new_target['tests_require']):
 
             # see https://docs.python.org/3/reference/expressions.html#comparisons
-            split_re = r'(\s)?([<>]=?|[=!]=)(\s)?'
-            check_whitespace = re.search(split_re, dependency)
+            split_re = re.compile(r'(\s)?([<>]=?|[=!]=)(\s)?')
+            check_whitespace = split_re.search(dependency)
 
             if check_whitespace and (check_whitespace.group(1) is None or check_whitespace.group(3) is None):
                 raise ValueError("Missing spaces around comparison operator in '%s'" % dependency)
 
             if dependency.startswith('vsc'):
-                dep_name = re.split(split_re, dependency)[0]
-                dep_name_version = re.sub(split_re, '-', dependency)
+                dep_name = split_re.split(dependency)[0]
+                dep_name_version = split_re.sub('-', dependency)
                 # if you specify any kind of version on a dependency, the dependency_links also needs a version or
                 # else it's ignored: https://setuptools.readthedocs.io/en/latest/setuptools.html#id14
                 for url, git_scheme in urls:
