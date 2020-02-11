@@ -233,6 +233,10 @@ class TestSetup(TestCase):
             ],
         }
         setup = vsc_setup()
+        # this is needed to pass the tests on Travis: travis will clone vsc-install through
+        # https and it will be marked as non private repo, causing the dependency_links to be injected
+        # with git+https, which is not correct in this test case.
+        setup.private_repo = True
         new_target = setup.parse_target(package)
 
         dep_links_urls = [
