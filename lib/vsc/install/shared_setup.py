@@ -72,9 +72,6 @@ try:
 except ImportError:
     have_xmlrunner = False
 
-# see https://docs.python.org/3/reference/expressions.html#comparisons
-COMPARISON_OPERATORS = ['<=', '<', '>=', '>', '==', '!=']
-
 # Test that these are matched by a .gitignore pattern
 GITIGNORE_PATTERNS = ['.pyc', '.pyo', '~']
 # .gitnore needs to contain these exactly
@@ -1431,26 +1428,25 @@ class vsc_setup(object):
             ]
         else:
             urls = [('github.com', 'git+https://')]
+
         for dependency in set(new_target['install_requires'] + new_target['setup_requires'] +
             new_target['tests_require']):
-            if dependency.startswith('vsc'):
-                dep = dependency.split(' ')[0]
-                depversion = ''
-                for comp in ['==', '<', '<=']:
-                    try:
-                        depversion = "-" + dependency.split(comp)[1].strip()
-                    except IndexError:
-                        pass
-                    for url, git_scheme in urls:
-                        new_target['dependency_links'] += [''.join([git_scheme, url, '/hpcugent/', dep, '.git#egg=',
-                                                           dep, depversion])]
 
-        for dep in new_target['install_requires']:
-            for comp in COMPARISON_OPERATORS:
-                if comp in dep:
-                    if (' %s ' % comp) not in dep:
-                        raise ValueError("Missing spaces around comparison operator in '%s'" % dep)
-                    break
+            # see https://docs.python.org/3/reference/expressions.html#comparisons
+            split_re = re.compile(r'(\s)?([<>]=?|[=!]=)(\s)?')
+            check_whitespace = split_re.search(dependency)
+
+            if check_whitespace and (check_whitespace.group(1) is None or check_whitespace.group(3) is None):
+                raise ValueError("Missing spaces around comparison operator in '%s'" % dependency)
+
+            if dependency.startswith('vsc'):
+                dep_name = split_re.split(dependency)[0]
+                dep_name_version = split_re.sub('-', dependency)
+                # if you specify any kind of version on a dependency, the dependency_links also needs a version or
+                # else it's ignored: https://setuptools.readthedocs.io/en/latest/setuptools.html#id14
+                for url, git_scheme in urls:
+                    new_target['dependency_links'] += [''.join([git_scheme, url, '/hpcugent/', dep_name, '.git#egg=',
+                                                                dep_name_version])]
 
         log.debug("New target = %s" % (new_target))
         print(new_target)
