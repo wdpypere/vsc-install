@@ -194,11 +194,11 @@ def gen_jenkinsfile():
     ]
 
     if vsc_ci_cfg[PIP3_INSTALL_TOX]:
-        test_cmds.append('pip3 install --user tox')
+        test_cmds.append('pip3 install --ignore-installed --user tox')
     else:
         test_cmds.append('python -m easy_install -U --user tox')
 
-    # make sure 'tox' command installed with --user is available via $PATH
+    # make sure 'tox' command installed with --user is available via $PATH/$PYTHONPATH
     test_cmds.append('export PATH=$HOME/.local/bin:$PATH && tox -v -c %s' % TOX_INI)
 
     header = [
