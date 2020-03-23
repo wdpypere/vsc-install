@@ -449,3 +449,24 @@ specify this via a `vsc-ci.ini` configuration file:
 [vsc-ci]
 install_scripts_prefix_override=1
 ```
+
+Requiring that tests pass using Python 3
+----------------------------------------
+
+To require that the test suite passes when run with Python 3, you must opt-in to generating a tox configuration file
+(tox.ini) that does not ignore a missing interpreter or failing tests, using a `vsc-ci.ini` configuration file like:
+
+```ini
+[vsc-ci]
+py3_tests_must_pass=1
+```
+
+Use 'pip3' to install tox
+-------------------------
+
+On systems that have Python 3 and `pip3` installed, it is recommended to opt-in to use `pip3 install` to install tox:
+
+```ini
+[vsc-ci]
+pip3_install_tox=1
+```

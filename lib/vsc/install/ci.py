@@ -52,6 +52,8 @@ VSC_CI_INI = VSC_CI + '.ini'
 
 INSTALL_SCRIPTS_PREFIX_OVERRIDE = 'install_scripts_prefix_override'
 JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
+PIP3_INSTALL_TOX = 'pip3_install_tox'
+PY3_TESTS_MUST_PASS = 'py3_tests_must_pass'
 RUN_SHELLCHECK = 'run_shellcheck'
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
@@ -73,6 +75,8 @@ def gen_tox_ini():
     see also https://tox.readthedocs.io/en/latest/config.html
     """
     logging.info('[%s]', TOX_INI)
+
+    vsc_ci_cfg = parse_vsc_ci_cfg()
 
     header = [
         "%s: configuration file for tox" % TOX_INI,
@@ -100,9 +104,16 @@ def gen_tox_ini():
         # instruct tox not to run sdist prior to installing the package in the tox environment
         # (setup.py requires vsc-install, which is not installed yet when 'python setup.py sdist' is run)
         "skipsdist = true",
-        # ignore failures due to missing Python version
-        # python2.7 must always be available though, see Jenkinsfile
-        "skip_missing_interpreters = true",
+    ]
+
+    if not vsc_ci_cfg[PY3_TESTS_MUST_PASS]:
+        lines.extend([
+            # ignore failures due to missing Python version
+            # python2.7 must always be available though, see Jenkinsfile
+            "skip_missing_interpreters = true",
+        ])
+
+    lines.extend([
         '',
         '[testenv]',
         "commands_pre =",
@@ -120,11 +131,15 @@ def gen_tox_ini():
         # $USER is not defined in tox environment, so pass it
         # see https://tox.readthedocs.io/en/latest/example/basic.html#passing-down-environment-variables
         'passenv = USER',
-        '',
-        # allow failing tests in Python 3, for now...
-        '[testenv:%s]' % py3_env,
-        "ignore_outcome = true"
-    ]
+    ])
+
+    if not vsc_ci_cfg[PY3_TESTS_MUST_PASS]:
+        lines.extend([
+            '',
+            # allow failing tests in Python 3, for now...
+            '[testenv:%s]' % py3_env,
+            "ignore_outcome = true"
+        ])
 
     return '\n'.join(lines) + '\n'
 
@@ -134,6 +149,8 @@ def parse_vsc_ci_cfg():
     vsc_ci_cfg = {
         INSTALL_SCRIPTS_PREFIX_OVERRIDE: False,
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
+        PIP3_INSTALL_TOX: False,
+        PY3_TESTS_MUST_PASS: False,
         RUN_SHELLCHECK: False,
     }
 
@@ -174,10 +191,15 @@ def gen_jenkinsfile():
         # since we've configured tox to ignore failures due to missing Python interpreters
         # (see skip_missing_interpreters in gen_tox_ini)
         'python2.7 -V',
-        'python -m easy_install -U --user tox',
-        # make sure 'tox' command installed with --user is available via $PATH
-        'export PATH=$HOME/.local/bin:$PATH && tox -v -c %s' % TOX_INI,
     ]
+
+    if vsc_ci_cfg[PIP3_INSTALL_TOX]:
+        test_cmds.append('pip3 install --ignore-installed --user tox')
+    else:
+        test_cmds.append('python -m easy_install -U --user tox')
+
+    # make sure 'tox' command installed with --user is available via $PATH/$PYTHONPATH
+    test_cmds.append('export PATH=$HOME/.local/bin:$PATH && tox -v -c %s' % TOX_INI)
 
     header = [
         "%s: scripted Jenkins pipefile" % JENKINSFILE,

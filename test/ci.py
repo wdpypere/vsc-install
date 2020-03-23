@@ -96,7 +96,9 @@ commands_pre =
     python -m easy_install -U vsc-install
 commands = python setup.py test
 passenv = USER
+"""
 
+EXPECTED_TOX_INI_PY36_IGNORE = """
 [testenv:py36]
 ignore_outcome = true
 """
@@ -122,13 +124,17 @@ class CITest(TestCase):
     def test_parse_vsc_ci_cfg(self):
         """Test parse_vsc_ci_cfg function."""
 
+        keys = [
+            'install_scripts_prefix_override',
+            'jira_issue_id_in_pr_title',
+            'pip3_install_tox',
+            'py3_tests_must_pass',
+            'run_shellcheck',
+        ]
+
         # (basically) empty vsc-ci.ini
         self.write_vsc_ci_ini('')
-        expected = {
-            'install_scripts_prefix_override': False,
-            'jira_issue_id_in_pr_title': False,
-            'run_shellcheck': False,
-        }
+        expected = dict((key, False) for key in keys)
         self.assertEqual(parse_vsc_ci_cfg(), expected)
 
         # vsc-ci.ini with unknown keys is trouble
@@ -136,16 +142,8 @@ class CITest(TestCase):
         error_msg = "Unknown key in vsc-ci.ini: unknown_key"
         self.assertErrorRegex(ValueError, error_msg, parse_vsc_ci_cfg)
 
-        self.write_vsc_ci_ini('\n'.join([
-            'install_scripts_prefix_override=1',
-            'jira_issue_id_in_pr_title=1',
-            'run_shellcheck=true',
-        ]))
-        expected = {
-            'install_scripts_prefix_override': True,
-            'jira_issue_id_in_pr_title': True,
-            'run_shellcheck': True,
-        }
+        self.write_vsc_ci_ini('\n'.join('%s=1' % key for key in keys))
+        expected = dict((key, True) for key in keys)
         self.assertEqual(parse_vsc_ci_cfg(), expected)
 
     def test_gen_jenkinsfile(self):
@@ -169,14 +167,22 @@ class CITest(TestCase):
 
     def test_tox_ini(self):
         """Test generating of tox.ini."""
-        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI)
+        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE)
+
+    def test_tox_ini_py3_tests(self):
+        """Test generation of tox.ini when Python 3 tests are expected to pass."""
+
+        self.write_vsc_ci_ini('py3_tests_must_pass=1')
+
+        expected = EXPECTED_TOX_INI.replace('skip_missing_interpreters = true\n', '')
+        self.assertEqual(gen_tox_ini(), expected)
 
     def test_tox_ini_install_script(self):
         """Test generating of tox.ini when install_scripts_prefix_override is set."""
 
         self.write_vsc_ci_ini('install_scripts_prefix_override=1')
 
-        expected = EXPECTED_TOX_INI
+        expected = EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE
         pip_regex = re.compile('pip install')
         expected = pip_regex.sub('pip install --install-option="--install-scripts={envdir}/bin"', expected)
         easy_install_regex = re.compile('easy_install -U')
