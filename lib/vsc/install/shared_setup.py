@@ -159,7 +159,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.15.0'
+VERSION = '0.15.1'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1422,9 +1422,9 @@ class vsc_setup(object):
 
         if self.private_repo:
             urls = [
+                ('github.com', 'git+https://'),
                 ('github.ugent.be', 'git+ssh://git@'),
                 ('github.com', 'git+ssh://git@'),
-                ('github.com', 'git+https://'),
             ]
         else:
             urls = [('github.com', 'git+https://')]
