@@ -50,8 +50,10 @@ TOX_INI = 'tox.ini'
 VSC_CI = 'vsc-ci'
 VSC_CI_INI = VSC_CI + '.ini'
 
+INHERIT_SITE_PACKAGES = 'inherit_site_packages'
 INSTALL_SCRIPTS_PREFIX_OVERRIDE = 'install_scripts_prefix_override'
 JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
+PIP_INSTALL_TOX = 'pip_install_tox'
 PIP3_INSTALL_TOX = 'pip3_install_tox'
 PY3_TESTS_MUST_PASS = 'py3_tests_must_pass'
 RUN_SHELLCHECK = 'run_shellcheck'
@@ -133,6 +135,10 @@ def gen_tox_ini():
         'passenv = USER',
     ])
 
+    if vsc_ci_cfg[INHERIT_SITE_PACKAGES]:
+        # inherit Python packages installed on the system, if requested
+        lines.append("sitepackages = true")
+
     if not vsc_ci_cfg[PY3_TESTS_MUST_PASS]:
         lines.extend([
             '',
@@ -147,8 +153,10 @@ def gen_tox_ini():
 def parse_vsc_ci_cfg():
     """Parse vsc-ci.ini configuration file (if any)."""
     vsc_ci_cfg = {
+        INHERIT_SITE_PACKAGES: False,
         INSTALL_SCRIPTS_PREFIX_OVERRIDE: False,
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
+        PIP_INSTALL_TOX: False,
         PIP3_INSTALL_TOX: False,
         PY3_TESTS_MUST_PASS: False,
         RUN_SHELLCHECK: False,
@@ -193,7 +201,9 @@ def gen_jenkinsfile():
         'python2.7 -V',
     ]
 
-    if vsc_ci_cfg[PIP3_INSTALL_TOX]:
+    if vsc_ci_cfg[PIP_INSTALL_TOX]:
+        test_cmds.append('pip install --ignore-installed --user tox')
+    elif vsc_ci_cfg[PIP3_INSTALL_TOX]:
         test_cmds.append('pip3 install --ignore-installed --user tox')
     else:
         test_cmds.append('python -m easy_install -U --user tox')
