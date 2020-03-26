@@ -47,15 +47,23 @@ node {
     }
 """
 
-JENKINSFILE_TEST_STAGE = """    stage('test') {
-        sh 'python2.7 -V'
-        sh 'python -m easy_install -U --user tox'
-        sh 'export PATH=$HOME/.local/bin:$PATH && tox -v -c %s'
-    }
-""" % TOX_INI
+EASY_INSTALL_TOX = "        sh 'python -m easy_install -U --user tox'\n"
+PIP_INSTALL_TOX = "        sh 'pip install --ignore-installed --user tox'\n"
+PIP3_INSTALL_TOX = "        sh 'pip3 install --ignore-installed --user tox'\n"
+TOX_RUN = "        sh 'export PATH=$HOME/.local/bin:$PATH && tox -v -c %s'\n" % TOX_INI
 
+JENKINSFILE_TEST_START = """    stage('test') {
+        sh 'python2.7 -V'
+"""
+JENKINSFILE_END_STAGE = "    }\n"
+
+JENKINSFILE_TEST_STAGE = JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN + JENKINSFILE_END_STAGE
+JENKINSFILE_TEST_STAGE_PIP = JENKINSFILE_TEST_START + PIP_INSTALL_TOX + TOX_RUN + JENKINSFILE_END_STAGE
+JENKINSFILE_TEST_STAGE_PIP3 = JENKINSFILE_TEST_START + PIP3_INSTALL_TOX + TOX_RUN + JENKINSFILE_END_STAGE
 
 EXPECTED_JENKINSFILE_DEFAULT = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE + '}\n'
+EXPECTED_JENKINSFILE_PIP_INSTALL_TOX = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE_PIP + '}\n'
+EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE_PIP3 + '}\n'
 
 EXPECTED_JENKINSFILE_JIRA = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE + """    stage('PR title JIRA link') {
         if (env.CHANGE_ID) {
@@ -125,8 +133,10 @@ class CITest(TestCase):
         """Test parse_vsc_ci_cfg function."""
 
         keys = [
+            'inherit_site_packages',
             'install_scripts_prefix_override',
             'jira_issue_id_in_pr_title',
+            'pip_install_tox',
             'pip3_install_tox',
             'py3_tests_must_pass',
             'run_shellcheck',
@@ -158,6 +168,20 @@ class CITest(TestCase):
         jenkinsfile_txt = gen_jenkinsfile()
         self.assertEqual(jenkinsfile_txt, EXPECTED_JENKINSFILE_JIRA)
 
+    def test_gen_jenkinsfile_pip_install_tox(self):
+        """Test generating of Jenkinsfile incl. install tox with 'pip install."""
+
+        self.write_vsc_ci_ini('pip_install_tox=1')
+        jenkinsfile_txt = gen_jenkinsfile()
+        self.assertEqual(jenkinsfile_txt, EXPECTED_JENKINSFILE_PIP_INSTALL_TOX)
+
+    def test_gen_jenkinsfile_pip3_install_tox(self):
+        """Test generating of Jenkinsfile incl. install tox with 'pip3 install."""
+
+        self.write_vsc_ci_ini('pip3_install_tox=1')
+        jenkinsfile_txt = gen_jenkinsfile()
+        self.assertEqual(jenkinsfile_txt, EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX)
+
     def test_gen_jenkinsfile_shellcheck(self):
         """Test generating of Jenkinsfile incl. running of shellcheck."""
 
@@ -168,6 +192,14 @@ class CITest(TestCase):
     def test_tox_ini(self):
         """Test generating of tox.ini."""
         self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE)
+
+    def test_tox_ini_inherit_site_packages(self):
+        """Test generation of tox.ini with inheriting of site packages enabled."""
+
+        self.write_vsc_ci_ini('inherit_site_packages=1')
+
+        expected = EXPECTED_TOX_INI + 'sitepackages = true\n' + EXPECTED_TOX_INI_PY36_IGNORE
+        self.assertEqual(gen_tox_ini(), expected)
 
     def test_tox_ini_py3_tests(self):
         """Test generation of tox.ini when Python 3 tests are expected to pass."""
