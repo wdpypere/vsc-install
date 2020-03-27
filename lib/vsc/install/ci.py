@@ -201,10 +201,17 @@ def gen_jenkinsfile():
         'python2.7 -V',
     ]
 
+
     if vsc_ci_cfg[PIP_INSTALL_TOX]:
-        test_cmds.append('pip install --ignore-installed --user tox')
+        test_cmds.extend([
+            'pip install --user --upgrade pip',
+            # make sure correct 'pip' installation is used
+            'export PATH=$HOME/.local/bin:$PATH && pip install --ignore-installed --user tox',
+        ])
+
     elif vsc_ci_cfg[PIP3_INSTALL_TOX]:
         test_cmds.append('pip3 install --ignore-installed --user tox')
+
     else:
         test_cmds.append('python -m easy_install -U --user tox')
 

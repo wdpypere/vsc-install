@@ -48,7 +48,9 @@ node {
 """
 
 EASY_INSTALL_TOX = "        sh 'python -m easy_install -U --user tox'\n"
-PIP_INSTALL_TOX = "        sh 'pip install --ignore-installed --user tox'\n"
+PIP_INSTALL_TOX = """        sh 'pip install --user --upgrade pip'
+        sh 'export PATH=$HOME/.local/bin:$PATH && pip install --ignore-installed --user tox'
+"""
 PIP3_INSTALL_TOX = "        sh 'pip3 install --ignore-installed --user tox'\n"
 TOX_RUN = "        sh 'export PATH=$HOME/.local/bin:$PATH && tox -v -c %s'\n" % TOX_INI
 
