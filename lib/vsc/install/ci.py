@@ -241,7 +241,7 @@ def gen_jenkinsfile():
         shellcheck_url += 'shellcheck-latest.linux.x86_64.tar.xz'
         lines.extend([
             indent("stage ('shellcheck') {"),
-            indent("sh 'curl --silent %s --output - | tar -xJv'" % shellcheck_url, level=2),
+            indent("sh 'curl -L --silent %s --output - | tar -xJv'" % shellcheck_url, level=2),
             indent("sh 'cp shellcheck-latest/shellcheck .'", level=2),
             indent("sh 'rm -r shellcheck-latest'", level=2),
             indent("sh './shellcheck --version'", level=2),
