@@ -236,9 +236,11 @@ def gen_jenkinsfile():
     ]
 
     if vsc_ci_cfg[RUN_SHELLCHECK]:
-        # see https://github.com/koalaman/shellcheck#installing
-        shellcheck_url = 'https://storage.googleapis.com/shellcheck/shellcheck-latest.linux.x86_64.tar.xz'
-        lines.extend([indent("stage ('shellcheck') {"),
+        # see https://github.com/koalaman/shellcheck#installing-a-pre-compiled-binary
+        shellcheck_url = 'https://github.com/koalaman/shellcheck/releases/download/latest/'
+        shellcheck_url += 'shellcheck-latest.linux.x86_64.tar.xz'
+        lines.extend([
+            indent("stage ('shellcheck') {"),
             indent("sh 'curl --silent %s --output - | tar -xJv'" % shellcheck_url, level=2),
             indent("sh 'cp shellcheck-latest/shellcheck .'", level=2),
             indent("sh 'rm -r shellcheck-latest'", level=2),
@@ -246,7 +248,6 @@ def gen_jenkinsfile():
             indent("sh './shellcheck bin/*.sh'", level=2),
             indent('}')
         ])
-
 
     lines.append(indent("stage('test') {"))
     lines.extend([indent("sh '%s'" % c, level=2) for c in test_cmds])
