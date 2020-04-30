@@ -211,15 +211,21 @@ class CITest(TestCase):
         expected = EXPECTED_TOX_INI.replace('skip_missing_interpreters = true\n', '')
         self.assertEqual(gen_tox_ini(), expected)
 
-    def test_tox_ini_install_script(self):
+    def test_install_scripts_prefix_override(self):
         """Test generating of tox.ini when install_scripts_prefix_override is set."""
 
-        self.write_vsc_ci_ini('install_scripts_prefix_override=1')
+        self.write_vsc_ci_ini('install_scripts_prefix_override=1\npip3_install_tox=1')
 
-        expected = EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE
+        expected_tox_ini = EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE
         pip_regex = re.compile('pip install')
-        expected = pip_regex.sub('pip install --install-option="--install-scripts={envdir}/bin"', expected)
+        pip_install_scripts = 'pip install --install-option="--install-scripts={envdir}/bin"'
+        expected_tox_ini = pip_regex.sub(pip_install_scripts, expected_tox_ini)
         easy_install_regex = re.compile('easy_install -U')
-        expected = easy_install_regex.sub('easy_install -U --script-dir={envdir}/bin', expected)
+        expected_tox_ini = easy_install_regex.sub('easy_install -U --script-dir={envdir}/bin', expected_tox_ini)
 
-        self.assertEqual(gen_tox_ini(), expected)
+        self.assertEqual(gen_tox_ini(), expected_tox_ini)
+
+        pip3_regex = re.compile('pip3 install')
+        pip3_install_scripts = pip_install_scripts.replace('pip ', 'pip3 ')
+        expected_jenkinsfile = pip3_regex.sub(pip3_install_scripts, EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX)
+        self.assertEqual(gen_jenkinsfile(), expected_jenkinsfile)

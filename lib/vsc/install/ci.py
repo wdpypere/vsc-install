@@ -92,12 +92,10 @@ def gen_tox_ini():
 
     vsc_ci_cfg = parse_vsc_ci_cfg()
 
+    pip_args, easy_install_args = '', ''
     if vsc_ci_cfg[INSTALL_SCRIPTS_PREFIX_OVERRIDE]:
         pip_args = '--install-option="--install-scripts={envdir}/bin" '
         easy_install_args = '--script-dir={envdir}/bin '
-    else:
-        pip_args = ''
-        easy_install_args = ''
 
     lines = header + [
         '',
@@ -201,19 +199,26 @@ def gen_jenkinsfile():
         'python2.7 -V',
     ]
 
+    pip_args, easy_install_args = '', ''
+    if vsc_ci_cfg[INSTALL_SCRIPTS_PREFIX_OVERRIDE]:
+        pip_args = '--install-option="--install-scripts={envdir}/bin" '
+        easy_install_args = '--script-dir={envdir}/bin '
 
     if vsc_ci_cfg[PIP_INSTALL_TOX]:
+        pip_args += '--ignore-installed --user'
         test_cmds.extend([
             'pip install --user --upgrade pip',
             # make sure correct 'pip' installation is used
-            'export PATH=$HOME/.local/bin:$PATH && pip install --ignore-installed --user tox',
+            'export PATH=$HOME/.local/bin:$PATH && pip install %s tox' % pip_args,
         ])
 
     elif vsc_ci_cfg[PIP3_INSTALL_TOX]:
-        test_cmds.append('pip3 install --ignore-installed --user tox')
+        pip_args += '--ignore-installed --user'
+        test_cmds.append('pip3 install %s tox' % pip_args)
 
     else:
-        test_cmds.append('python -m easy_install -U --user tox')
+        easy_install_args += '-U --user'
+        test_cmds.append('python -m easy_install %s tox' % easy_install_args)
 
     # make sure 'tox' command installed with --user is available via $PATH/$PYTHONPATH
     test_cmds.append('export PATH=$HOME/.local/bin:$PATH && tox -v -c %s' % TOX_INI)
