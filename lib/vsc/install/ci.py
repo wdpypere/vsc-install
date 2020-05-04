@@ -127,7 +127,10 @@ def gen_tox_ini():
         # vsc/__init__.py is not installed because we're using pkg_resources.declare_namespace
         # (see https://github.com/pypa/pip/issues/1924)
         "    python -m easy_install -U %svsc-install" % easy_install_args,
-        "commands = python setup.py test",
+        "commands =",
+        "    # clean up .eggs directory to avoid mixing Python packages installed with Python 2 & 3",
+        "    rm -rf .eggs",
+        "    python setup.py test",
         # $USER is not defined in tox environment, so pass it
         # see https://tox.readthedocs.io/en/latest/example/basic.html#passing-down-environment-variables
         'passenv = USER',

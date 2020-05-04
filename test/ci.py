@@ -104,7 +104,10 @@ skip_missing_interpreters = true
 commands_pre =
     pip install 'setuptools<42.0'
     python -m easy_install -U vsc-install
-commands = python setup.py test
+commands =
+    # clean up .eggs directory to avoid mixing Python packages installed with Python 2 & 3
+    rm -rf .eggs
+    python setup.py test
 passenv = USER
 """
 
