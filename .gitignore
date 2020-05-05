@@ -7,7 +7,7 @@ setup.cfg
 MANIFEST
 
 # Packages
-.eggs
+.eggs*
 *.egg
 *.egg-info
 dist
