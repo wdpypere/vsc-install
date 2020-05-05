@@ -8,6 +8,8 @@ MANIFEST
 
 # Packages
 .eggs
+.eggs.py2
+.eggs.py3
 *.egg
 *.egg-info
 dist

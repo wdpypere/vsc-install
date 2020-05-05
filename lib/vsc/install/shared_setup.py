@@ -48,6 +48,7 @@ import shutil
 import re
 
 import setuptools
+import setuptools.dist
 import setuptools.command.test
 
 from distutils import log  # also for setuptools
@@ -75,7 +76,7 @@ except ImportError:
 # Test that these are matched by a .gitignore pattern
 GITIGNORE_PATTERNS = ['.pyc', '.pyo', '~']
 # .gitnore needs to contain these exactly
-GITIGNORE_EXACT_PATTERNS = ['.eggs']
+GITIGNORE_EXACT_PATTERNS = ['.eggs', '.eggs.py2', '.eggs.py3']
 
 # private class variables to communicate
 # between VscScanningLoader and VscTestCommand
@@ -159,7 +160,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.15.7'
+VERSION = '0.15.8'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -258,6 +259,29 @@ def _fvs(msg=None):
         log.debug("%sFound no subclasses, returning %s" % (msg, pname))
 
     return klass
+
+
+setuptools.dist.Distribution._orig_get_egg_cache_dir = setuptools.dist.Distribution.get_egg_cache_dir
+
+
+# monkey patch setuptools to use different .eggs directory depending on Python version being used
+def get_egg_cache_dir_pyver(self):
+    egg_cache_dir = self._orig_get_egg_cache_dir()
+
+    # the original get_egg_cache_dir creates the .eggs directory if it doesn't exist yet,
+    # but we want to have it versioned, so we rename it
+    egg_cache_dir_pyver = egg_cache_dir + '.py%s' % sys.version_info[0]
+    try:
+        if not os.path.exists(egg_cache_dir_pyver):
+            os.rename(egg_cache_dir, egg_cache_dir_pyver)
+    except OSError as err:
+        raise OSError("Failed to rename %s to %s: %s" % (egg_cache_dir, egg_cache_dir_pyver, err))
+
+    return egg_cache_dir_pyver
+
+
+setuptools.dist.Distribution.get_egg_cache_dir = get_egg_cache_dir_pyver
+setuptools.dist.Distribution.get_egg_cache_dir = get_egg_cache_dir_pyver
 
 
 class vsc_setup(object):
