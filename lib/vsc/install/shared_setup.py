@@ -76,7 +76,7 @@ except ImportError:
 # Test that these are matched by a .gitignore pattern
 GITIGNORE_PATTERNS = ['.pyc', '.pyo', '~']
 # .gitnore needs to contain these exactly
-GITIGNORE_EXACT_PATTERNS = ['.eggs', '.eggs.py2', '.eggs.py3']
+GITIGNORE_EXACT_PATTERNS = ['.eggs*']
 
 # private class variables to communicate
 # between VscScanningLoader and VscTestCommand
@@ -280,7 +280,6 @@ def get_egg_cache_dir_pyver(self):
     return egg_cache_dir_pyver
 
 
-setuptools.dist.Distribution.get_egg_cache_dir = get_egg_cache_dir_pyver
 setuptools.dist.Distribution.get_egg_cache_dir = get_egg_cache_dir_pyver
 
 
