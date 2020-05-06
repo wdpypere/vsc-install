@@ -160,7 +160,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.15.8'
+VERSION = '0.15.9'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -261,26 +261,34 @@ def _fvs(msg=None):
     return klass
 
 
-setuptools.dist.Distribution._orig_get_egg_cache_dir = setuptools.dist.Distribution.get_egg_cache_dir
+# for sufficiently recent version of setuptools, we can hijack the 'get_egg_cache_dir' method
+# to control the .eggs directory being used
+if hasattr(setuptools.dist.Distribution, 'get_egg_cache_dir'):
+    setuptools.dist.Distribution._orig_get_egg_cache_dir = setuptools.dist.Distribution.get_egg_cache_dir
 
+    # monkey patch setuptools to use different .eggs directory depending on Python version being used
+    def get_egg_cache_dir_pyver(self):
+        egg_cache_dir = self._orig_get_egg_cache_dir()
 
-# monkey patch setuptools to use different .eggs directory depending on Python version being used
-def get_egg_cache_dir_pyver(self):
-    egg_cache_dir = self._orig_get_egg_cache_dir()
+        # the original get_egg_cache_dir creates the .eggs directory if it doesn't exist yet,
+        # but we want to have it versioned, so we rename it
+        egg_cache_dir_pyver = egg_cache_dir + '.py%s' % sys.version_info[0]
+        try:
+            if not os.path.exists(egg_cache_dir_pyver):
+                os.rename(egg_cache_dir, egg_cache_dir_pyver)
+        except OSError as err:
+            raise OSError("Failed to rename %s to %s: %s" % (egg_cache_dir, egg_cache_dir_pyver, err))
 
-    # the original get_egg_cache_dir creates the .eggs directory if it doesn't exist yet,
-    # but we want to have it versioned, so we rename it
-    egg_cache_dir_pyver = egg_cache_dir + '.py%s' % sys.version_info[0]
-    try:
-        if not os.path.exists(egg_cache_dir_pyver):
-            os.rename(egg_cache_dir, egg_cache_dir_pyver)
-    except OSError as err:
-        raise OSError("Failed to rename %s to %s: %s" % (egg_cache_dir, egg_cache_dir_pyver, err))
+        return egg_cache_dir_pyver
 
-    return egg_cache_dir_pyver
+    setuptools.dist.Distribution.get_egg_cache_dir = get_egg_cache_dir_pyver
 
-
-setuptools.dist.Distribution.get_egg_cache_dir = get_egg_cache_dir_pyver
+# for ancient setuptools version (< 7.0), get_egg_cache_dir is not there yet
+# in that case, just hard remove the existing .eggs directory, to force re-creating it
+else:
+    eggs_dir = os.path.join(os.getcwd(), '.eggs')
+    if os.path.exists(eggs_dir):
+        shutil.rmtree(eggs_dir)
 
 
 class vsc_setup(object):
