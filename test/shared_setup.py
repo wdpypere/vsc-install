@@ -85,7 +85,7 @@ class TestSetup(TestCase):
         self.assertEqual(self.setup.sanitize('python-ldap == 11'), 'python-ldap == 11',
                          msg='packages starting with python- are not prefixed again with VSC_RPM_PYTHON set')
 
-        self.assertEqual(shared_setup.PYTHON_BDIST_RPM_PREFIX_MAP, {'pycrypto': 'python%s-crypto'},
+        self.assertEqual(shared_setup.PYTHON_BDIST_RPM_PREFIX_MAP, {'pycrypto': 'python%s-crypto', 'psycopg2': 'python%s-psycopg2'},
                          msg='PYTHON_BDIST_RPM_PREFIX_MAP is hardcoded mapping')
         self.assertEqual(self.setup.sanitize('pycrypto == 12'), 'python-crypto == 12',
                          msg='packages in PYTHON_BDIST_RPM_PREFIX_MAP are repalced with value with VSC_RPM_PYTHON set')
