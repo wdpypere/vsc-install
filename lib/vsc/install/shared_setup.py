@@ -160,7 +160,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.15.10'
+VERSION = '0.15.11'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1438,19 +1438,24 @@ class vsc_setup(object):
                     new_target[k] = type(v)()
                     new_target[k] += v
 
+        tests_requires = new_target.setdefault('tests_require', [])
         if sys.version_info < (2, 7):
             # py26 support dropped in 0.8, and the old versions don't detect enough
             log.info('no prospector support in py26 (or older)')
-            tests_requires = new_target.setdefault('tests_require', [])
-            new_target['tests_require'] = [x for x in tests_requires if 'prospector' not in x]
-        else:
+            tests_requires = [x for x in tests_requires if 'prospector' not in x]
+        elif sys.version_info < (3, 0):
             log.info('adding prospector to tests_require')
-            tests_requires = new_target.setdefault('tests_require', [])
+            # limit version to avoid pulling in python 3.x only versions
+            tests_requires.append('zipp < 2.0')
+            tests_requires.append('configparser < 5.0')
             # Python 2.x support was removed in pydocstyle 4.0, so stick to latest release before 4.0
             tests_requires.append('pydocstyle < 4.0')
             # fix from https://github.com/PyCQA/prospector/pull/323 required to avoid infinite recursion
             tests_requires.append('prospector >= 1.1.6.4')
-            new_target['tests_require'] = tests_requires
+        else:
+            tests_requires.append('prospector')
+
+        new_target['tests_require'] = tests_requires
 
         if self.private_repo:
             urls = [
