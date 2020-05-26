@@ -470,3 +470,28 @@ On systems that have Python 3 and `pip3` installed, it is recommended to opt-in 
 [vsc-ci]
 pip3_install_tox=1
 ```
+
+Avoid running ``pip install`` in repo checkout
+----------------------------------------------
+
+For some repositories, running ``pip install`` to install ``tox`` from the checked out repository is problematic,
+because of the ``setup.cfg`` containing things that should not be picked up by ``pip``.
+
+For those repositories, you can specify that the installation commands in the ``Jenkinsfile`` should be
+run from ``$HOME``, via:
+
+```ini
+[vsc-ci]
+home_install=1
+```
+
+Leveraging system (Python) packages
+-----------------------------------
+
+If a repository requires Python packages as dependencies that are installed as OS packages (for example, ``pyslurm``),
+tox must be configured to inherit these packages in the test environment. This can be enabled via:
+
+```ini
+[vsc-ci]
+inherit_site_packages=1
+```
