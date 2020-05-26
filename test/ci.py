@@ -135,6 +135,7 @@ class CITest(TestCase):
         """Test parse_vsc_ci_cfg function."""
 
         keys = [
+            'home_install',
             'inherit_site_packages',
             'install_scripts_prefix_override',
             'jira_issue_id_in_pr_title',
@@ -183,6 +184,15 @@ class CITest(TestCase):
         self.write_vsc_ci_ini('pip3_install_tox=1')
         jenkinsfile_txt = gen_jenkinsfile()
         self.assertEqual(jenkinsfile_txt, EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX)
+
+    def test_gen_jenkinsfile_home_pip3_install_tox(self):
+        """Test generating of Jenkinsfile incl. install tox with 'pip3 install."""
+
+        self.write_vsc_ci_ini('home_install=1\npip3_install_tox=1')
+        jenkinsfile_txt = gen_jenkinsfile()
+
+        expected = EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX.replace('pip3 install', 'cd $HOME && pip3 install')
+        self.assertEqual(jenkinsfile_txt, expected)
 
     def test_gen_jenkinsfile_shellcheck(self):
         """Test generating of Jenkinsfile incl. running of shellcheck."""

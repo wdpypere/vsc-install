@@ -50,6 +50,7 @@ TOX_INI = 'tox.ini'
 VSC_CI = 'vsc-ci'
 VSC_CI_INI = VSC_CI + '.ini'
 
+HOME_INSTALL = 'home_install'
 INHERIT_SITE_PACKAGES = 'inherit_site_packages'
 INSTALL_SCRIPTS_PREFIX_OVERRIDE = 'install_scripts_prefix_override'
 JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
@@ -151,6 +152,7 @@ def gen_tox_ini():
 def parse_vsc_ci_cfg():
     """Parse vsc-ci.ini configuration file (if any)."""
     vsc_ci_cfg = {
+        HOME_INSTALL: False,
         INHERIT_SITE_PACKAGES: False,
         INSTALL_SCRIPTS_PREFIX_OVERRIDE: False,
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
@@ -204,21 +206,30 @@ def gen_jenkinsfile():
         pip_args = '--install-option="--install-scripts={envdir}/bin" '
         easy_install_args = '--script-dir={envdir}/bin '
 
+    # run 'pip install' commands in $HOME (rather than in repo checkout) if desired
+    if vsc_ci_cfg[HOME_INSTALL]:
+        install_cmd = "cd $HOME && pip install"
+    else:
+        install_cmd = "pip install"
+
     if vsc_ci_cfg[PIP_INSTALL_TOX]:
         pip_args += '--ignore-installed --user'
+
         test_cmds.extend([
-            'pip install --user --upgrade pip',
+            install_cmd + ' --user --upgrade pip',
             # make sure correct 'pip' installation is used
-            'export PATH=$HOME/.local/bin:$PATH && pip install %s tox' % pip_args,
+            'export PATH=$HOME/.local/bin:$PATH && %s %s tox' % (install_cmd, pip_args),
         ])
 
     elif vsc_ci_cfg[PIP3_INSTALL_TOX]:
+        install_cmd = install_cmd.replace('pip ', 'pip3 ')
         pip_args += '--ignore-installed --user'
-        test_cmds.append('pip3 install %s tox' % pip_args)
+        test_cmds.append('%s %s tox' % (install_cmd, pip_args))
 
     else:
+        install_cmd = install_cmd.replace('pip install', 'python -m easy_install')
         easy_install_args += '-U --user'
-        test_cmds.append('python -m easy_install %s tox' % easy_install_args)
+        test_cmds.append('%s %s tox' % (install_cmd, easy_install_args))
 
     # make sure 'tox' command installed with --user is available via $PATH/$PYTHONPATH
     test_cmds.append('export PATH=$HOME/.local/bin:$PATH && tox -v -c %s' % TOX_INI)
