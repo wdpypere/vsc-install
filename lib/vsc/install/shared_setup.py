@@ -1452,8 +1452,13 @@ class vsc_setup(object):
             tests_requires.append('pydocstyle < 4.0')
             # fix from https://github.com/PyCQA/prospector/pull/323 required to avoid infinite recursion
             tests_requires.append('prospector >= 1.1.6.4, < 1.3')
+            # mock 4.x is no longer compatible with Python 2
+            tests_requires.append('mock < 4.0')
         else:
-            tests_requires.append('prospector')
+            tests_requires.extend([
+                'prospector',
+                'mock',
+            ])
 
         new_target['tests_require'] = tests_requires
 
