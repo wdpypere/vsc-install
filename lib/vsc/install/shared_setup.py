@@ -160,7 +160,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.15.12'
+VERSION = '0.15.13'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1451,7 +1451,7 @@ class vsc_setup(object):
             # Python 2.x support was removed in pydocstyle 4.0, so stick to latest release before 4.0
             tests_requires.append('pydocstyle < 4.0')
             # fix from https://github.com/PyCQA/prospector/pull/323 required to avoid infinite recursion
-            tests_requires.append('prospector >= 1.1.6.4')
+            tests_requires.append('prospector >= 1.1.6.4, < 1.3')
         else:
             tests_requires.append('prospector')
 
