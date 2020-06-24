@@ -160,7 +160,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.15.13'
+VERSION = '0.15.14'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -262,6 +262,16 @@ def _fvs(msg=None):
     return klass
 
 
+def _read(source, read_lines=False):
+    """read a file, either in full or as a list (read_lines=True)"""
+    with open(source) as file_handle:
+        if read_lines:
+            txt = file_handle.readlines()
+        else:
+            txt = file_handle.read()
+    return txt
+
+
 # for sufficiently recent version of setuptools, we can hijack the 'get_egg_cache_dir' method
 # to control the .eggs directory being used
 if hasattr(setuptools.dist.Distribution, 'get_egg_cache_dir'):
@@ -347,7 +357,7 @@ class vsc_setup(object):
         elif not os.path.isfile(filename):
             raise Exception('cannot find file %s to get name from' % filename)
 
-        txt = open(filename).read()
+        txt = _read(filename)
 
         # First ones are from PKG-INFO
         # second one is .git/config
@@ -430,7 +440,8 @@ class vsc_setup(object):
         # primitive gitignore
         gitignore = os.path.join(base_dir, '.gitignore')
         if os.path.isfile(gitignore):
-            all_patterns = [l for l in [l.strip() for l in open(gitignore).readlines()] if l and not l.startswith('#')]
+            all_patterns = [l for l in [l.strip() for l in _read(gitignore, read_lines=True)]
+                            if l and not l.startswith('#')]
 
             patterns = [l.replace('*', '.*') for l in all_patterns if l.startswith('*')]
             reg = re.compile('^('+'|'.join(patterns)+')$')
@@ -472,7 +483,7 @@ class vsc_setup(object):
             if '__init__.py' in files or package in excluded_pkgs:
                 # Force vsc shared packages/namespace
                 if '__init__.py' in files and (package == 'vsc' or package.startswith('vsc.')):
-                    init = open(os.path.join(root, '__init__.py')).read()
+                    init = _read(os.path.join(root, '__init__.py'))
                     if not re.search(r'^import\s+pkg_resources\n{1,3}pkg_resources.declare_namespace\(__name__\)$',
                                      init, re.M):
                         raise Exception(('vsc namespace packages do not allow non-shared namespace in dir %s.'
@@ -541,9 +552,7 @@ class vsc_setup(object):
                 os.unlink(dest)
                 self.copy_file(os.path.join(self.setup.REPO_BASE_DIR, *paths), dest)
 
-            fh = open(dest, 'r')
-            code = fh.read()
-            fh.close()
+            code = _read(dest)
 
             return dest, code
 
@@ -598,9 +607,7 @@ class vsc_setup(object):
                 raise Exception("sdist requires access shared_setup source (%s)" % err)
 
             try:
-                fh = open(dest, 'w')
-                fh.write(source_code)
-                fh.close()
+                self._write(dest, source_code)
             except IOError as err:
                 raise IOError("Failed to write NEW_SHARED_SETUP source to %s (%s)" % (dest, err))
 
@@ -651,7 +658,7 @@ class vsc_setup(object):
                 pyshebang_reg = re.compile(r'\A%s.*$' % SHEBANG_ENV_PYTHON, re.M)
                 for fn in scripts:
                     # includes newline
-                    first_line = open(os.path.join(base_dir, fn)).readline()
+                    first_line = _read(os.path.join(base_dir, fn), read_lines=True)
                     if pyshebang_reg.search(first_line):
                         log.info("going to adapt shebang for script %s" % fn)
                         dest, code = self._recopy(base_dir, fn)
@@ -1365,7 +1372,7 @@ class vsc_setup(object):
             if 'long_description' in target:
                 log.info(('Going to ignore the provided long_descripton.'
                           'Set it in the %s or disable vsc_description') % README)
-            readmetxt = open(readme).read()
+            readmetxt = _read(readme)
 
             # look for description block, read text until double empty line or new block
             # allow 'words with === on next line' or comment-like block '# title'
