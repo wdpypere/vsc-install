@@ -138,6 +138,19 @@ PROSPECTOR_OPTIONS = [
     '--die-on-tool-error',
 ]
 
+# prospector ignore paths
+PROSPECTOR_IGNORE_PATHS = []
+
+# prospector ignore paths defaults
+PROSPECTOR_IGNORE_PATHS_DEFAULTS = [
+    'build'
+]
+
+
+def prospector_ignore_paths_add(path):
+    """Add a path that should be ignored by prospector"""
+    PROSPECTOR_IGNORE_PATHS.append(path)
+
 
 def run_prospector(base_dir, clear_ignore_patterns=False):
     """Run prospector and apply white/blacklists to the results"""
@@ -145,8 +158,10 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
 
     log.info("Using prosector version %s", prospector_version)
 
+    ignore_dirs = ','.join(PROSPECTOR_IGNORE_PATHS + PROSPECTOR_IGNORE_PATHS_DEFAULTS)
     sys.argv = ['fakename']
-    sys.argv.extend(PROSPECTOR_OPTIONS)
+    sys.argv.extend(PROSPECTOR_OPTIONS + ['--ignore-paths', ignore_dirs])
+    log.debug("Prospector ignoring paths: %s", ignore_dirs)
 
     if PROSPECTOR_USE_LIBS:
         sys.argv.extend(["--uses", ",".join(PROSPECTOR_USE_LIBS)])
