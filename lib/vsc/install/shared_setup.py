@@ -1461,6 +1461,8 @@ class vsc_setup(object):
             tests_requires.append('prospector >= 1.1.6.4, < 1.3')
             # mock 4.x is no longer compatible with Python 2
             tests_requires.append('mock < 4.0')
+            # isort 5.0 is no longer compatible with Python 2
+            tests_requires.append('isort < 5.0')
         else:
             tests_requires.extend([
                 'prospector',
