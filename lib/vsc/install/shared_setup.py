@@ -659,7 +659,7 @@ class vsc_setup(object):
                 for fn in scripts:
                     # includes newline
                     first_line = _read(os.path.join(base_dir, fn), read_lines=True)
-                    if pyshebang_reg.search(first_line):
+                    if pyshebang_reg.search(first_line[0]):
                         log.info("going to adapt shebang for script %s" % fn)
                         dest, code = self._recopy(base_dir, fn)
                         code = pyshebang_reg.sub(SHEBANG_STRIPPED_ENV_PYTHON, code)
