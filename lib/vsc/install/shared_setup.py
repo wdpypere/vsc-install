@@ -160,7 +160,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.15.15'
+VERSION = '0.15.16'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -658,7 +658,7 @@ class vsc_setup(object):
                 pyshebang_reg = re.compile(r'\A%s.*$' % SHEBANG_ENV_PYTHON, re.M)
                 for fn in scripts:
                     # includes newline
-                    first_line = _read(os.path.join(base_dir, fn), read_lines=True)
+                    first_line = _read(os.path.join(base_dir, fn), read_lines=True)[0]
                     if pyshebang_reg.search(first_line):
                         log.info("going to adapt shebang for script %s" % fn)
                         dest, code = self._recopy(base_dir, fn)
