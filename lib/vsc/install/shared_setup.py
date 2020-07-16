@@ -658,8 +658,8 @@ class vsc_setup(object):
                 pyshebang_reg = re.compile(r'\A%s.*$' % SHEBANG_ENV_PYTHON, re.M)
                 for fn in scripts:
                     # includes newline
-                    first_line = _read(os.path.join(base_dir, fn), read_lines=True)
-                    if pyshebang_reg.search(first_line[0]):
+                    first_line = _read(os.path.join(base_dir, fn), read_lines=True)[0]
+                    if pyshebang_reg.search(first_line):
                         log.info("going to adapt shebang for script %s" % fn)
                         dest, code = self._recopy(base_dir, fn)
                         code = pyshebang_reg.sub(SHEBANG_STRIPPED_ENV_PYTHON, code)
