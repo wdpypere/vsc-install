@@ -215,10 +215,13 @@ def gen_jenkinsfile():
     if vsc_ci_cfg[PIP_INSTALL_TOX]:
         pip_args += '--ignore-installed --user'
 
+        # tox requires zipp: require zipp < 3.0 since newer version are Python 3 only
+        tox = '"zipp<3.0" tox'
+
         test_cmds.extend([
             install_cmd + ' --user --upgrade pip',
             # make sure correct 'pip' installation is used
-            'export PATH=$HOME/.local/bin:$PATH && %s %s tox' % (install_cmd, pip_args),
+            'export PATH=$HOME/.local/bin:$PATH && %s %s %s' % (install_cmd, pip_args, tox),
         ])
 
     elif vsc_ci_cfg[PIP3_INSTALL_TOX]:
