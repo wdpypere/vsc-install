@@ -212,18 +212,23 @@ def gen_jenkinsfile():
     else:
         install_cmd = "pip install"
 
+    prefix = os.path.join('$PWD', '.vsc-tox')
+
     if vsc_ci_cfg[PIP_INSTALL_TOX]:
-        pip_args += '--ignore-installed --user'
+        pip_args += '--ignore-installed --prefix %s' % prefix
+
+        # tox requires zipp: require zipp < 3.0 since newer version are Python 3 only
+        tox = '"zipp<3.0" tox'
 
         test_cmds.extend([
             install_cmd + ' --user --upgrade pip',
             # make sure correct 'pip' installation is used
-            'export PATH=$HOME/.local/bin:$PATH && %s %s tox' % (install_cmd, pip_args),
+            'export PATH=$HOME/.local/bin:$PATH && %s %s %s' % (install_cmd, pip_args, tox),
         ])
 
     elif vsc_ci_cfg[PIP3_INSTALL_TOX]:
         install_cmd = install_cmd.replace('pip ', 'pip3 ')
-        pip_args += '--ignore-installed --user'
+        pip_args += '--ignore-installed --prefix %s' % prefix
         test_cmds.append('%s %s tox' % (install_cmd, pip_args))
 
     else:
@@ -231,8 +236,12 @@ def gen_jenkinsfile():
         easy_install_args += '-U --user'
         test_cmds.append('%s %s tox' % (install_cmd, easy_install_args))
 
-    # make sure 'tox' command installed with --user is available via $PATH/$PYTHONPATH
-    test_cmds.append('export PATH=$HOME/.local/bin:$PATH && tox -v -c %s' % TOX_INI)
+    test_cmds.extend([
+        # make sure 'tox' command installed is available by updating $PATH
+        'export PATH=%s:$PATH && tox -v -c %s' % (os.path.join(prefix, 'bin'), TOX_INI),
+        # clean up tox installation
+        'rm -r $PWD/.vsc-tox',
+    ])
 
     header = [
         "%s: scripted Jenkins pipefile" % JENKINSFILE,
