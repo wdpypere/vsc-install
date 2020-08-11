@@ -56,6 +56,7 @@ INSTALL_SCRIPTS_PREFIX_OVERRIDE = 'install_scripts_prefix_override'
 JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
 PIP_INSTALL_TOX = 'pip_install_tox'
 PIP3_INSTALL_TOX = 'pip3_install_tox'
+PY3_ONLY = 'py3_only'
 PY3_TESTS_MUST_PASS = 'py3_tests_must_pass'
 RUN_SHELLCHECK = 'run_shellcheck'
 
@@ -88,10 +89,19 @@ def gen_tox_ini():
     ]
     header = ['# ' + l for l in header]
 
-    py3_env = 'py36'
-    envs = ['py27', py3_env]
-
     vsc_ci_cfg = parse_vsc_ci_cfg()
+
+    # list of Python environments in which tests should be run
+    envs = []
+
+    # don't run tests with Python 2 if 'py3_only' is set in vsc-ci.ini
+    if not vsc_ci_cfg[PY3_ONLY]:
+        envs.append('py27')
+
+    # always run tests with Python 3
+    # (failing tests may be ignored if 'py3_tests_must_pass' is set to 0 in vsc-ci.ini)
+    py3_env = 'py36'
+    envs.append(py3_env)
 
     pip_args, easy_install_args = '', ''
     if vsc_ci_cfg[INSTALL_SCRIPTS_PREFIX_OVERRIDE]:
@@ -158,6 +168,7 @@ def parse_vsc_ci_cfg():
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
         PIP_INSTALL_TOX: False,
         PIP3_INSTALL_TOX: False,
+        PY3_ONLY: False,
         PY3_TESTS_MUST_PASS: False,
         RUN_SHELLCHECK: False,
     }
