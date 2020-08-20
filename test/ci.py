@@ -135,30 +135,33 @@ class CITest(TestCase):
     def test_parse_vsc_ci_cfg(self):
         """Test parse_vsc_ci_cfg function."""
 
-        keys = [
-            'home_install',
-            'inherit_site_packages',
-            'install_scripts_prefix_override',
-            'jira_issue_id_in_pr_title',
-            'pip_install_tox',
-            'pip3_install_tox',
-            'py3_only',
-            'py3_tests_must_pass',
-            'run_shellcheck',
-        ]
+        default = {
+            'additional_test_commands': None,
+            'home_install': False,
+            'inherit_site_packages': False,
+            'install_scripts_prefix_override': False,
+            'jira_issue_id_in_pr_title': False,
+            'pip_install_tox': False,
+            'pip3_install_tox': False,
+            'py3_only': False,
+            'py3_tests_must_pass': False,
+            'run_shellcheck': False,
+        }
 
         # (basically) empty vsc-ci.ini
         self.write_vsc_ci_ini('')
-        expected = dict((key, False) for key in keys)
-        self.assertEqual(parse_vsc_ci_cfg(), expected)
+        self.assertEqual(parse_vsc_ci_cfg(), default)
 
         # vsc-ci.ini with unknown keys is trouble
         self.write_vsc_ci_ini("unknown_key=1")
         error_msg = "Unknown key in vsc-ci.ini: unknown_key"
         self.assertErrorRegex(ValueError, error_msg, parse_vsc_ci_cfg)
 
-        self.write_vsc_ci_ini('\n'.join('%s=1' % key for key in keys))
-        expected = dict((key, True) for key in keys)
+        vsc_ini_txt = '\n'.join('%s=1' % key for key in default.keys())
+        vsc_ini_txt = re.sub('additional_test_commands=1', 'additional_test_commands=./more_tests.sh', vsc_ini_txt)
+        self.write_vsc_ci_ini(vsc_ini_txt)
+        expected = dict((key, True) for key in default.keys())
+        expected['additional_test_commands'] = './more_tests.sh'
         self.assertEqual(parse_vsc_ci_cfg(), expected)
 
     def test_gen_jenkinsfile(self):
@@ -202,6 +205,36 @@ class CITest(TestCase):
         self.write_vsc_ci_ini('run_shellcheck=1')
         jenkinsfile_txt = gen_jenkinsfile()
         self.assertEqual(jenkinsfile_txt, EXPECTED_JENKINSFILE_SHELLCHECK)
+
+    def test_tox_ini_additional_test_commands(self):
+        """Test use of 'additional_test_commands' in vsc-ci.ini."""
+
+        self.write_vsc_ci_ini('additional_test_commands=./more_tests.sh')
+        expected = JENKINSFILE_INIT + JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN + '\n'.join([
+            "        sh './more_tests.sh'",
+            "    }",
+            "}",
+            '',
+        ])
+        self.assertEqual(gen_jenkinsfile(), expected)
+
+        self.write_vsc_ci_ini('\n'.join([
+            'additional_test_commands=',
+            '    ./more_tests.sh',
+            '    another-command',
+            '    test -f foo.txt',
+            "    echo 'this command uses single quotes'",
+        ]))
+        expected = JENKINSFILE_INIT + JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN + '\n'.join([
+            "        sh './more_tests.sh'",
+            "        sh 'another-command'",
+            "        sh 'test -f foo.txt'",
+            '        sh """echo \'this command uses single quotes\'"""',
+            "    }",
+            "}",
+            '',
+        ])
+        self.assertEqual(gen_jenkinsfile(), expected)
 
     def test_tox_ini(self):
         """Test generating of tox.ini."""
