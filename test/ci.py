@@ -142,6 +142,7 @@ class CITest(TestCase):
             'jira_issue_id_in_pr_title',
             'pip_install_tox',
             'pip3_install_tox',
+            'py3_only',
             'py3_tests_must_pass',
             'run_shellcheck',
         ]
@@ -220,6 +221,14 @@ class CITest(TestCase):
         self.write_vsc_ci_ini('py3_tests_must_pass=1')
 
         expected = EXPECTED_TOX_INI.replace('skip_missing_interpreters = true\n', '')
+        self.assertEqual(gen_tox_ini(), expected)
+
+    def test_tox_ini_py3_only(self):
+        """Test generation of tox.ini when tests should only be run with Python 3."""
+
+        self.write_vsc_ci_ini('py3_only=1')
+
+        expected = EXPECTED_TOX_INI.replace('envlist = py27,py36', 'envlist = py36') + EXPECTED_TOX_INI_PY36_IGNORE
         self.assertEqual(gen_tox_ini(), expected)
 
     def test_install_scripts_prefix_override(self):

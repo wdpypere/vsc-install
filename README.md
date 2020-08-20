@@ -461,6 +461,21 @@ To require that the test suite passes when run with Python 3, you must opt-in to
 py3_tests_must_pass=1
 ```
 
+Only testing with Python 3
+--------------------------
+
+To only test with Python 3 and skip running the tests with Python, you can set `py3_only` in ` vsc-ci.ini`:
+
+```ini
+[vsc-ci]
+py3_tests_must_pass=1
+py3_only=1
+```
+
+This is useful for repositories where we start adding stuff that only works in Python 3.
+
+**Note:** make sure you also enable `py3_tests_must_pass`, since that's not enabled by default (yet)!
+
 Use 'pip3' to install tox
 -------------------------
 
