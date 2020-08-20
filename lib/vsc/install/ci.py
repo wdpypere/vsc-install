@@ -50,6 +50,7 @@ TOX_INI = 'tox.ini'
 VSC_CI = 'vsc-ci'
 VSC_CI_INI = VSC_CI + '.ini'
 
+ADDITIONAL_TEST_COMMANDS = 'additional_test_commands'
 HOME_INSTALL = 'home_install'
 INHERIT_SITE_PACKAGES = 'inherit_site_packages'
 INSTALL_SCRIPTS_PREFIX_OVERRIDE = 'install_scripts_prefix_override'
@@ -162,6 +163,7 @@ def gen_tox_ini():
 def parse_vsc_ci_cfg():
     """Parse vsc-ci.ini configuration file (if any)."""
     vsc_ci_cfg = {
+        ADDITIONAL_TEST_COMMANDS: None,
         HOME_INSTALL: False,
         INHERIT_SITE_PACKAGES: False,
         INSTALL_SCRIPTS_PREFIX_OVERRIDE: False,
@@ -185,7 +187,10 @@ def parse_vsc_ci_cfg():
         # every entry in the vsc-ci section is expected to be a known setting
         for key, _ in cfgparser.items(VSC_CI):
             if key in vsc_ci_cfg:
-                vsc_ci_cfg[key] = cfgparser.getboolean(VSC_CI, key)
+                if key in [ADDITIONAL_TEST_COMMANDS]:
+                    vsc_ci_cfg[key] = cfgparser.get(VSC_CI, key)
+                else:
+                    vsc_ci_cfg[key] = cfgparser.getboolean(VSC_CI, key)
             else:
                 raise ValueError("Unknown key in %s: %s" % (VSC_CI_INI, key))
 
@@ -254,12 +259,16 @@ def gen_jenkinsfile():
         'rm -r $PWD/.vsc-tox',
     ])
 
+    additional_test_commands = vsc_ci_cfg[ADDITIONAL_TEST_COMMANDS]
+    if additional_test_commands:
+        test_cmds.extend(additional_test_commands.strip().split('\n'))
+
     header = [
         "%s: scripted Jenkins pipefile" % JENKINSFILE,
         "This file was automatically generated using 'python -m vsc.install.ci'",
         "DO NOT EDIT MANUALLY",
     ]
-    header = ['// ' + l for l in header]
+    header = ['// ' + line for line in header]
 
     lines = header + [
         '',
@@ -286,7 +295,12 @@ def gen_jenkinsfile():
         ])
 
     lines.append(indent("stage('test') {"))
-    lines.extend([indent("sh '%s'" % c, level=2) for c in test_cmds])
+    for test_cmd in test_cmds:
+        # be careful with test commands that include single quotes!
+        if "'" in test_cmd:
+            lines.append(indent('sh """%s"""' % test_cmd, level=2))
+        else:
+            lines.append(indent("sh '%s'" % test_cmd, level=2))
     lines.append(indent('}'))
 
     if vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE]:

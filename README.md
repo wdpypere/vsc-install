@@ -435,6 +435,29 @@ To also run `shellcheck` in the generated `Jenkinsfile`, specify this via a `vsc
 run_shellcheck=1
 ```
 
+Adding additional test commands to Jenkinsfile
+----------------------------------------------
+
+If additional custom test commands (other than `shellcheck`) need to be run by the `Jenkinsfile`,
+you can speicfy this in `vsc-ci.ini` via `additional_test_commands`.
+
+To add a single custom test command:
+
+```ini
+[vsc-ci]
+additional_test_commands=./more_test.sh
+```
+
+To add multiple test commands:
+
+```ini
+[vsc-ci]
+additional_test_commands=
+  first-test-cmd
+  second-test-cmd
+  third-test-cmd
+```
+
 Overriding install location of scripts
 --------------------------------------
 
