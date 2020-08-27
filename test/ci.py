@@ -52,17 +52,19 @@ PIP_INSTALL_TOX = """        sh 'pip install --user --upgrade pip'
         sh 'export PATH=$HOME/.local/bin:$PATH && pip install --ignore-installed --prefix $PWD/.vsc-tox "zipp<3.0" tox'
 """
 PIP3_INSTALL_TOX = "        sh 'pip3 install --ignore-installed --prefix $PWD/.vsc-tox tox'\n"
-TOX_RUN = """        sh 'export PATH=$PWD/.vsc-tox/bin:$PATH && tox -v -c tox.ini'
+
+TOX_RUN_PY3 = """        sh 'export PATH=$PWD/.vsc-tox/bin:$PATH && export PYTHONPATH=$PWD/.vsc-tox/lib/python$(python3 -c "import sys; print(\\\\"%s.%s\\\\" % sys.version_info[:2])")/site-packages:$PYTHONPATH && tox -v -c tox.ini'
         sh 'rm -r $PWD/.vsc-tox'\n"""
+TOX_RUN_PY2 = TOX_RUN_PY3.replace('python3', 'python')
 
 JENKINSFILE_TEST_START = """    stage('test') {
         sh 'python2.7 -V'
 """
 JENKINSFILE_END_STAGE = "    }\n"
 
-JENKINSFILE_TEST_STAGE = JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN + JENKINSFILE_END_STAGE
-JENKINSFILE_TEST_STAGE_PIP = JENKINSFILE_TEST_START + PIP_INSTALL_TOX + TOX_RUN + JENKINSFILE_END_STAGE
-JENKINSFILE_TEST_STAGE_PIP3 = JENKINSFILE_TEST_START + PIP3_INSTALL_TOX + TOX_RUN + JENKINSFILE_END_STAGE
+JENKINSFILE_TEST_STAGE = JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN_PY2 + JENKINSFILE_END_STAGE
+JENKINSFILE_TEST_STAGE_PIP = JENKINSFILE_TEST_START + PIP_INSTALL_TOX + TOX_RUN_PY2 + JENKINSFILE_END_STAGE
+JENKINSFILE_TEST_STAGE_PIP3 = JENKINSFILE_TEST_START + PIP3_INSTALL_TOX + TOX_RUN_PY3 + JENKINSFILE_END_STAGE
 
 EXPECTED_JENKINSFILE_DEFAULT = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE + '}\n'
 EXPECTED_JENKINSFILE_PIP_INSTALL_TOX = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE_PIP + '}\n'
@@ -210,7 +212,7 @@ class CITest(TestCase):
         """Test use of 'additional_test_commands' in vsc-ci.ini."""
 
         self.write_vsc_ci_ini('additional_test_commands=./more_tests.sh')
-        expected = JENKINSFILE_INIT + JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN + '\n'.join([
+        expected = JENKINSFILE_INIT + JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN_PY2 + '\n'.join([
             "        sh './more_tests.sh'",
             "    }",
             "}",
@@ -225,7 +227,7 @@ class CITest(TestCase):
             '    test -f foo.txt',
             "    echo 'this command uses single quotes'",
         ]))
-        expected = JENKINSFILE_INIT + JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN + '\n'.join([
+        expected = JENKINSFILE_INIT + JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN_PY2 + '\n'.join([
             "        sh './more_tests.sh'",
             "        sh 'another-command'",
             "        sh 'test -f foo.txt'",

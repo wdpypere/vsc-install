@@ -230,6 +230,8 @@ def gen_jenkinsfile():
 
     prefix = os.path.join('$PWD', '.vsc-tox')
 
+    python_cmd = 'python'
+
     if vsc_ci_cfg[PIP_INSTALL_TOX]:
         pip_args += '--ignore-installed --prefix %s' % prefix
 
@@ -246,15 +248,26 @@ def gen_jenkinsfile():
         install_cmd = install_cmd.replace('pip ', 'pip3 ')
         pip_args += '--ignore-installed --prefix %s' % prefix
         test_cmds.append('%s %s tox' % (install_cmd, pip_args))
+        python_cmd = 'python3'
 
     else:
         install_cmd = install_cmd.replace('pip install', 'python -m easy_install')
         easy_install_args += '-U --user'
         test_cmds.append('%s %s tox' % (install_cmd, easy_install_args))
 
+    # Python version to use for updating $PYTHONPATH must be determined dynamically, so use $(...) trick;
+    # we must stick to just double strings in the command used to determine the Python version, to avoid
+    # that entire shell command is wrapped in triple quotes (which causes trouble)
+    pyver_cmd = python_cmd + ' -c "import sys; print(\\\\"%s.%s\\\\" % sys.version_info[:2])"'
+    pythonpath = os.path.join(prefix, 'lib', 'python$(%s)' % pyver_cmd, 'site-packages')
+
     test_cmds.extend([
-        # make sure 'tox' command installed is available by updating $PATH
-        'export PATH=%s:$PATH && tox -v -c %s' % (os.path.join(prefix, 'bin'), TOX_INI),
+        # make sure 'tox' command installed is available by updating $PATH and $PYTHONPATH
+        ' && '.join([
+            'export PATH=%s:$PATH' % os.path.join(prefix, 'bin'),
+            'export PYTHONPATH=%s:$PYTHONPATH' % pythonpath,
+            'tox -v -c %s' % TOX_INI,
+        ]),
         # clean up tox installation
         'rm -r $PWD/.vsc-tox',
     ])
