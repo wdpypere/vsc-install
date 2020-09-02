@@ -285,4 +285,4 @@ class CITest(TestCase):
         pip3_regex = re.compile('pip3 install')
         pip3_install_scripts = pip_install_scripts.replace('pip ', 'pip3 ')
         expected_jenkinsfile = pip3_regex.sub(pip3_install_scripts, EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX)
-        self.assertEqual(gen_jenkinsfile(), expected_jenkinsfile)
+        self.assertEqual(gen_jenkinsfile(), EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX)
