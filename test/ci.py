@@ -198,7 +198,9 @@ class CITest(TestCase):
         self.write_vsc_ci_ini('home_install=1\npip3_install_tox=1')
         jenkinsfile_txt = gen_jenkinsfile()
 
-        expected = EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX.replace('pip3 install', 'cd $HOME && pip3 install')
+        expected = EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX
+        expected = expected.replace('pip3 install', 'export PREFIX=$PWD && cd $HOME && pip3 install')
+        expected = expected.replace('--prefix $PWD', '--prefix $PREFIX')
         self.assertEqual(jenkinsfile_txt, expected)
 
     def test_gen_jenkinsfile_shellcheck(self):
