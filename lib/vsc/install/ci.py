@@ -55,6 +55,7 @@ HOME_INSTALL = 'home_install'
 INHERIT_SITE_PACKAGES = 'inherit_site_packages'
 INSTALL_SCRIPTS_PREFIX_OVERRIDE = 'install_scripts_prefix_override'
 JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
+MOVE_SETUP_CFG = 'move_setup_cfg'
 PIP_INSTALL_TOX = 'pip_install_tox'
 PIP3_INSTALL_TOX = 'pip3_install_tox'
 PY3_ONLY = 'py3_only'
@@ -129,6 +130,12 @@ def gen_tox_ini():
         '',
         '[testenv]',
         "commands_pre =",
+    ])
+
+    if vsc_ci_cfg[MOVE_SETUP_CFG]:
+        lines.append("    mv setup.cfg setup.cfg.moved")
+
+    lines.extend([
         # install required setuptools version;
         # we need a setuptools < 42.0 for now, since in 42.0 easy_install was changed to use pip when available;
         # it's important to use pip (not easy_install) here, since only pip will actually remove an older
@@ -139,6 +146,12 @@ def gen_tox_ini():
         # vsc/__init__.py is not installed because we're using pkg_resources.declare_namespace
         # (see https://github.com/pypa/pip/issues/1924)
         "    python -m easy_install -U %svsc-install" % easy_install_args,
+    ])
+
+    if vsc_ci_cfg[MOVE_SETUP_CFG]:
+        lines.append("    mv setup.cfg.moved setup.cfg")
+
+    lines.extend([
         "commands = python setup.py test",
         # $USER is not defined in tox environment, so pass it
         # see https://tox.readthedocs.io/en/latest/example/basic.html#passing-down-environment-variables
@@ -168,6 +181,7 @@ def parse_vsc_ci_cfg():
         INHERIT_SITE_PACKAGES: False,
         INSTALL_SCRIPTS_PREFIX_OVERRIDE: False,
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
+        MOVE_SETUP_CFG: False,
         PIP_INSTALL_TOX: False,
         PIP3_INSTALL_TOX: False,
         PY3_ONLY: False,

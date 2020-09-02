@@ -143,6 +143,7 @@ class CITest(TestCase):
             'inherit_site_packages': False,
             'install_scripts_prefix_override': False,
             'jira_issue_id_in_pr_title': False,
+            'move_setup_cfg': False,
             'pip_install_tox': False,
             'pip3_install_tox': False,
             'py3_only': False,
@@ -282,7 +283,21 @@ class CITest(TestCase):
 
         self.assertEqual(gen_tox_ini(), expected_tox_ini)
 
-        pip3_regex = re.compile('pip3 install')
-        pip3_install_scripts = pip_install_scripts.replace('pip ', 'pip3 ')
-        expected_jenkinsfile = pip3_regex.sub(pip3_install_scripts, EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX)
         self.assertEqual(gen_jenkinsfile(), EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX)
+
+    def test_move_setup_cfg(self):
+        """Test moving setup.cfg out of the way while installing test deps."""
+
+        self.write_vsc_ci_ini('move_setup_cfg=1')
+
+        expected_tox_ini = EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE
+        expected_tox_ini = expected_tox_ini.replace('commands_pre =', '\n'.join([
+            'commands_pre =',
+            '    mv setup.cfg setup.cfg.moved',
+        ]))
+        expected_tox_ini = expected_tox_ini.replace('commands =', '\n'.join([
+            '    mv setup.cfg.moved setup.cfg',
+            'commands =',
+        ]))
+
+        self.assertEqual(gen_tox_ini(), expected_tox_ini)
