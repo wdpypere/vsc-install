@@ -218,9 +218,6 @@ def gen_jenkinsfile():
     ]
 
     pip_args, easy_install_args = '', ''
-    if vsc_ci_cfg[INSTALL_SCRIPTS_PREFIX_OVERRIDE]:
-        pip_args = '--install-option="--install-scripts={envdir}/bin" '
-        easy_install_args = '--script-dir={envdir}/bin '
 
     install_subdir = '.vsc-tox'
 
