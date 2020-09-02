@@ -222,13 +222,15 @@ def gen_jenkinsfile():
         pip_args = '--install-option="--install-scripts={envdir}/bin" '
         easy_install_args = '--script-dir={envdir}/bin '
 
+    install_subdir = '.vsc-tox'
+
     # run 'pip install' commands in $HOME (rather than in repo checkout) if desired
     if vsc_ci_cfg[HOME_INSTALL]:
-        install_cmd = "cd $HOME && pip install"
+        install_cmd = "export PREFIX=$PWD && cd $HOME && pip install"
+        prefix = os.path.join('$PREFIX', install_subdir)
     else:
         install_cmd = "pip install"
-
-    prefix = os.path.join('$PWD', '.vsc-tox')
+        prefix = os.path.join('$PWD', install_subdir)
 
     python_cmd = 'python'
 
@@ -259,17 +261,17 @@ def gen_jenkinsfile():
     # we must stick to just double strings in the command used to determine the Python version, to avoid
     # that entire shell command is wrapped in triple quotes (which causes trouble)
     pyver_cmd = python_cmd + ' -c "import sys; print(\\\\"%s.%s\\\\" % sys.version_info[:2])"'
-    pythonpath = os.path.join(prefix, 'lib', 'python$(%s)' % pyver_cmd, 'site-packages')
+    pythonpath = os.path.join('$PWD', install_subdir, 'lib', 'python$(%s)' % pyver_cmd, 'site-packages')
 
     test_cmds.extend([
         # make sure 'tox' command installed is available by updating $PATH and $PYTHONPATH
         ' && '.join([
-            'export PATH=%s:$PATH' % os.path.join(prefix, 'bin'),
+            'export PATH=%s:$PATH' % os.path.join('$PWD', install_subdir, 'bin'),
             'export PYTHONPATH=%s:$PYTHONPATH' % pythonpath,
             'tox -v -c %s' % TOX_INI,
         ]),
         # clean up tox installation
-        'rm -r $PWD/.vsc-tox',
+        'rm -r %s' % os.path.join('$PWD', install_subdir),
     ])
 
     additional_test_commands = vsc_ci_cfg[ADDITIONAL_TEST_COMMANDS]
