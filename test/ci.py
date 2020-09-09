@@ -101,7 +101,6 @@ EXPECTED_TOX_INI = """# tox.ini: configuration file for tox
 [tox]
 envlist = py27,py36
 skipsdist = true
-skip_missing_interpreters = true
 
 [testenv]
 commands_pre =
@@ -147,7 +146,7 @@ class CITest(TestCase):
             'pip_install_tox': False,
             'pip3_install_tox': False,
             'py3_only': False,
-            'py3_tests_must_pass': False,
+            'py3_tests_must_pass': True,
             'run_shellcheck': False,
         }
 
@@ -243,22 +242,23 @@ class CITest(TestCase):
 
     def test_tox_ini(self):
         """Test generating of tox.ini."""
-        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE)
+        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI)
 
     def test_tox_ini_inherit_site_packages(self):
         """Test generation of tox.ini with inheriting of site packages enabled."""
 
         self.write_vsc_ci_ini('inherit_site_packages=1')
 
-        expected = EXPECTED_TOX_INI + 'sitepackages = true\n' + EXPECTED_TOX_INI_PY36_IGNORE
+        expected = EXPECTED_TOX_INI + 'sitepackages = true\n'
         self.assertEqual(gen_tox_ini(), expected)
 
     def test_tox_ini_py3_tests(self):
-        """Test generation of tox.ini when Python 3 tests are expected to pass."""
+        """Test generation of tox.ini when Python 3 tests are ignored."""
 
-        self.write_vsc_ci_ini('py3_tests_must_pass=1')
+        self.write_vsc_ci_ini('py3_tests_must_pass=0')
 
-        expected = EXPECTED_TOX_INI.replace('skip_missing_interpreters = true\n', '')
+        expected = EXPECTED_TOX_INI.replace('skipsdist = true', 'skipsdist = true\nskip_missing_interpreters = true')
+        expected += EXPECTED_TOX_INI_PY36_IGNORE
         self.assertEqual(gen_tox_ini(), expected)
 
     def test_tox_ini_py3_only(self):
@@ -266,7 +266,7 @@ class CITest(TestCase):
 
         self.write_vsc_ci_ini('py3_only=1')
 
-        expected = EXPECTED_TOX_INI.replace('envlist = py27,py36', 'envlist = py36') + EXPECTED_TOX_INI_PY36_IGNORE
+        expected = EXPECTED_TOX_INI.replace('envlist = py27,py36', 'envlist = py36')
         self.assertEqual(gen_tox_ini(), expected)
 
     def test_install_scripts_prefix_override(self):
@@ -274,7 +274,7 @@ class CITest(TestCase):
 
         self.write_vsc_ci_ini('install_scripts_prefix_override=1\npip3_install_tox=1')
 
-        expected_tox_ini = EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE
+        expected_tox_ini = EXPECTED_TOX_INI
         pip_regex = re.compile('pip install')
         pip_install_scripts = 'pip install --install-option="--install-scripts={envdir}/bin"'
         expected_tox_ini = pip_regex.sub(pip_install_scripts, expected_tox_ini)
@@ -290,7 +290,7 @@ class CITest(TestCase):
 
         self.write_vsc_ci_ini('move_setup_cfg=1')
 
-        expected_tox_ini = EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE
+        expected_tox_ini = EXPECTED_TOX_INI
         expected_tox_ini = expected_tox_ini.replace('commands_pre =', '\n'.join([
             'commands_pre =',
             '    mv setup.cfg setup.cfg.moved',
