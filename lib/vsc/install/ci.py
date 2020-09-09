@@ -185,7 +185,7 @@ def parse_vsc_ci_cfg():
         PIP_INSTALL_TOX: False,
         PIP3_INSTALL_TOX: False,
         PY3_ONLY: False,
-        PY3_TESTS_MUST_PASS: False,
+        PY3_TESTS_MUST_PASS: True,
         RUN_SHELLCHECK: False,
     }
 
