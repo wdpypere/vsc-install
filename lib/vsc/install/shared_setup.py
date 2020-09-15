@@ -160,7 +160,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.0'
+VERSION = '0.17.1'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1238,10 +1238,16 @@ class vsc_setup(object):
                 and name does not start with python-
         """
 
+        def fix_range(txt):
+            """Convert , separated version requirements in explicit repeated versions"""
+            parts = txt.split(',')
+            first = parts.pop(0)
+            prog = first.split(' ')[0]
+            return ", ".join([first]+["%s %s" % (prog, x.strip()) for x in parts])
+
         if isinstance(name, (list, tuple)):
             klass = _fvs('sanitize')
-            return ",".join([klass.sanitize(r) for r in name])
-
+            return "\n    ".join([klass.sanitize(r) for r in name])
         else:
             pyversuff = os.environ.get('VSC_RPM_PYTHON', None)
             if pyversuff in ("1", "2", "3"):
@@ -1253,7 +1259,7 @@ class vsc_setup(object):
                 # hardcoded prefix map
                 for pydep, rpmname in PYTHON_BDIST_RPM_PREFIX_MAP.items():
                     if name.startswith(pydep):
-                        newname = (rpmname+name[len(pydep):]) % pyversuff
+                        newname = fix_range((rpmname+name[len(pydep):]) % pyversuff)
                         log.debug("new sanitized name %s from map (old %s)", newname, name)
                         return newname
 
@@ -1263,11 +1269,11 @@ class vsc_setup(object):
                                  or name.startswith('vsc'))
 
                 if is_python_pkg:
-                    newname = 'python%s-%s' % (pyversuff, name)
+                    newname = fix_range('python%s-%s' % (pyversuff, name))
                     log.debug("new sanitized name %s (old %s)", newname, name)
                     return newname
 
-            return name
+            return fix_range(name)
 
 
 
