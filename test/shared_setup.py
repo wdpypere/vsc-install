@@ -94,10 +94,11 @@ class TestSetup(TestCase):
                          msg='NO_PREFIX_PYTHON_BDIST_RPM is list of packages that are not modified')
         self.assertEqual(self.setup.sanitize('pbs_python <= 13'), 'pbs_python <= 13',
                          msg='packages in PYTHON_BDIST_RPM_PREFIX_MAP are not prefixed with VSC_RPM_PYTHON set')
-
+        self.assertEqual(self.setup.sanitize('pbs_python <= 16, > 14'), 'pbs_python <= 16, pbs_python > 14',
+                         msg='multiple requirements to package requirement per version with VSC_RPM_PYTHON set')
         self.assertEqual(self.setup.sanitize(['anything >= 5', 'vsc-xyz >= 10', 'pycrypto == 12', 'pbs_python <= 13']),
-                         'python-anything >= 5,python-vsc-xyz >= 10,python-crypto == 12,pbs_python <= 13',
-                         msg='list is ,-joined and replaced/prefixed with VSC_RPM_PYTHON set')
+                         'python-anything >= 5\n    python-vsc-xyz >= 10\n    python-crypto == 12\n    pbs_python <= 13',
+                         msg='list is newline-joined and replaced/prefixed with VSC_RPM_PYTHON set')
 
         os.environ['VSC_RPM_PYTHON'] = '2'
         self.assertEqual(self.setup.sanitize('anything >= 5'), 'python2-anything >= 5',
@@ -121,9 +122,11 @@ class TestSetup(TestCase):
                          'not set')
         self.assertEqual(self.setup.sanitize('pbs_python <= 13'), 'pbs_python <= 13',
                          msg='packages in PYTHON_BDIST_RPM_PREFIX_MAP are not prefixed with VSC_RPM_PYTHON not set')
+        self.assertEqual(self.setup.sanitize('pbs_python <= 16, > 14'), 'pbs_python <= 16, pbs_python > 14',
+                         msg='multiple requirements to package requirement per version with VSC_RPM_PYTHON not set')
         self.assertEqual(self.setup.sanitize(['anything >= 5', 'vsc-xyz >= 10', 'pycrypto == 12', 'pbs_python <= 13']),
-                         'anything >= 5,vsc-xyz >= 10,pycrypto == 12,pbs_python <= 13',
-                         msg='list is ,-joined and nothing replaced/prefixed with VSC_RPM_PYTHON not set')
+                         "anything >= 5\n    vsc-xyz >= 10\n    pycrypto == 12\n    pbs_python <= 13",
+                         msg='list is newline-joined and nothing replaced/prefixed with VSC_RPM_PYTHON not set')
 
     def test_rel_gitignore(self):
         """
