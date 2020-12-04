@@ -144,6 +144,12 @@ sm = ('Samuel Moors', 'samuel.moors@vub.be')
 bh = ('Balazs Hajgato', 'Balazs.Hajgato@UGent.be')
 ad = ('Alex Domingo', 'alex.domingo.toro@vub.be')
 
+# available remotes
+GIT_REMOTES = [
+    'hpcugent',
+    'sisc-hpc',
+]
+
 # Regexp used to remove suffixes from scripts when installing(/packaging)
 REGEXP_REMOVE_SUFFIX = re.compile(r'(\.(?:py|sh|pl))$')
 
@@ -364,6 +370,7 @@ class vsc_setup(object):
 
         # multiline search
         # github pattern for hpcugent, not fork
+        github_domain_pattern = '(?:%s)' % '|'.join(GIT_REMOTES)
         all_patterns = {
             'name': [
                 r'^Name:\s*(.*?)\s*$',
@@ -371,8 +378,8 @@ class vsc_setup(object):
             ],
             'url': [
                 r'^Home-page:\s*(.*?)\s*$',
-                r'^\s*url\s*=\s*((?:https?|ssh).*?github.*?[:/](?:hpcugent|sisc-hpc)/.*?)(?:\.git)?\s*$',
-                r'^\s*url\s*=\s*(git[:@].*?github.*?[:/](?:hpcugent|sisc-hpc)/.*?)(?:\.git)?\s*$',
+                r'^\s*url\s*=\s*((?:https?|ssh).*?github.*?[:/]%s/.*?)(?:\.git)?\s*$' % github_domain_pattern,
+                r'^\s*url\s*=\s*(git[:@].*?github.*?[:/]%s/.*?)(?:\.git)?\s*$' % github_domain_pattern,
             ],
             'download_url': [
                 r'^Download-URL:\s*(.*?)\s*$',
@@ -396,7 +403,8 @@ class vsc_setup(object):
             self.private_repo = True
 
         if 'url' not in res:
-            raise KeyError("Missing url in git config %s. (Missing mandatory hpcugent or sisc-hpc remote?)" % (res))
+            allowed_remotes = ', '.join(GIT_REMOTES)
+            raise KeyError("Missing url in git config %s. (Missing mandatory remote? %s)" % (res, allowed_remotes))
 
         # handle git://server/user/project
         reg = re.search(r'^(git|ssh)://', res.get('url', ''))
