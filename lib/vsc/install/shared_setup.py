@@ -144,6 +144,12 @@ sm = ('Samuel Moors', 'samuel.moors@vub.be')
 bh = ('Balazs Hajgato', 'Balazs.Hajgato@UGent.be')
 ad = ('Alex Domingo', 'alex.domingo.toro@vub.be')
 
+# available remotes
+GIT_REMOTES = [
+    'hpcugent',
+    'sisc-hpc',
+]
+
 # Regexp used to remove suffixes from scripts when installing(/packaging)
 REGEXP_REMOVE_SUFFIX = re.compile(r'(\.(?:py|sh|pl))$')
 
@@ -160,7 +166,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.15.15'
+VERSION = '0.17.2'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -364,6 +370,7 @@ class vsc_setup(object):
 
         # multiline search
         # github pattern for hpcugent, not fork
+        github_domain_pattern = '(?:%s)' % '|'.join(GIT_REMOTES)
         all_patterns = {
             'name': [
                 r'^Name:\s*(.*?)\s*$',
@@ -371,8 +378,8 @@ class vsc_setup(object):
             ],
             'url': [
                 r'^Home-page:\s*(.*?)\s*$',
-                r'^\s*url\s*=\s*((?:https?|ssh).*?github.*?[:/](?:hpcugent|sisc-hpc)/.*?)\.git\s*$',
-                r'^\s*url\s*=\s*(git[:@].*?github.*?[:/](?:hpcugent|sisc-hpc)/.*?)(?:\.git)?\s*$',
+                r'^\s*url\s*=\s*((?:https?|ssh).*?github.*?[:/]%s/.*?)(?:\.git)?\s*$' % github_domain_pattern,
+                r'^\s*url\s*=\s*(git[:@].*?github.*?[:/]%s/.*?)(?:\.git)?\s*$' % github_domain_pattern,
             ],
             'download_url': [
                 r'^Download-URL:\s*(.*?)\s*$',
@@ -396,7 +403,8 @@ class vsc_setup(object):
             self.private_repo = True
 
         if 'url' not in res:
-            raise KeyError("Missing url in git config %s. (Missing mandatory hpcugent or sisc-hpc remote?)" % (res))
+            allowed_remotes = ', '.join(GIT_REMOTES)
+            raise KeyError("Missing url in git config %s. (Missing mandatory remote? %s)" % (res, allowed_remotes))
 
         # handle git://server/user/project
         reg = re.search(r'^(git|ssh)://', res.get('url', ''))
@@ -658,7 +666,7 @@ class vsc_setup(object):
                 pyshebang_reg = re.compile(r'\A%s.*$' % SHEBANG_ENV_PYTHON, re.M)
                 for fn in scripts:
                     # includes newline
-                    first_line = _read(os.path.join(base_dir, fn), read_lines=True)
+                    first_line = _read(os.path.join(base_dir, fn), read_lines=True)[0]
                     if pyshebang_reg.search(first_line):
                         log.info("going to adapt shebang for script %s" % fn)
                         dest, code = self._recopy(base_dir, fn)
@@ -1238,10 +1246,16 @@ class vsc_setup(object):
                 and name does not start with python-
         """
 
+        def fix_range(txt):
+            """Convert , separated version requirements in explicit repeated versions"""
+            parts = txt.split(',')
+            first = parts.pop(0)
+            prog = first.split(' ')[0]
+            return ", ".join([first]+["%s %s" % (prog, x.strip()) for x in parts])
+
         if isinstance(name, (list, tuple)):
             klass = _fvs('sanitize')
-            return ",".join([klass.sanitize(r) for r in name])
-
+            return "\n    ".join([klass.sanitize(r) for r in name])
         else:
             pyversuff = os.environ.get('VSC_RPM_PYTHON', None)
             if pyversuff in ("1", "2", "3"):
@@ -1253,7 +1267,7 @@ class vsc_setup(object):
                 # hardcoded prefix map
                 for pydep, rpmname in PYTHON_BDIST_RPM_PREFIX_MAP.items():
                     if name.startswith(pydep):
-                        newname = (rpmname+name[len(pydep):]) % pyversuff
+                        newname = fix_range((rpmname+name[len(pydep):]) % pyversuff)
                         log.debug("new sanitized name %s from map (old %s)", newname, name)
                         return newname
 
@@ -1263,11 +1277,11 @@ class vsc_setup(object):
                                  or name.startswith('vsc'))
 
                 if is_python_pkg:
-                    newname = 'python%s-%s' % (pyversuff, name)
+                    newname = fix_range('python%s-%s' % (pyversuff, name))
                     log.debug("new sanitized name %s (old %s)", newname, name)
                     return newname
 
-            return name
+            return fix_range(name)
 
 
 

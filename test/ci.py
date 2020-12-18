@@ -31,7 +31,7 @@ Test CI functionality
 import os
 import re
 
-from vsc.install.ci import TOX_INI, gen_jenkinsfile, gen_tox_ini, parse_vsc_ci_cfg
+from vsc.install.ci import gen_jenkinsfile, gen_tox_ini, parse_vsc_ci_cfg
 from vsc.install.testing import TestCase
 
 
@@ -49,19 +49,22 @@ node {
 
 EASY_INSTALL_TOX = "        sh 'python -m easy_install -U --user tox'\n"
 PIP_INSTALL_TOX = """        sh 'pip install --user --upgrade pip'
-        sh 'export PATH=$HOME/.local/bin:$PATH && pip install --ignore-installed --user tox'
+        sh 'export PATH=$HOME/.local/bin:$PATH && pip install --ignore-installed --prefix $PWD/.vsc-tox "zipp<3.0" tox'
 """
-PIP3_INSTALL_TOX = "        sh 'pip3 install --ignore-installed --user tox'\n"
-TOX_RUN = "        sh 'export PATH=$HOME/.local/bin:$PATH && tox -v -c %s'\n" % TOX_INI
+PIP3_INSTALL_TOX = "        sh 'pip3 install --ignore-installed --prefix $PWD/.vsc-tox tox'\n"
+
+TOX_RUN_PY3 = """        sh 'export PATH=$PWD/.vsc-tox/bin:$PATH && export PYTHONPATH=$PWD/.vsc-tox/lib/python$(python3 -c "import sys; print(\\\\"%s.%s\\\\" % sys.version_info[:2])")/site-packages:$PYTHONPATH && tox -v -c tox.ini'
+        sh 'rm -r $PWD/.vsc-tox'\n"""
+TOX_RUN_PY2 = TOX_RUN_PY3.replace('python3', 'python')
 
 JENKINSFILE_TEST_START = """    stage('test') {
         sh 'python2.7 -V'
 """
 JENKINSFILE_END_STAGE = "    }\n"
 
-JENKINSFILE_TEST_STAGE = JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN + JENKINSFILE_END_STAGE
-JENKINSFILE_TEST_STAGE_PIP = JENKINSFILE_TEST_START + PIP_INSTALL_TOX + TOX_RUN + JENKINSFILE_END_STAGE
-JENKINSFILE_TEST_STAGE_PIP3 = JENKINSFILE_TEST_START + PIP3_INSTALL_TOX + TOX_RUN + JENKINSFILE_END_STAGE
+JENKINSFILE_TEST_STAGE = JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN_PY2 + JENKINSFILE_END_STAGE
+JENKINSFILE_TEST_STAGE_PIP = JENKINSFILE_TEST_START + PIP_INSTALL_TOX + TOX_RUN_PY2 + JENKINSFILE_END_STAGE
+JENKINSFILE_TEST_STAGE_PIP3 = JENKINSFILE_TEST_START + PIP3_INSTALL_TOX + TOX_RUN_PY3 + JENKINSFILE_END_STAGE
 
 EXPECTED_JENKINSFILE_DEFAULT = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE + '}\n'
 EXPECTED_JENKINSFILE_PIP_INSTALL_TOX = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE_PIP + '}\n'
@@ -98,7 +101,6 @@ EXPECTED_TOX_INI = """# tox.ini: configuration file for tox
 [tox]
 envlist = py27,py36
 skipsdist = true
-skip_missing_interpreters = true
 
 [testenv]
 commands_pre =
@@ -134,29 +136,34 @@ class CITest(TestCase):
     def test_parse_vsc_ci_cfg(self):
         """Test parse_vsc_ci_cfg function."""
 
-        keys = [
-            'home_install',
-            'inherit_site_packages',
-            'install_scripts_prefix_override',
-            'jira_issue_id_in_pr_title',
-            'pip_install_tox',
-            'pip3_install_tox',
-            'py3_tests_must_pass',
-            'run_shellcheck',
-        ]
+        default = {
+            'additional_test_commands': None,
+            'home_install': False,
+            'inherit_site_packages': False,
+            'install_scripts_prefix_override': False,
+            'jira_issue_id_in_pr_title': False,
+            'move_setup_cfg': False,
+            'pip_install_tox': False,
+            'pip3_install_tox': False,
+            'py3_only': False,
+            'py3_tests_must_pass': True,
+            'run_shellcheck': False,
+        }
 
         # (basically) empty vsc-ci.ini
         self.write_vsc_ci_ini('')
-        expected = dict((key, False) for key in keys)
-        self.assertEqual(parse_vsc_ci_cfg(), expected)
+        self.assertEqual(parse_vsc_ci_cfg(), default)
 
         # vsc-ci.ini with unknown keys is trouble
         self.write_vsc_ci_ini("unknown_key=1")
         error_msg = "Unknown key in vsc-ci.ini: unknown_key"
         self.assertErrorRegex(ValueError, error_msg, parse_vsc_ci_cfg)
 
-        self.write_vsc_ci_ini('\n'.join('%s=1' % key for key in keys))
-        expected = dict((key, True) for key in keys)
+        vsc_ini_txt = '\n'.join('%s=1' % key for key in default.keys())
+        vsc_ini_txt = re.sub('additional_test_commands=1', 'additional_test_commands=./more_tests.sh', vsc_ini_txt)
+        self.write_vsc_ci_ini(vsc_ini_txt)
+        expected = dict((key, True) for key in default.keys())
+        expected['additional_test_commands'] = './more_tests.sh'
         self.assertEqual(parse_vsc_ci_cfg(), expected)
 
     def test_gen_jenkinsfile(self):
@@ -191,7 +198,9 @@ class CITest(TestCase):
         self.write_vsc_ci_ini('home_install=1\npip3_install_tox=1')
         jenkinsfile_txt = gen_jenkinsfile()
 
-        expected = EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX.replace('pip3 install', 'cd $HOME && pip3 install')
+        expected = EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX
+        expected = expected.replace('pip3 install', 'export PREFIX=$PWD && cd $HOME && pip3 install')
+        expected = expected.replace('--prefix $PWD', '--prefix $PREFIX')
         self.assertEqual(jenkinsfile_txt, expected)
 
     def test_gen_jenkinsfile_shellcheck(self):
@@ -201,24 +210,63 @@ class CITest(TestCase):
         jenkinsfile_txt = gen_jenkinsfile()
         self.assertEqual(jenkinsfile_txt, EXPECTED_JENKINSFILE_SHELLCHECK)
 
+    def test_tox_ini_additional_test_commands(self):
+        """Test use of 'additional_test_commands' in vsc-ci.ini."""
+
+        self.write_vsc_ci_ini('additional_test_commands=./more_tests.sh')
+        expected = JENKINSFILE_INIT + JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN_PY2 + '\n'.join([
+            "        sh './more_tests.sh'",
+            "    }",
+            "}",
+            '',
+        ])
+        self.assertEqual(gen_jenkinsfile(), expected)
+
+        self.write_vsc_ci_ini('\n'.join([
+            'additional_test_commands=',
+            '    ./more_tests.sh',
+            '    another-command',
+            '    test -f foo.txt',
+            "    echo 'this command uses single quotes'",
+        ]))
+        expected = JENKINSFILE_INIT + JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN_PY2 + '\n'.join([
+            "        sh './more_tests.sh'",
+            "        sh 'another-command'",
+            "        sh 'test -f foo.txt'",
+            '        sh """echo \'this command uses single quotes\'"""',
+            "    }",
+            "}",
+            '',
+        ])
+        self.assertEqual(gen_jenkinsfile(), expected)
+
     def test_tox_ini(self):
         """Test generating of tox.ini."""
-        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE)
+        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI)
 
     def test_tox_ini_inherit_site_packages(self):
         """Test generation of tox.ini with inheriting of site packages enabled."""
 
         self.write_vsc_ci_ini('inherit_site_packages=1')
 
-        expected = EXPECTED_TOX_INI + 'sitepackages = true\n' + EXPECTED_TOX_INI_PY36_IGNORE
+        expected = EXPECTED_TOX_INI + 'sitepackages = true\n'
         self.assertEqual(gen_tox_ini(), expected)
 
     def test_tox_ini_py3_tests(self):
-        """Test generation of tox.ini when Python 3 tests are expected to pass."""
+        """Test generation of tox.ini when Python 3 tests are ignored."""
 
-        self.write_vsc_ci_ini('py3_tests_must_pass=1')
+        self.write_vsc_ci_ini('py3_tests_must_pass=0')
 
-        expected = EXPECTED_TOX_INI.replace('skip_missing_interpreters = true\n', '')
+        expected = EXPECTED_TOX_INI.replace('skipsdist = true', 'skipsdist = true\nskip_missing_interpreters = true')
+        expected += EXPECTED_TOX_INI_PY36_IGNORE
+        self.assertEqual(gen_tox_ini(), expected)
+
+    def test_tox_ini_py3_only(self):
+        """Test generation of tox.ini when tests should only be run with Python 3."""
+
+        self.write_vsc_ci_ini('py3_only=1')
+
+        expected = EXPECTED_TOX_INI.replace('envlist = py27,py36', 'envlist = py36')
         self.assertEqual(gen_tox_ini(), expected)
 
     def test_install_scripts_prefix_override(self):
@@ -226,7 +274,7 @@ class CITest(TestCase):
 
         self.write_vsc_ci_ini('install_scripts_prefix_override=1\npip3_install_tox=1')
 
-        expected_tox_ini = EXPECTED_TOX_INI + EXPECTED_TOX_INI_PY36_IGNORE
+        expected_tox_ini = EXPECTED_TOX_INI
         pip_regex = re.compile('pip install')
         pip_install_scripts = 'pip install --install-option="--install-scripts={envdir}/bin"'
         expected_tox_ini = pip_regex.sub(pip_install_scripts, expected_tox_ini)
@@ -235,7 +283,21 @@ class CITest(TestCase):
 
         self.assertEqual(gen_tox_ini(), expected_tox_ini)
 
-        pip3_regex = re.compile('pip3 install')
-        pip3_install_scripts = pip_install_scripts.replace('pip ', 'pip3 ')
-        expected_jenkinsfile = pip3_regex.sub(pip3_install_scripts, EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX)
-        self.assertEqual(gen_jenkinsfile(), expected_jenkinsfile)
+        self.assertEqual(gen_jenkinsfile(), EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX)
+
+    def test_move_setup_cfg(self):
+        """Test moving setup.cfg out of the way while installing test deps."""
+
+        self.write_vsc_ci_ini('move_setup_cfg=1')
+
+        expected_tox_ini = EXPECTED_TOX_INI
+        expected_tox_ini = expected_tox_ini.replace('commands_pre =', '\n'.join([
+            'commands_pre =',
+            '    mv setup.cfg setup.cfg.moved',
+        ]))
+        expected_tox_ini = expected_tox_ini.replace('commands =', '\n'.join([
+            '    mv setup.cfg.moved setup.cfg',
+            'commands =',
+        ]))
+
+        self.assertEqual(gen_tox_ini(), expected_tox_ini)

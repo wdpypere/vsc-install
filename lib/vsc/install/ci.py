@@ -50,12 +50,15 @@ TOX_INI = 'tox.ini'
 VSC_CI = 'vsc-ci'
 VSC_CI_INI = VSC_CI + '.ini'
 
+ADDITIONAL_TEST_COMMANDS = 'additional_test_commands'
 HOME_INSTALL = 'home_install'
 INHERIT_SITE_PACKAGES = 'inherit_site_packages'
 INSTALL_SCRIPTS_PREFIX_OVERRIDE = 'install_scripts_prefix_override'
 JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
+MOVE_SETUP_CFG = 'move_setup_cfg'
 PIP_INSTALL_TOX = 'pip_install_tox'
 PIP3_INSTALL_TOX = 'pip3_install_tox'
+PY3_ONLY = 'py3_only'
 PY3_TESTS_MUST_PASS = 'py3_tests_must_pass'
 RUN_SHELLCHECK = 'run_shellcheck'
 
@@ -88,10 +91,19 @@ def gen_tox_ini():
     ]
     header = ['# ' + l for l in header]
 
-    py3_env = 'py36'
-    envs = ['py27', py3_env]
-
     vsc_ci_cfg = parse_vsc_ci_cfg()
+
+    # list of Python environments in which tests should be run
+    envs = []
+
+    # don't run tests with Python 2 if 'py3_only' is set in vsc-ci.ini
+    if not vsc_ci_cfg[PY3_ONLY]:
+        envs.append('py27')
+
+    # always run tests with Python 3
+    # (failing tests may be ignored if 'py3_tests_must_pass' is set to 0 in vsc-ci.ini)
+    py3_env = 'py36'
+    envs.append(py3_env)
 
     pip_args, easy_install_args = '', ''
     if vsc_ci_cfg[INSTALL_SCRIPTS_PREFIX_OVERRIDE]:
@@ -118,6 +130,12 @@ def gen_tox_ini():
         '',
         '[testenv]',
         "commands_pre =",
+    ])
+
+    if vsc_ci_cfg[MOVE_SETUP_CFG]:
+        lines.append("    mv setup.cfg setup.cfg.moved")
+
+    lines.extend([
         # install required setuptools version;
         # we need a setuptools < 42.0 for now, since in 42.0 easy_install was changed to use pip when available;
         # it's important to use pip (not easy_install) here, since only pip will actually remove an older
@@ -128,6 +146,12 @@ def gen_tox_ini():
         # vsc/__init__.py is not installed because we're using pkg_resources.declare_namespace
         # (see https://github.com/pypa/pip/issues/1924)
         "    python -m easy_install -U %svsc-install" % easy_install_args,
+    ])
+
+    if vsc_ci_cfg[MOVE_SETUP_CFG]:
+        lines.append("    mv setup.cfg.moved setup.cfg")
+
+    lines.extend([
         "commands = python setup.py test",
         # $USER is not defined in tox environment, so pass it
         # see https://tox.readthedocs.io/en/latest/example/basic.html#passing-down-environment-variables
@@ -152,13 +176,16 @@ def gen_tox_ini():
 def parse_vsc_ci_cfg():
     """Parse vsc-ci.ini configuration file (if any)."""
     vsc_ci_cfg = {
+        ADDITIONAL_TEST_COMMANDS: None,
         HOME_INSTALL: False,
         INHERIT_SITE_PACKAGES: False,
         INSTALL_SCRIPTS_PREFIX_OVERRIDE: False,
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
+        MOVE_SETUP_CFG: False,
         PIP_INSTALL_TOX: False,
         PIP3_INSTALL_TOX: False,
-        PY3_TESTS_MUST_PASS: False,
+        PY3_ONLY: False,
+        PY3_TESTS_MUST_PASS: True,
         RUN_SHELLCHECK: False,
     }
 
@@ -174,7 +201,10 @@ def parse_vsc_ci_cfg():
         # every entry in the vsc-ci section is expected to be a known setting
         for key, _ in cfgparser.items(VSC_CI):
             if key in vsc_ci_cfg:
-                vsc_ci_cfg[key] = cfgparser.getboolean(VSC_CI, key)
+                if key in [ADDITIONAL_TEST_COMMANDS]:
+                    vsc_ci_cfg[key] = cfgparser.get(VSC_CI, key)
+                else:
+                    vsc_ci_cfg[key] = cfgparser.getboolean(VSC_CI, key)
             else:
                 raise ValueError("Unknown key in %s: %s" % (VSC_CI_INI, key))
 
@@ -202,44 +232,69 @@ def gen_jenkinsfile():
     ]
 
     pip_args, easy_install_args = '', ''
-    if vsc_ci_cfg[INSTALL_SCRIPTS_PREFIX_OVERRIDE]:
-        pip_args = '--install-option="--install-scripts={envdir}/bin" '
-        easy_install_args = '--script-dir={envdir}/bin '
+
+    install_subdir = '.vsc-tox'
 
     # run 'pip install' commands in $HOME (rather than in repo checkout) if desired
     if vsc_ci_cfg[HOME_INSTALL]:
-        install_cmd = "cd $HOME && pip install"
+        install_cmd = "export PREFIX=$PWD && cd $HOME && pip install"
+        prefix = os.path.join('$PREFIX', install_subdir)
     else:
         install_cmd = "pip install"
+        prefix = os.path.join('$PWD', install_subdir)
+
+    python_cmd = 'python'
 
     if vsc_ci_cfg[PIP_INSTALL_TOX]:
-        pip_args += '--ignore-installed --user'
+        pip_args += '--ignore-installed --prefix %s' % prefix
+
+        # tox requires zipp: require zipp < 3.0 since newer version are Python 3 only
+        tox = '"zipp<3.0" tox'
 
         test_cmds.extend([
             install_cmd + ' --user --upgrade pip',
             # make sure correct 'pip' installation is used
-            'export PATH=$HOME/.local/bin:$PATH && %s %s tox' % (install_cmd, pip_args),
+            'export PATH=$HOME/.local/bin:$PATH && %s %s %s' % (install_cmd, pip_args, tox),
         ])
 
     elif vsc_ci_cfg[PIP3_INSTALL_TOX]:
         install_cmd = install_cmd.replace('pip ', 'pip3 ')
-        pip_args += '--ignore-installed --user'
+        pip_args += '--ignore-installed --prefix %s' % prefix
         test_cmds.append('%s %s tox' % (install_cmd, pip_args))
+        python_cmd = 'python3'
 
     else:
         install_cmd = install_cmd.replace('pip install', 'python -m easy_install')
         easy_install_args += '-U --user'
         test_cmds.append('%s %s tox' % (install_cmd, easy_install_args))
 
-    # make sure 'tox' command installed with --user is available via $PATH/$PYTHONPATH
-    test_cmds.append('export PATH=$HOME/.local/bin:$PATH && tox -v -c %s' % TOX_INI)
+    # Python version to use for updating $PYTHONPATH must be determined dynamically, so use $(...) trick;
+    # we must stick to just double strings in the command used to determine the Python version, to avoid
+    # that entire shell command is wrapped in triple quotes (which causes trouble)
+    pyver_cmd = python_cmd + ' -c "import sys; print(\\\\"%s.%s\\\\" % sys.version_info[:2])"'
+    pythonpath = os.path.join('$PWD', install_subdir, 'lib', 'python$(%s)' % pyver_cmd, 'site-packages')
+
+    test_cmds.extend([
+        # make sure 'tox' command installed is available by updating $PATH and $PYTHONPATH
+        ' && '.join([
+            'export PATH=%s:$PATH' % os.path.join('$PWD', install_subdir, 'bin'),
+            'export PYTHONPATH=%s:$PYTHONPATH' % pythonpath,
+            'tox -v -c %s' % TOX_INI,
+        ]),
+        # clean up tox installation
+        'rm -r %s' % os.path.join('$PWD', install_subdir),
+    ])
+
+    additional_test_commands = vsc_ci_cfg[ADDITIONAL_TEST_COMMANDS]
+    if additional_test_commands:
+        test_cmds.extend(additional_test_commands.strip().split('\n'))
 
     header = [
         "%s: scripted Jenkins pipefile" % JENKINSFILE,
         "This file was automatically generated using 'python -m vsc.install.ci'",
         "DO NOT EDIT MANUALLY",
     ]
-    header = ['// ' + l for l in header]
+    header = ['// ' + line for line in header]
 
     lines = header + [
         '',
@@ -266,7 +321,12 @@ def gen_jenkinsfile():
         ])
 
     lines.append(indent("stage('test') {"))
-    lines.extend([indent("sh '%s'" % c, level=2) for c in test_cmds])
+    for test_cmd in test_cmds:
+        # be careful with test commands that include single quotes!
+        if "'" in test_cmd:
+            lines.append(indent('sh """%s"""' % test_cmd, level=2))
+        else:
+            lines.append(indent("sh '%s'" % test_cmd, level=2))
     lines.append(indent('}'))
 
     if vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE]:
