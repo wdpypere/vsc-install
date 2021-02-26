@@ -1363,6 +1363,11 @@ class vsc_setup(object):
         new_target['license'] = lic_name
         classifiers.append(lic_classifier)
 
+        # a dict with key the new_target key to search and replace
+        #    value is a list of 2-element (pattern, replace) lists passed to re.sub
+        #    if returning value is empty, it is not added after the replacement
+        vsc_filter_rpm = target.pop('vsc_filter_rpm', {})
+
         # set name, url, download_url (skip name if it was specified)
         update = self.get_name_url(version=target['version'], license_name=lic_name)
         if 'name' in target:
@@ -1512,6 +1517,28 @@ class vsc_setup(object):
                 for url, git_scheme in urls:
                     new_target['dependency_links'] += [''.join([git_scheme, url, '/hpcugent/', dep_name, '.git#egg=',
                                                                 dep_name_version])]
+
+        if 'VSC_RPM_PYTHON' in os.environ:
+            for key, snrs in vsc_filter_rpm.items():
+                def snr(txt):
+                    for pattern, replace in snrs:
+                        txt = re.sub(pattern, replace, txt)
+                    return txt
+
+                if key in new_target:
+                    log.debug("Found VSC_RPM_PYTHON set and vsc_filter_rpm for %s set to %s", key, snrs)
+                    old = new_target.pop(key)
+                    if isinstance(old, list):
+                        # remove empty strings
+                        new = [y for y in [snr(x) for x in old] if y]
+                    else:
+                        log.error("vsc_filter_rpm does not support %s for %s", type(old), key)
+                        sys.exit(1)
+                    if new:
+                        log.debug("new vsc_filter_rpm value for %s: %s", key, new)
+                        new_target[key] = new
+                    else:
+                        log.debug("new vsc_filter_rpm value for %s was empty, not adding it back", key)
 
         log.debug("New target = %s" % (new_target))
         print(new_target)
