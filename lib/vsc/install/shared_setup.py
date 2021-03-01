@@ -166,7 +166,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.3'
+VERSION = '0.17.4'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1544,7 +1544,7 @@ class vsc_setup(object):
                         log.debug("new vsc_filter_rpm value for %s was empty, not adding it back", key)
 
         log.debug("New target = %s" % (new_target))
-        print(new_target)
+        print("new target", new_target)
         return new_target
 
     @staticmethod
@@ -1597,7 +1597,6 @@ class vsc_setup(object):
             exclude files provided by packages that are shared
                 excluded_pkgs_rpm: is a list of packages, default to ['vsc']
                 set it to None when defining own function
-            generate the setup.cfg using build_setup_cfg_for_bdist_rpm
         """
         pkgs = target.pop('excluded_pkgs_rpm', ['vsc'])
         if pkgs is not None:
@@ -1608,7 +1607,6 @@ class vsc_setup(object):
         # therefor we regenerate self.package files with the excluded pkgs as extra param
         self.package_files = self.files_in_packages(excluded_pkgs=pkgs)
         _fvs('prepare_rpm').SHARED_TARGET['packages'] = self.generate_packages()
-        self.build_setup_cfg_for_bdist_rpm(target)
 
     def action_target(self, target, setupfn=None, extra_sdist=None, urltemplate=None):
         """
@@ -1639,8 +1637,12 @@ class vsc_setup(object):
             self.cleanup()
 
         self.prepare_rpm(target)
-        x = self.parse_target(target, urltemplate)
-        setupfn(**x)
+
+        new_target = self.parse_target(target, urltemplate)
+        # generate the setup.cfg using build_setup_cfg_for_bdist_rpm
+        self.build_setup_cfg_for_bdist_rpm(new_target)
+
+        setupfn(**new_target)
 
 # here for backwards compatibility
 SHARED_TARGET = _fvs('SHARED_TARGET').SHARED_TARGET
