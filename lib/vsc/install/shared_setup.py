@@ -1,6 +1,6 @@
 # -*- coding: latin-1 -*-
 #
-# Copyright 2011-2020 Ghent University
+# Copyright 2011-2021 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -166,7 +166,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.2'
+VERSION = '0.17.3'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -228,6 +228,9 @@ KNOWN_LICENSES = {
 # a whitelist of licenses that allow pushing to pypi during vsc_release
 PYPI_LICENSES = ['LGPLv2+', 'GPLv2']
 
+# environment variable name to set when building rpms from vsc-install managed repos
+#    indicates the python version it is being build for
+VSC_RPM_PYTHON = 'VSC_RPM_PYTHON'
 
 def _fvs(msg=None):
     """
@@ -1257,7 +1260,7 @@ class vsc_setup(object):
             klass = _fvs('sanitize')
             return "\n    ".join([klass.sanitize(r) for r in name])
         else:
-            pyversuff = os.environ.get('VSC_RPM_PYTHON', None)
+            pyversuff = os.environ.get(VSC_RPM_PYTHON, None)
             if pyversuff in ("1", "2", "3"):
                 # enable VSC-style naming for Python packages: use 'python2-*' or 'python3-*',
                 # unless '1' is used as value for $VSC_RPM_PYTHON, then use 'python-*' for legacy behaviour
@@ -1362,6 +1365,11 @@ class vsc_setup(object):
         log.info('setting license %s' % lic_name)
         new_target['license'] = lic_name
         classifiers.append(lic_classifier)
+
+        # a dict with key the new_target key to search and replace
+        #    value is a list of 2-element (pattern, replace) lists passed to re.sub
+        #    if returning value is empty, it is not added after the replacement
+        vsc_filter_rpm = target.pop('vsc_filter_rpm', {})
 
         # set name, url, download_url (skip name if it was specified)
         update = self.get_name_url(version=target['version'], license_name=lic_name)
@@ -1512,6 +1520,28 @@ class vsc_setup(object):
                 for url, git_scheme in urls:
                     new_target['dependency_links'] += [''.join([git_scheme, url, '/hpcugent/', dep_name, '.git#egg=',
                                                                 dep_name_version])]
+
+        if VSC_RPM_PYTHON in os.environ:
+            for key, pattern_replace_list in vsc_filter_rpm.items():
+                def search_replace(txt):
+                    for pattern, replace in pattern_replace_list:
+                        txt = re.sub(pattern, replace, txt)
+                    return txt
+
+                if key in new_target:
+                    log.debug("Found VSC_RPM_PYTHON set and vsc_filter_rpm for %s set to %s", key, pattern_replace_list)
+                    old = new_target.pop(key)
+                    if isinstance(old, list):
+                        # remove empty strings
+                        new = [y for y in [search_replace(x) for x in old] if y]
+                    else:
+                        log.error("vsc_filter_rpm does not support %s for %s", type(old), key)
+                        sys.exit(1)
+                    if new:
+                        log.debug("new vsc_filter_rpm value for %s: %s", key, new)
+                        new_target[key] = new
+                    else:
+                        log.debug("new vsc_filter_rpm value for %s was empty, not adding it back", key)
 
         log.debug("New target = %s" % (new_target))
         print(new_target)

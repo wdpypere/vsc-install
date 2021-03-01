@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Ghent University
+# Copyright 2016-2021 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -256,3 +256,49 @@ class TestSetup(TestCase):
 
         package['install_requires'].append('vsc-utils<=1.0.0')
         self.assertRaises(ValueError, setup.parse_target, package)
+
+    def test_parse_vsc_filter(self):
+        """Test injecting dependency_links in parse_target"""
+        inst_req = [
+            'vsc-config >= 2.0.0',
+            'vsc-accountpage-clients',
+            'vsc-base > 1.0.0',
+        ]
+
+        def pkg(vfr):
+            pkg = {
+                'name': 'vsc-test',
+                'excluded_pkgs_rpm': [],
+                'version': '1.0',
+                'install_requires': inst_req[:],
+            }
+            if vfr:
+                pkg.update(vfr)
+            return pkg
+
+        def test_target(vfr, expected):
+            setup = vsc_setup()
+            new_target = setup.parse_target(pkg(vfr))
+            self.assertEqual(new_target['install_requires'], expected)
+
+        vfr = {
+            'vsc_filter_rpm': {
+                'install_requires': [
+                    ['vsc-base.*', ''],
+                    ['^(vsc-config).*', '\g<1>'], # strip version info for vsc-config
+                ],
+            },
+        }
+
+        os.environ.pop('VSC_RPM_PYTHON', None)
+
+        # nothing in env, nothing passed as vfr
+        test_target({}, inst_req)
+        # nothing set in env
+        test_target(vfr, inst_req)
+
+        os.environ['VSC_RPM_PYTHON'] = '3'
+        # something in env, nothing passed as vfr
+        test_target({}, inst_req)
+        # something in env
+        test_target(vfr, ['vsc-config', 'vsc-accountpage-clients'])
