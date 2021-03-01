@@ -228,6 +228,9 @@ KNOWN_LICENSES = {
 # a whitelist of licenses that allow pushing to pypi during vsc_release
 PYPI_LICENSES = ['LGPLv2+', 'GPLv2']
 
+# environment variable name to set when building rpms from vsc-install managed repos
+#    indicates the python version it is being build for
+VSC_RPM_PYTHON = 'VSC_RPM_PYTHON'
 
 def _fvs(msg=None):
     """
@@ -1257,7 +1260,7 @@ class vsc_setup(object):
             klass = _fvs('sanitize')
             return "\n    ".join([klass.sanitize(r) for r in name])
         else:
-            pyversuff = os.environ.get('VSC_RPM_PYTHON', None)
+            pyversuff = os.environ.get(VSC_RPM_PYTHON, None)
             if pyversuff in ("1", "2", "3"):
                 # enable VSC-style naming for Python packages: use 'python2-*' or 'python3-*',
                 # unless '1' is used as value for $VSC_RPM_PYTHON, then use 'python-*' for legacy behaviour
@@ -1518,19 +1521,19 @@ class vsc_setup(object):
                     new_target['dependency_links'] += [''.join([git_scheme, url, '/hpcugent/', dep_name, '.git#egg=',
                                                                 dep_name_version])]
 
-        if 'VSC_RPM_PYTHON' in os.environ:
-            for key, snrs in vsc_filter_rpm.items():
-                def snr(txt):
-                    for pattern, replace in snrs:
+        if VSC_RPM_PYTHON in os.environ:
+            for key, pattern_replace_list in vsc_filter_rpm.items():
+                def search_replace(txt):
+                    for pattern, replace in pattern_replace_list:
                         txt = re.sub(pattern, replace, txt)
                     return txt
 
                 if key in new_target:
-                    log.debug("Found VSC_RPM_PYTHON set and vsc_filter_rpm for %s set to %s", key, snrs)
+                    log.debug("Found VSC_RPM_PYTHON set and vsc_filter_rpm for %s set to %s", key, pattern_replace_list)
                     old = new_target.pop(key)
                     if isinstance(old, list):
                         # remove empty strings
-                        new = [y for y in [snr(x) for x in old] if y]
+                        new = [y for y in [search_replace(x) for x in old] if y]
                     else:
                         log.error("vsc_filter_rpm does not support %s for %s", type(old), key)
                         sys.exit(1)
