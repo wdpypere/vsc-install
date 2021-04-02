@@ -242,7 +242,7 @@ logging.info('Hello %s! This is %s.' % (name, program))
 import logging
 name = 'world'
 program ='python'
-logging('Hello %s! This is %s.', name, program)
+logging.info('Hello %s! This is %s.', name, program)
 ```
 
 
