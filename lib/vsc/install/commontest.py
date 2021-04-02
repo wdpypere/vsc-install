@@ -78,50 +78,49 @@ PROSPECTOR_BLACKLIST = [
     'Locally disabling',  # shows up when you locally disable a warning, this is the point
     'Useless suppression',  # shows up when you locally disable/suppress a warning, this is the point
     "Redefining built-in 'reduce'",  # allow importing reduce from functools, required for Python 3 compatibility
+    'c-extension-no-member', # run-time inspection of c extensions is disabled by default and gives warnings
 ]
 # to dissable any of these warnings in a block, you can do things like add a comment # pylint: disable=C0321
 PROSPECTOR_WHITELIST = [
-    'undefined',
-    'no-value-for-parameter',
-    'dangerous-default-value',
-    'bare-except',
-    'E713',  # not 'c' in d: -> 'c' not in d:
-    'arguments-differ',
-    'unused-argument',
-    'unused-variable',
-    'reimported',
-    'F811',  # redefinition of unused name
-    'unused-import',
-    'syntax-error',
-    'E101',  # mixing tabs and spaces
-    'bad-indentation',
-    'E111',  # pep8: E111 / indentation is not a multiple of four
-    'bad-whitespace',
-    'trailing-whitespace',
-    'W291',  # pep8: W291 / trailing whitespace
     #'protected-access',
-    #'logging-not-lazy',
-    'duplicate-key',  # when a key appears twice in a dict definition
+    'E101',  # mixing tabs and spaces
+    'E111',  # pep8: E111 / indentation is not a multiple of four
     'E501',  # 'line too long'when a line is longer then 120 chars
-    'line-too-long', # use fail using pylint as well (not only pep8 above)
-    # 'protected-access',
-    'logging-not-lazy',
-    # will stop working in python3
-    'unpacking-in-except',
-    'redefine-in-handler',  # except A, B -> except (A, B)
-    'indexing-exception',  # indexing exceptions doesn't work in python3, use Exc.args[index] instead (but why?)
-    'raising-string',  # don't raise strings, raise objects extending Exception
-    'old-octal-literal',  # use 0o700 instead of 0700
-    'import-star-module-level',  # Import * only allowed at module level
-    'old-ne-operator',  # don't use <> as not equal operator, use !=
+    'E713',  # not 'c' in d: -> 'c' not in d:
+    'F811',  # redefinition of unused name
+    'W291',  # pep8: W291 / trailing whitespace
+    'arguments-differ',
     'backtick',  # don't use `variable` to turn a variable in a string, use the str() function
-    'old-raise-syntax',  # sed when the alternate raise syntax raise foo, bar is used instead of raise foo(bar) .
-    'redefined-builtin',
-    'print-statement',  # use print() and from future import __print__ instead of print
-    'metaclass-assignment',  # __metaclass__ doesn't exist anymore in python3
+    'bad-indentation',
+    'bad-whitespace',
+    'bare-except',
+    'dangerous-default-value',
+    'duplicate-key',  # when a key appears twice in a dict definition
+    'import-star-module-level',  # Import * only allowed at module level
     'inconsistent-return-statements', # Either all or no return statements in a function should return an expression.
-    'no-member',
+    'indexing-exception',  # indexing exceptions doesn't work in python3, use Exc.args[index] instead (but why?)
+    'line-too-long', # use fail using pylint as well (not only pep8 above)
+    'logging-not-lazy',
     'logging-too-few-args',
+    'logging-too-many-args',
+    'metaclass-assignment',  # __metaclass__ doesn't exist anymore in python3
+    'no-member',
+    'no-value-for-parameter',
+    'old-ne-operator',  # don't use <> as not equal operator, use !=
+    'old-octal-literal',  # use 0o700 instead of 0700
+    'old-raise-syntax',  # sed when the alternate raise syntax raise foo, bar is used instead of raise foo(bar) .
+    'print-statement',  # use print() and from future import __print__ instead of print
+    'raising-string',  # don't raise strings, raise objects extending Exception
+    'redefine-in-handler',  # except A, B -> except (A, B)
+    'redefined-builtin',
+    'reimported',
+    'syntax-error',
+    'trailing-whitespace',
+    'undefined',
+    'unpacking-in-except', # will stop working in python3
+    'unused-argument',
+    'unused-import',
+    'unused-variable',
 ]
 
 # Prospector commandline options (positional path is added automatically)
