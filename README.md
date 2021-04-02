@@ -226,6 +226,24 @@ def new_filter(b_b):
     return b_b
 ```
 
+logging-not-lazy
+----------------
+
+Don't use string interpolation when logging if not needed:
+
+```python
+name = 'world'
+program ='python'
+print('Hello %s! This is %s.' % (name, program))
+```
+=>
+```python
+name = 'world'
+program ='python'
+print('Hello %s! This is %s.', name, program)
+```
+
+
 Fix Python 3 failing tests
 ==========================
 
