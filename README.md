@@ -232,15 +232,17 @@ logging-not-lazy
 Don't use string interpolation when logging if not needed:
 
 ```python
+import logging
 name = 'world'
 program ='python'
-print('Hello %s! This is %s.' % (name, program))
+logging.info('Hello %s! This is %s.' % (name, program))
 ```
 =>
 ```python
+import logging
 name = 'world'
 program ='python'
-print('Hello %s! This is %s.', name, program)
+logging('Hello %s! This is %s.', name, program)
 ```
 
 
