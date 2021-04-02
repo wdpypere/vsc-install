@@ -105,7 +105,7 @@ PROSPECTOR_WHITELIST = [
     'E501',  # 'line too long'when a line is longer then 120 chars
     'line-too-long', # use fail using pylint as well (not only pep8 above)
     # 'protected-access',
-    # 'logging-not-lazy',
+    'logging-not-lazy',
     # will stop working in python3
     'unpacking-in-except',
     'redefine-in-handler',  # except A, B -> except (A, B)
@@ -120,6 +120,8 @@ PROSPECTOR_WHITELIST = [
     'print-statement',  # use print() and from future import __print__ instead of print
     'metaclass-assignment',  # __metaclass__ doesn't exist anymore in python3
     'inconsistent-return-statements', # Either all or no return statements in a function should return an expression.
+    'no-member',
+    'logging-too-few-args',
 ]
 
 # Prospector commandline options (positional path is added automatically)
