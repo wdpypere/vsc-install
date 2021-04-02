@@ -120,6 +120,8 @@ PROSPECTOR_WHITELIST = [
     'print-statement',  # use print() and from future import __print__ instead of print
     'metaclass-assignment',  # __metaclass__ doesn't exist anymore in python3
     'inconsistent-return-statements', # Either all or no return statements in a function should return an expression.
+    'no-member',
+    'logging-too-few-args',
 ]
 
 # Prospector commandline options (positional path is added automatically)

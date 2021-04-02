@@ -195,7 +195,7 @@ def parse_vsc_ci_cfg():
             cfgparser.read(VSC_CI_INI)
             cfgparser.items(VSC_CI)  # just to make sure vsc-ci section is there
         except (configparser.NoSectionError, configparser.ParsingError) as err:
-            logging.error("ERROR: Failed to parse %s: %s" % (VSC_CI_INI, err))
+            logging.error("ERROR: Failed to parse %s: %s", VSC_CI_INI, err))
             sys.exit(1)
 
         # every entry in the vsc-ci section is expected to be a known setting
