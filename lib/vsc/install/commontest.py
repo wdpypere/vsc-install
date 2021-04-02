@@ -105,7 +105,7 @@ PROSPECTOR_WHITELIST = [
     'E501',  # 'line too long'when a line is longer then 120 chars
     'line-too-long', # use fail using pylint as well (not only pep8 above)
     # 'protected-access',
-    # 'logging-not-lazy',
+    'logging-not-lazy',
     # will stop working in python3
     'unpacking-in-except',
     'redefine-in-handler',  # except A, B -> except (A, B)
