@@ -117,6 +117,7 @@ PROSPECTOR_WHITELIST = [
     'syntax-error',
     'trailing-whitespace',
     'undefined',
+    'unnecessary-semicolon',
     'unpacking-in-except', # will stop working in python3
     'unused-argument',
     'unused-import',
