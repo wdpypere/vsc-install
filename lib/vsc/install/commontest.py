@@ -90,6 +90,7 @@ PROSPECTOR_WHITELIST = [
     'F811',  # redefinition of unused name
     'W291',  # pep8: W291 / trailing whitespace
     'arguments-differ',
+    'assignment-from-no-return', # Assigning result of a function call, where the function has no return
     'backtick',  # don't use `variable` to turn a variable in a string, use the str() function
     'bad-indentation',
     'bad-whitespace',
