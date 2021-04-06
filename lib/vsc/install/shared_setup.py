@@ -166,7 +166,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.9'
+VERSION = '0.17.10'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -697,13 +697,11 @@ class vsc_setup(object):
                 os.mkdir(setupper.REPO_LIB_DIR)
                 cleanup.append(setupper.REPO_LIB_DIR)
 
-            res = egg_info.finalize_options(self, *args, **kwargs)
+            egg_info.finalize_options(self, *args, **kwargs)
 
             # cleanup any diretcories created
             for directory in cleanup:
                 shutil.rmtree(directory)
-
-            return res
 
         def find_sources(self):
             """Default lookup."""
@@ -1032,12 +1030,11 @@ class vsc_setup(object):
                 __import__(DEFAULT_TEST_SUITE)
             self.reload_modules(DEFAULT_TEST_SUITE)
 
-            res = TestCommand.run_tests(self)
+            TestCommand.run_tests(self)
 
             # cleanup any diretcories created
             for directory in cleanup:
                 shutil.rmtree(directory)
-            return res
 
     @staticmethod
     def add_and_remove(alist, extra=None, exclude=None):
