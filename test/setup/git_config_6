@@ -4,5 +4,5 @@
 	bare = false
 	logallrefupdates = true
 [remote "origin"]
-	url = git@github.com:sisc-hpc/vsc-jobs-brussel.git
+	url = git@github.com:vub-hpc/vsc-jobs-brussel.git
 	fetch = +refs/heads/*:refs/remotes/origin/*
