@@ -302,3 +302,77 @@ class TestSetup(TestCase):
         test_target({}, inst_req)
         # something in env
         test_target(vfr, ['vsc-config', 'vsc-accountpage-clients'])
+
+    def test_setup_cfg(self):
+        """Test generating of setup.cfg."""
+
+        def read_setup_cfg():
+            with open('setup.cfg') as fp:
+                return fp.read().strip()
+
+        os.chdir(self.tmpdir)
+
+        # test with minimal target
+        vsc_setup.build_setup_cfg_for_bdist_rpm({})
+        expected = '\n'.join([
+            '[bdist_rpm]',
+            '',
+            '[metadata]',
+            '',
+            'description-file = README.md',
+        ])
+        self.assertEqual(read_setup_cfg(), expected)
+
+        # realistic target
+        target = {
+            'install_requires': ['vsc-base >= 3.1.0', 'vsc-ldap', 'requests', 'foobar < 1.0'],
+            'setup_requires': ['vsc-install >= 0.17.11'],
+        }
+        vsc_setup.build_setup_cfg_for_bdist_rpm(target)
+        expected = '\n'.join([
+            '[bdist_rpm]',
+            'requires = vsc-base >= 3.1.0',
+            '    vsc-ldap',
+            '    requests',
+            '    foobar < 1.0',
+            'build_requires = vsc-install >= 0.17.11',
+            '',
+            '[metadata]',
+            '',
+            'description-file = README.md',
+        ])
+        self.assertEqual(read_setup_cfg(), expected)
+
+        # provides is rare, but it happens (see icinga-checks)
+        target['provides'] = 'perl(utils)'
+        vsc_setup.build_setup_cfg_for_bdist_rpm(target)
+        expected_provides = expected.replace('build_requires', 'provides = perl(utils)\nbuild_requires')
+        self.assertEqual(read_setup_cfg(), expected_provides)
+
+        # provides is filtered out after calling build_setup_cfg_for_bdist_rpm
+        self.assertFalse('provides' in target)
+
+        # alternate location of scripts/binaries also specified
+        target['install-scripts'] = '/path/to/scripts'
+        vsc_setup.build_setup_cfg_for_bdist_rpm(target)
+        expected = '\n'.join([
+            '[install]',
+            'install-scripts = /path/to/scripts',
+            '',
+            expected,
+        ])
+        self.assertEqual(read_setup_cfg(), expected)
+
+        # install-scripts is filtered out after calling build_setup_cfg_for_bdist_rpm
+        self.assertFalse('install-scripts' in target)
+
+        # if makesetupcfg is set to False, existing setup.cfg is left untouched
+        setup_cfg_txt = 'thisdoesnotreallymatter'
+        with open('setup.cfg', 'w') as fp:
+            fp.write(setup_cfg_txt)
+
+        target['makesetupcfg'] = False
+        vsc_setup.build_setup_cfg_for_bdist_rpm(target)
+        self.assertEqual(read_setup_cfg(), setup_cfg_txt)
+
+        self.assertFalse('makesetupcfg' in target)
