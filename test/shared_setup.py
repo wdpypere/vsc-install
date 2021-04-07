@@ -66,8 +66,8 @@ class TestSetup(TestCase):
         fn = 'git_config_6'
         res_brussel = {
             'name': 'vsc-jobs-brussel',
-            'url': 'https://github.com/sisc-hpc/vsc-jobs-brussel',
-            'download_url': 'https://github.com/sisc-hpc/vsc-jobs-brussel/archive/0.1.0.tar.gz',
+            'url': 'https://github.com/vub-hpc/vsc-jobs-brussel',
+            'download_url': 'https://github.com/vub-hpc/vsc-jobs-brussel/archive/0.1.0.tar.gz',
         }
         self.assertEqual(self.setup.get_name_url(os.path.join(self.setup.REPO_TEST_DIR, 'setup', fn), version='0.1.0'),
                          res_brussel,
