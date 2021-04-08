@@ -166,7 +166,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.11'
+VERSION = '0.17.12'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1552,10 +1552,19 @@ class vsc_setup(object):
     def build_setup_cfg_for_bdist_rpm(target):
         """Generates a setup.cfg on a per-target basis.
 
-        Create [bdist_rpm] section with
+        Can be skipped by setting 'makesetupcfg' to False in setup.py
+
+        Creates [bdist_rpm] section with
             install_requires => requires
             provides => provides
             setup_requires => build_requires
+
+        Creates [metadata] section with
+            description-file => README file
+
+        Creates [install] section if needed,
+        if any of the following are specified via setup.py:
+            install-scripts => non-standard location for scripts/binaries
 
         @type target: dict
 
@@ -1575,7 +1584,19 @@ class vsc_setup(object):
             sys.exit(1)
 
         klass = _fvs('build_setup_cfg_for_bdist_rpm')
-        txt = ["[bdist_rpm]"]
+
+        txt = []
+
+        # specify non-standard location for scripts/binaries, if specified
+        install_scripts = target.pop('install-scripts', None)
+        if install_scripts:
+            txt.extend([
+                '[install]',
+                'install-scripts = %s' % install_scripts,
+                '',
+            ])
+
+        txt.append("[bdist_rpm]")
         if 'install_requires' in target:
             txt.extend(["requires = %s" % (klass.sanitize(target['install_requires']))])
 
