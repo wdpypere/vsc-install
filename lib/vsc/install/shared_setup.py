@@ -168,7 +168,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.14'
+VERSION = '0.17.15'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -426,6 +426,9 @@ class vsc_setup(object):
                 res['download_url'] = None
             elif 'github' in res.get('url', '') and version is not None:
                 res['download_url'] = "%s/archive/%s.tar.gz" % (res['url'], version)
+            else:
+                # other remotes have no external download url
+                res['download_url'] = None
 
         if len(res) != 3:
             raise Exception("Cannot determine name, url and download url from filename %s: got %s" % (filename, res))
