@@ -135,7 +135,7 @@ def gen_license_header(license_name, **kwargs):
 
     found = False
     for github_organ in institute_details.keys():
-        if github_organ in kwargs.get('url', ''):
+        if github_organ in kwargs.get('url', '').lower():
             kwargs.update(institute_details[github_organ])
             found = True
             break
@@ -292,7 +292,7 @@ institute_details = {
         'university_url': 'http://ugent.be/hpc',
         'university_team_url': 'http://ugent.be/hpc/en',
     },
-    'vub-hpc': {
+    'vub': {
         'university_name': 'Vrije Universiteit Brussel',
         'university_url': 'https://www.vub.be',
         'university_team_url': 'https://hpc.vub.be',
