@@ -374,7 +374,7 @@ class vsc_setup(object):
 
         # multiline search
         # github pattern for hpcugent, not fork
-        git_remote_patterns = ['{}.*?[:/]{}'.format(*remote) for remote in GIT_REMOTES]
+        git_remote_patterns = ['%s.*?[:/]%s' % remote for remote in GIT_REMOTES]
         git_domain_pattern = '(?:%s)' % '|'.join(git_remote_patterns)
         all_patterns = {
             'name': [
@@ -408,7 +408,7 @@ class vsc_setup(object):
             self.private_repo = True
 
         if 'url' not in res:
-            allowed_remotes = ', '.join(['{}/{}'.format(*remote) for remote in GIT_REMOTES])
+            allowed_remotes = ', '.join(['%s/%s' % remote for remote in GIT_REMOTES])
             raise KeyError("Missing url in git config %s. (Missing mandatory remote? %s)" % (res, allowed_remotes))
 
         # handle git://server/user/project
