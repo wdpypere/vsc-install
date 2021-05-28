@@ -146,8 +146,9 @@ ad = ('Alex Domingo', 'alex.domingo.toro@vub.be')
 
 # available remotes
 GIT_REMOTES = [
-    'hpcugent',
-    'vub-hpc',
+    ('github.com', 'hpcugent'),
+    ('github.com', 'vub-hpc'),
+    ('dev.azure.com', 'VUB-ICT'),
 ]
 
 # Regexp used to remove suffixes from scripts when installing(/packaging)
@@ -373,7 +374,8 @@ class vsc_setup(object):
 
         # multiline search
         # github pattern for hpcugent, not fork
-        github_domain_pattern = '(?:%s)' % '|'.join(GIT_REMOTES)
+        git_remote_patterns = ['{}.*?[:/]{}'.format(*remote) for remote in GIT_REMOTES]
+        git_domain_pattern = '(?:%s)' % '|'.join(git_remote_patterns)
         all_patterns = {
             'name': [
                 r'^Name:\s*(.*?)\s*$',
@@ -381,8 +383,8 @@ class vsc_setup(object):
             ],
             'url': [
                 r'^Home-page:\s*(.*?)\s*$',
-                r'^\s*url\s*=\s*((?:https?|ssh).*?github.*?[:/]%s/.*?)(?:\.git)?\s*$' % github_domain_pattern,
-                r'^\s*url\s*=\s*(git[:@].*?github.*?[:/]%s/.*?)(?:\.git)?\s*$' % github_domain_pattern,
+                r'^\s*url\s*=\s*((?:https?|ssh).*?%s/.*?)(?:\.git)?\s*$' % git_domain_pattern,
+                r'^\s*url\s*=\s*(git[:@].*?%s/.*?)(?:\.git)?\s*$' % git_domain_pattern,
             ],
             'download_url': [
                 r'^Download-URL:\s*(.*?)\s*$',
@@ -406,7 +408,7 @@ class vsc_setup(object):
             self.private_repo = True
 
         if 'url' not in res:
-            allowed_remotes = ', '.join(GIT_REMOTES)
+            allowed_remotes = ', '.join(['{}/{}'.format(*remote) for remote in GIT_REMOTES])
             raise KeyError("Missing url in git config %s. (Missing mandatory remote? %s)" % (res, allowed_remotes))
 
         # handle git://server/user/project
