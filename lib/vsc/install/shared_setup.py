@@ -425,6 +425,9 @@ class vsc_setup(object):
                 res['download_url'] = None
             elif 'github' in res.get('url', '') and version is not None:
                 res['download_url'] = "%s/archive/%s.tar.gz" % (res['url'], version)
+            else:
+                # other remotes have no external download url
+                res['download_url'] = None
 
         if len(res) != 3:
             raise Exception("Cannot determine name, url and download url from filename %s: got %s" % (filename, res))
