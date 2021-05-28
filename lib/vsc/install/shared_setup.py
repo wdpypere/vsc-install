@@ -146,6 +146,7 @@ ad = ('Alex Domingo', 'alex.domingo.toro@vub.be')
 
 # available remotes
 GIT_REMOTES = [
+    ('github.ugent.be', 'hpcugent'),
     ('github.com', 'hpcugent'),
     ('github.com', 'vub-hpc'),
     ('dev.azure.com', 'VUB-ICT'),
