@@ -143,6 +143,7 @@ class CITest(TestCase):
             'install_scripts_prefix_override': False,
             'jira_issue_id_in_pr_title': False,
             'move_setup_cfg': False,
+            'pip_install_test_deps': None,
             'pip_install_tox': False,
             'pip3_install_tox': False,
             'py3_only': False,
@@ -159,11 +160,19 @@ class CITest(TestCase):
         error_msg = "Unknown key in vsc-ci.ini: unknown_key"
         self.assertErrorRegex(ValueError, error_msg, parse_vsc_ci_cfg)
 
-        vsc_ini_txt = '\n'.join('%s=1' % key for key in default.keys())
-        vsc_ini_txt = re.sub('additional_test_commands=1', 'additional_test_commands=./more_tests.sh', vsc_ini_txt)
-        self.write_vsc_ci_ini(vsc_ini_txt)
+        vsc_ini_txt_lines = []
+        for key in default.keys():
+            # special treatment needed for non-boolean keys like additional_test_commands
+            if default[key] is None:
+                vsc_ini_txt_lines.append('%s=foo' % key)
+            else:
+                vsc_ini_txt_lines.append('%s=1' % key)
+
+        self.write_vsc_ci_ini('\n'.join(vsc_ini_txt_lines))
         expected = dict((key, True) for key in default.keys())
-        expected['additional_test_commands'] = './more_tests.sh'
+        for key in default.keys():
+            if default[key] is None:
+                expected[key] = 'foo'
         self.assertEqual(parse_vsc_ci_cfg(), expected)
 
     def test_gen_jenkinsfile(self):
@@ -298,6 +307,23 @@ class CITest(TestCase):
         expected_tox_ini = expected_tox_ini.replace('commands =', '\n'.join([
             '    mv setup.cfg.moved setup.cfg',
             'commands =',
+        ]))
+
+        self.assertEqual(gen_tox_ini(), expected_tox_ini)
+
+    def test_pip_install_test_deps(self):
+        """Test specifying dependencies to pre-install for tests in tox.ini."""
+        self.write_vsc_ci_ini('\n'.join([
+            'pip_install_test_deps =',
+            '    foo',
+            '    bar<1.0',
+        ]))
+
+        expected_tox_ini = EXPECTED_TOX_INI
+        expected_tox_ini = expected_tox_ini.replace('commands_pre =', '\n'.join([
+            'commands_pre =',
+            "    pip install 'foo'",
+            "    pip install 'bar<1.0'",
         ]))
 
         self.assertEqual(gen_tox_ini(), expected_tox_ini)

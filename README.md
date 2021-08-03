@@ -553,3 +553,32 @@ tox must be configured to inherit these packages in the test environment. This c
 [vsc-ci]
 inherit_site_packages=1
 ```
+
+Pre-installing dependencies before running tests
+------------------------------------------------
+
+Although ``vsc-install`` will automatically install all dependencies listed in ``setup.py`` prior to running the
+tests, there are cases where this doesn't work out as expected.
+Some Python packages only support being installed with ``pip install`` (for example because they use a namespace
+that is spread across multiple different Python packages, like ``fs`` and ``fs.sshfs``).
+
+You can specify Python packages that should be installed (with ``pip install``) before running the tests via
+``pip_install_test_deps`` in ``vsc-ci.ini``:
+
+```ini
+[vsc-ci]
+pip_install_test_deps=
+    foo
+    bar<1.0
+```
+
+This results in corresponding ``pip install`` commands being added to the ``commands_pre`` section in ``tox.ini``:
+
+```ini
+[testenv]
+commands_pre =
+    pip install 'foo'
+    pip install 'bar<1.0'
+    pip install 'setuptools<42.0'
+    python -m easy_install -U vsc-install
+```
