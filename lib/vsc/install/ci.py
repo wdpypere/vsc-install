@@ -56,6 +56,7 @@ INHERIT_SITE_PACKAGES = 'inherit_site_packages'
 INSTALL_SCRIPTS_PREFIX_OVERRIDE = 'install_scripts_prefix_override'
 JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
 MOVE_SETUP_CFG = 'move_setup_cfg'
+PIP_INSTALL_TEST_DEPS = 'pip_install_test_deps'
 PIP_INSTALL_TOX = 'pip_install_tox'
 PIP3_INSTALL_TOX = 'pip3_install_tox'
 PY3_ONLY = 'py3_only'
@@ -135,6 +136,11 @@ def gen_tox_ini():
     if vsc_ci_cfg[MOVE_SETUP_CFG]:
         lines.append("    mv setup.cfg setup.cfg.moved")
 
+    pip_install_test_deps = vsc_ci_cfg[PIP_INSTALL_TEST_DEPS]
+    if pip_install_test_deps:
+        for dep in pip_install_test_deps.strip().split('\n'):
+            lines.append("    pip install %s'%s'" % (pip_args, dep))
+
     lines.extend([
         # install required setuptools version;
         # we need a setuptools < 42.0 for now, since in 42.0 easy_install was changed to use pip when available;
@@ -182,6 +188,7 @@ def parse_vsc_ci_cfg():
         INSTALL_SCRIPTS_PREFIX_OVERRIDE: False,
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
         MOVE_SETUP_CFG: False,
+        PIP_INSTALL_TEST_DEPS: None,
         PIP_INSTALL_TOX: False,
         PIP3_INSTALL_TOX: False,
         PY3_ONLY: False,
@@ -201,7 +208,7 @@ def parse_vsc_ci_cfg():
         # every entry in the vsc-ci section is expected to be a known setting
         for key, _ in cfgparser.items(VSC_CI):
             if key in vsc_ci_cfg:
-                if key in [ADDITIONAL_TEST_COMMANDS]:
+                if key in [ADDITIONAL_TEST_COMMANDS, PIP_INSTALL_TEST_DEPS]:
                     vsc_ci_cfg[key] = cfgparser.get(VSC_CI, key)
                 else:
                     vsc_ci_cfg[key] = cfgparser.getboolean(VSC_CI, key)
