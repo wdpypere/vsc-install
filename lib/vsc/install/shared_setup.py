@@ -168,7 +168,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.16'
+VERSION = '0.17.17'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1490,10 +1490,7 @@ class vsc_setup(object):
             tests_requires.append('isort < 5.0')
         else:
             tests_requires.extend([
-                # stick to older flake8, to avoid version conflict on pyflakes dependency
-                # flake8 3.9.0 requires pyflakes<2.4.0,>=2.3.0
-                # prospector 1.3.1 requires pyflakes<2.3.0,>=2.2.0
-                'flake8 < 3.9.0',
+                'flake8',
                 'prospector',
                 'mock',
             ])
