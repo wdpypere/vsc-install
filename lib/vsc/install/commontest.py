@@ -37,6 +37,7 @@ Running python setup.py test will pick this up and do its magic
 import logging
 import optparse
 import os
+import pkg_resources
 import pprint
 import re
 import sys
@@ -58,7 +59,7 @@ try:
     _old_basicconfig = logging.basicConfig
     from prospector.run import Prospector
     from prospector.config import ProspectorConfig
-    from prospector.__pkginfo__ import __version__ as prospector_version
+    prospector_version = pkg_resources.get_distribution("prospector").version
     HAS_PROSPECTOR = True
     # restore in case pyroma is missing (see https://github.com/landscapeio/prospector/pull/156)
     logging.basicConfig = _old_basicconfig
