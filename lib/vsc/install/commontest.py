@@ -34,7 +34,6 @@ Running python setup.py test will pick this up and do its magic
 @author: Stijn De Weirdt (Ghent University)
 """
 
-import logging
 import optparse
 import os
 import pkg_resources
@@ -49,10 +48,6 @@ from vsc.install.ci import JENKINSFILE, TOX_INI, gen_jenkinsfile, gen_tox_ini
 from vsc.install.headers import check_header
 from vsc.install.shared_setup import vsc_setup
 from vsc.install.testing import TestCase
-
-_old_basicconfig = logging.basicConfig
-# restore in case pyroma is missing (see https://github.com/landscapeio/prospector/pull/156)
-logging.basicConfig = _old_basicconfig
 
 prospector_version = pkg_resources.get_distribution("prospector").version
 
