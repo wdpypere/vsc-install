@@ -34,13 +34,14 @@ Running python setup.py test will pick this up and do its magic
 @author: Stijn De Weirdt (Ghent University)
 """
 
-import logging
 import optparse
 import os
+import pkg_resources
 import pprint
 import re
 import sys
-import unittest
+from prospector.run import Prospector
+from prospector.config import ProspectorConfig
 
 from distutils import log
 from vsc.install.ci import JENKINSFILE, TOX_INI, gen_jenkinsfile, gen_tox_ini
@@ -48,23 +49,7 @@ from vsc.install.headers import check_header
 from vsc.install.shared_setup import vsc_setup
 from vsc.install.testing import TestCase
 
-# No prospector in py26 or earlier
-# Also not enforced on installation
-HAS_PROSPECTOR = False
-Prospector = None
-ProspectorConfig = None
-
-try:
-    _old_basicconfig = logging.basicConfig
-    from prospector.run import Prospector
-    from prospector.config import ProspectorConfig
-    from prospector.__pkginfo__ import __version__ as prospector_version
-    HAS_PROSPECTOR = True
-    # restore in case pyroma is missing (see https://github.com/landscapeio/prospector/pull/156)
-    logging.basicConfig = _old_basicconfig
-except ImportError:
-    pass
-
+prospector_version = pkg_resources.get_distribution("prospector").version
 
 # this sets the --uses commandline
 PROSPECTOR_USE_LIBS = []
@@ -321,7 +306,6 @@ class CommonTest(TestCase):
                 self.assertFalse(check_header(os.path.join(self.setup.REPO_BASE_DIR, scr), script=True, write=False),
                                  msg='check_header of %s' % scr)
 
-    @unittest.skipUnless(HAS_PROSPECTOR, "Prospector is not available, so prosprector tests were skipped")
     def test_prospector(self):
         """Test prospector failures"""
 
