@@ -119,6 +119,7 @@ if log.Log.__name__ != 'NewLog':
                 return self._orig_log(self, level, newmsg, args)
             except Exception:
                 print(newmsg % args)
+                return None
 
     log.Log = NewLog
     log._global_log = NewLog()
