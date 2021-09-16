@@ -169,7 +169,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.17'
+VERSION = '0.17.18'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1491,8 +1491,11 @@ class vsc_setup(object):
             tests_requires.append('isort < 5.0')
         else:
             tests_requires.extend([
-                'flake8',
-                'prospector',
+                # stick to astroid < 2.8, as required by pylint 2.10.x
+                'astroid~=2.7.3',
+                'pylint~=2.10.2',
+                'flake8~=3.9.2',
+                'prospector~=1.5.0.1',
                 'mock',
             ])
 
