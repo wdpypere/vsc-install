@@ -1501,6 +1501,8 @@ class vsc_setup(object):
                 'astroid~=2.7.3',
                 # stick to pyflakes < 2.3.0, as required by prospector 1.5.0.x and flake8 3.8.x
                 'pyflakes~=2.2.0',
+                # stick to pycodestyle < 2.7.0, as required by flake8 3.8.x
+                'pycodestyle~=2.6.0',
                 'pylint~=2.10.2',
                 'flake8~=3.8.4',
                 'prospector~=1.5.0.1',
