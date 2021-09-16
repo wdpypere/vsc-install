@@ -169,7 +169,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.17'
+VERSION = '0.17.18'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1490,9 +1490,22 @@ class vsc_setup(object):
             # isort 5.0 is no longer compatible with Python 2
             tests_requires.append('isort < 5.0')
         else:
+            # soft pinning of (transitive) dependencies of prospector
+            # ('~=' means stick to compatible release, https://www.python.org/dev/peps/pep-0440/#compatible-release);
+            # updating these must be done in lockstep, see setup.cfg or pyproject.toml or whatever at:
+            # - https://github.com/PyCQA/pylint/blob/v2.10.2/setup.cfg
+            # - https://github.com/PyCQA/flake8/blob/3.8.4/setup.cfg
+            # - https://github.com/PyCQA/prospector/blob/1.5.0.1/pyproject.toml
             tests_requires.extend([
-                'flake8',
-                'prospector',
+                # stick to astroid < 2.8, as required by pylint 2.10.x
+                'astroid~=2.7.3',
+                # stick to pyflakes < 2.3.0, as required by prospector 1.5.0.x and flake8 3.8.x
+                'pyflakes~=2.2.0',
+                # stick to pycodestyle < 2.7.0, as required by flake8 3.8.x
+                'pycodestyle~=2.6.0',
+                'pylint~=2.10.2',
+                'flake8~=3.8.4',
+                'prospector~=1.5.0.1',
                 'mock',
             ])
 
