@@ -169,7 +169,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.18'
+VERSION = '0.17.19'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1489,6 +1489,8 @@ class vsc_setup(object):
             tests_requires.append('mock < 4.0')
             # isort 5.0 is no longer compatible with Python 2
             tests_requires.append('isort < 5.0')
+            # pyyaml > 5.4.1 fails for python 2.7
+            tests_requires.append('pyyaml >= 5.4.1, < 6.0')
         else:
             # soft pinning of (transitive) dependencies of prospector
             # ('~=' means stick to compatible release, https://www.python.org/dev/peps/pep-0440/#compatible-release);
