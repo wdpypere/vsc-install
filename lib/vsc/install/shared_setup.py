@@ -1489,6 +1489,8 @@ class vsc_setup(object):
             tests_requires.append('mock < 4.0')
             # isort 5.0 is no longer compatible with Python 2
             tests_requires.append('isort < 5.0')
+            # pyyaml > 5.4.1 fails for python 2.7
+            tests_requires.append('pyyaml >= 5.4.1, < 6.0')
         else:
             # soft pinning of (transitive) dependencies of prospector
             # ('~=' means stick to compatible release, https://www.python.org/dev/peps/pep-0440/#compatible-release);
