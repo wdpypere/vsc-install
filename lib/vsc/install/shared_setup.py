@@ -1,6 +1,6 @@
 # -*- coding: latin-1 -*-
 #
-# Copyright 2011-2021 Ghent University
+# Copyright 2011-2022 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -1501,15 +1501,10 @@ class vsc_setup(object):
             # - https://github.com/PyCQA/flake8/blob/3.8.4/setup.cfg
             # - https://github.com/PyCQA/prospector/blob/1.5.0.1/pyproject.toml
             tests_requires.extend([
-                # stick to astroid < 2.8, as required by pylint 2.10.x
-                'astroid~=2.7.3',
-                # stick to pyflakes < 2.3.0, as required by prospector 1.5.0.x and flake8 3.8.x
-                'pyflakes~=2.2.0',
-                # stick to pycodestyle < 2.7.0, as required by flake8 3.8.x
-                'pycodestyle~=2.6.0',
-                'pylint~=2.10.2',
-                'flake8~=3.8.4',
-                'prospector~=1.5.0.1',
+                'prospector',
+                'pylint-django~=2.4.4',
+                # requires python 3.7
+                'platformdirs < 2.4.0',
                 'mock',
             ])
 
