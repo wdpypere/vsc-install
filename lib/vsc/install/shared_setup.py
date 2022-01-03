@@ -1510,8 +1510,8 @@ class vsc_setup(object):
                 'pylint~=2.10.2',
                 'flake8~=3.8.4',
                 'prospector~=1.5.0.1',
-                # requires python 3.7
                 'pylint-django~=2.4.4',
+                # requires python 3.7
                 'platformdirs < 2.4.0',
                 'mock',
             ])
