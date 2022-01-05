@@ -1506,6 +1506,7 @@ class vsc_setup(object):
                 'pylint~=2.12.2',
                 'flake8~=3.9.2',
                 'prospector',
+                'pylint-plugin-utils < 0.7',
                 'pylint-django~=2.4.4',
                 # requires python 3.7
                 'platformdirs < 2.4.0',
