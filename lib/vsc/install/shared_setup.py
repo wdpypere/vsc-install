@@ -1505,7 +1505,7 @@ class vsc_setup(object):
                 'pycodestyle~=2.7.0',
                 'pylint~=2.12.2',
                 'flake8~=3.9.2',
-                'prospector',
+                'prospector~=1.5.3.1',
                 'pylint-plugin-utils < 0.7',
                 'pylint-django~=2.4.4',
                 # requires python 3.7
