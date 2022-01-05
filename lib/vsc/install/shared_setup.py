@@ -1508,7 +1508,7 @@ class vsc_setup(object):
                 'prospector~=1.5.3.1',
                 'pylint-plugin-utils < 0.7',
                 'pylint-django~=2.4.4',
-                # requires python 3.7
+                # platformdirs >= 2.4.0 requires Python 3.7, so stick to older versions for running tests with Python 3.6
                 'platformdirs < 2.4.0',
                 'mock',
             ])
