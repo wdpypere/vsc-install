@@ -1,6 +1,6 @@
 # -*- coding: latin-1 -*-
 #
-# Copyright 2011-2021 Ghent University
+# Copyright 2011-2022 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -169,7 +169,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.20'
+VERSION = '0.17.21'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1497,19 +1497,19 @@ class vsc_setup(object):
             # soft pinning of (transitive) dependencies of prospector
             # ('~=' means stick to compatible release, https://www.python.org/dev/peps/pep-0440/#compatible-release);
             # updating these must be done in lockstep, see setup.cfg or pyproject.toml or whatever at:
-            # - https://github.com/PyCQA/pylint/blob/v2.10.2/setup.cfg
-            # - https://github.com/PyCQA/flake8/blob/3.8.4/setup.cfg
-            # - https://github.com/PyCQA/prospector/blob/1.5.0.1/pyproject.toml
+            # - https://github.com/PyCQA/pylint/blob/v2.12.2/setup.cfg
+            # - https://github.com/PyCQA/flake8/blob/3.9.2/setup.cfg
+            # - https://github.com/PyCQA/prospector/blob/1.5.3.1/pyproject.toml
             tests_requires.extend([
-                # stick to astroid < 2.8, as required by pylint 2.10.x
-                'astroid~=2.7.3',
-                # stick to pyflakes < 2.3.0, as required by prospector 1.5.0.x and flake8 3.8.x
-                'pyflakes~=2.2.0',
-                # stick to pycodestyle < 2.7.0, as required by flake8 3.8.x
-                'pycodestyle~=2.6.0',
-                'pylint~=2.10.2',
-                'flake8~=3.8.4',
-                'prospector~=1.5.0.1',
+                'pyflakes~=2.3.0',
+                'pycodestyle~=2.7.0',
+                'pylint~=2.12.2',
+                'flake8~=3.9.2',
+                'prospector~=1.5.3.1',
+                'pylint-plugin-utils < 0.7',
+                'pylint-django~=2.4.4',
+                # platformdirs >= 2.4.0 requires Python 3.7, use older versions for running tests with Python 3.6
+                'platformdirs < 2.4.0',
                 'mock',
             ])
 
