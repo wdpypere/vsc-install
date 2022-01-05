@@ -1497,19 +1497,15 @@ class vsc_setup(object):
             # soft pinning of (transitive) dependencies of prospector
             # ('~=' means stick to compatible release, https://www.python.org/dev/peps/pep-0440/#compatible-release);
             # updating these must be done in lockstep, see setup.cfg or pyproject.toml or whatever at:
-            # - https://github.com/PyCQA/pylint/blob/v2.10.2/setup.cfg
-            # - https://github.com/PyCQA/flake8/blob/3.8.4/setup.cfg
-            # - https://github.com/PyCQA/prospector/blob/1.5.0.1/pyproject.toml
+            # - https://github.com/PyCQA/pylint/blob/v2.12.2/setup.cfg
+            # - https://github.com/PyCQA/flake8/blob/3.9.2/setup.cfg
+            # - https://github.com/PyCQA/prospector/blob/1.5.3.1/pyproject.toml
             tests_requires.extend([
-                # stick to astroid < 2.8, as required by pylint 2.10.x
-                'astroid~=2.7.3',
-                # stick to pyflakes < 2.3.0, as required by prospector 1.5.0.x and flake8 3.8.x
-                'pyflakes~=2.2.0',
-                # stick to pycodestyle < 2.7.0, as required by flake8 3.8.x
-                'pycodestyle~=2.6.0',
-                'pylint~=2.10.2',
-                'flake8~=3.8.4',
-                'prospector~=1.5.0.1',
+                'pyflakes~=2.3.0',
+                'pycodestyle~=2.7.0',
+                'pylint~=2.12.2',
+                'flake8~=3.9.2',
+                'prospector',
                 'pylint-django~=2.4.4',
                 # requires python 3.7
                 'platformdirs < 2.4.0',
