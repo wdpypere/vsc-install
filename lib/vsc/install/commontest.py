@@ -96,7 +96,8 @@ PROSPECTOR_WHITELIST = [
     'old-octal-literal',  # use 0o700 instead of 0700
     'old-raise-syntax',  # sed when the alternate raise syntax raise foo, bar is used instead of raise foo(bar) .
     'print-statement',  # use print() and from future import __print__ instead of print
-    'raising-string',  # don't raise strings, raise objects extending Exception
+    'raising-string',  # don't raise strings, raise objects extending Exception (python2)
+    'raising-bad-type',  # don't raise strings, raise objects extending Exception (python3)
     'redefine-in-handler',  # except A, B -> except (A, B)
     'redefined-builtin',
     'reimported',
