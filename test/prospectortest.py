@@ -77,7 +77,8 @@ class ProspectorTest(TestCase):
             # some of the prospector test cases don't make sense in Python 3 because they yield syntax errors,
             # or are no longer a problem in Python 3
             py3_invalid_tests = ['backtick', 'old-octal-literal', 'import-star-module-level', 'redefine-in-handler',
-                                 'old-raise-syntax', 'print-statement', 'unpacking-in-except', 'old-ne-operator', 'raising-string']
+                                 'indexing-exception', 'old-raise-syntax', 'print-statement', 'unpacking-in-except',
+                                 'old-ne-operator', 'raising-string', 'metaclass-assignment']
             undetected_tests = [x for x in undetected_tests if x not in py3_invalid_tests]
 
         self.assertFalse(undetected_tests, "\nprospector did not detect %s\n" % undetected_tests)
