@@ -169,7 +169,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.21'
+VERSION = '0.17.22'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1493,6 +1493,8 @@ class vsc_setup(object):
             tests_requires.append('pyyaml >= 5.4.1, < 6.0')
             # lazy_object_proxy 1.7.0 no longer compatible with python 2
             tests_requires.append('lazy_object_proxy < 1.7.0')
+            # requirements-detector 1.0.0 no longer compatible with python 2
+            tests_requires.append('requirements-detector < 1.0.0')
         else:
             # soft pinning of (transitive) dependencies of prospector
             # ('~=' means stick to compatible release, https://www.python.org/dev/peps/pep-0440/#compatible-release);
