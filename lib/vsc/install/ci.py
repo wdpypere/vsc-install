@@ -231,12 +231,12 @@ def gen_jenkinsfile():
 
     vsc_ci_cfg = parse_vsc_ci_cfg()
 
-    test_cmds = [
+    test_cmds = []
+    if not vsc_ci_cfg[PY3_ONLY]:
         # make very sure Python 2.7 is available,
         # since we've configured tox to ignore failures due to missing Python interpreters
         # (see skip_missing_interpreters in gen_tox_ini)
-        'python2.7 -V',
-    ]
+        test_cmds.append('python2.7 -V')
 
     pip_args, easy_install_args = '', ''
 
