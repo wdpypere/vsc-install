@@ -169,7 +169,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.24'
+VERSION = '0.17.25'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1502,19 +1502,32 @@ class vsc_setup(object):
             # - https://github.com/PyCQA/pylint/blob/v2.12.2/setup.cfg
             # - https://github.com/PyCQA/flake8/blob/3.9.2/setup.cfg
             # - https://github.com/PyCQA/prospector/blob/1.5.3.1/pyproject.toml
+
+            # To figure out requirements of what needs what: grep name_of_tool .eggs.py3/*/*/requires.txt
             tests_requires.extend([
-                'pyflakes~=2.3.0',
-                'pycodestyle~=2.7.0',
-                'pylint~=2.12.2',
-                'flake8~=3.9.2',
-                'prospector~=1.5.3.1',
-                'pylint-plugin-utils < 0.7',
-                'pylint-django~=2.4.4',
-                # platformdirs >= 2.4.0 requires Python 3.7, use older versions for running tests with Python 3.6
-                'platformdirs < 2.4.0',
-                'typing-extensions < 4.2.0', # higher requires python 3.7
                 'mock',
             ])
+            if sys.version_info < (3, 7):
+                tests_requires.extend([
+                    'pyflakes~=2.3.0',
+                    'pycodestyle~=2.7.0',
+                    'pylint~=2.12.2',
+                    'prospector~=1.5.3.1',
+                    'flake8~=3.9.2',
+                    'pylint-plugin-utils < 0.7',
+                    'pylint-django~=2.4.4',
+                    # platformdirs >= 2.4.0 requires Python 3.7, use older versions for running tests with Python 3.6
+                    'platformdirs < 2.4.0',
+                    'typing-extensions < 4.2.0', # higher requires python 3.7
+                ])
+            else:  # tested for fedora36 py3.10
+                tests_requires.extend([
+                    'astroid <= 2.12.0-dev0',
+                    'pyflakes < 3.0.0',
+                    'pycodestyle < 2.9.0',
+                    'pylint~=2.14.4',
+                    'prospector~=1.7.7',
+                ])
 
         new_target['tests_require'] = tests_requires
 
