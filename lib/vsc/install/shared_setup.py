@@ -1507,7 +1507,7 @@ class vsc_setup(object):
             tests_requires.extend([
                 'mock',
             ])
-            if sys.version_info < (3, 7):
+            if sys.version_info < (3, 9):
                 tests_requires.extend([
                     'pyflakes~=2.3.0',
                     'pycodestyle~=2.7.0',
@@ -1523,9 +1523,9 @@ class vsc_setup(object):
                 ])
             else:  # tested for fedora36 py3.10
                 tests_requires.extend([
+                    'flake8 < 5.0.0',
                     'astroid <= 2.12.0-dev0',
-                    'pyflakes < 3.0.0',
-                    'pycodestyle < 2.9.0',
+                    'pyflakes < 2.5.0',
                     'pylint~=2.14.4',
                     'prospector~=1.7.7',
                 ])
