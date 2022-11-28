@@ -1507,7 +1507,7 @@ class vsc_setup(object):
             tests_requires.extend([
                 'mock',
             ])
-            if sys.version_info < (3, 9):
+            if sys.version_info < (3, 7):
                 tests_requires.extend([
                     'pyflakes~=2.3.0',
                     'pycodestyle~=2.7.0',
@@ -1521,7 +1521,7 @@ class vsc_setup(object):
                     'typing-extensions < 4.2.0', # higher requires python 3.7
                     'lazy-object-proxy < 1.8.0', # higher requires python 3.7
                 ])
-            else:  # tested for fedora36 py3.10
+            else:  # tested for fedora37 py3.11
                 tests_requires.extend([
                     'flake8 < 5.0.0',
                     'astroid <= 2.12.0-dev0',
