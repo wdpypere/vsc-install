@@ -1497,8 +1497,6 @@ class vsc_setup(object):
             tests_requires.append('requirements-detector < 1.0.0')
             # singledispatch 4.0.0 no longer compatible with python 2
             tests_requires.append('singledispatch < 4.0.0')
-            # importlib-metadata 6.0.0 no longer compatible with python 2
-            tests_requires.append('importlib-metadata < 6.0.0')
         else:
             # soft pinning of (transitive) dependencies of prospector
             # ('~=' means stick to compatible release, https://www.python.org/dev/peps/pep-0440/#compatible-release);
@@ -1525,6 +1523,8 @@ class vsc_setup(object):
                     'typing-extensions < 4.2.0', # higher requires python 3.7
                     'lazy-object-proxy < 1.8.0', # higher requires python 3.7
                     'jsonpickle < 3.0.0', # higher requires python 3.7
+                    # importlib-metadata 6.0.0 no longer compatible with python 3.7
+                    tests_requires.append('importlib-metadata < 6.0.0')
                 ])
             else:  # tested for fedora37 py3.11
                 tests_requires.extend([
