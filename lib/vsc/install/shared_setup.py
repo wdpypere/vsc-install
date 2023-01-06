@@ -1523,7 +1523,7 @@ class vsc_setup(object):
                     'typing-extensions < 4.2.0', # higher requires python 3.7
                     'lazy-object-proxy < 1.8.0', # higher requires python 3.7
                     'jsonpickle < 3.0.0', # higher requires python 3.7
-                    'importlib-metadata < 6.0.0' # no longer compatible with python 3.7
+                    'importlib-metadata < 5.2.0' # no longer compatible with python 3.7
                 ])
             else:  # tested for fedora37 py3.11
                 tests_requires.extend([
