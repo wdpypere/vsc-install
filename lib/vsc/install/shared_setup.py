@@ -169,7 +169,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.29'
+VERSION = '0.17.30'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -1523,7 +1523,8 @@ class vsc_setup(object):
                     'typing-extensions < 4.2.0', # higher requires python 3.7
                     'lazy-object-proxy < 1.8.0', # higher requires python 3.7
                     'jsonpickle < 3.0.0', # higher requires python 3.7
-                    'importlib-metadata < 5.0.0' # no longer compatible with python 3.7
+                    'importlib-metadata < 5.0.0', # no longer compatible with python 3.7
+                    'isort < 5.11.0',
                 ])
             else:  # tested for fedora37 py3.11
                 tests_requires.extend([
