@@ -169,7 +169,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.30'
+VERSION = '0.17.31'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -576,9 +576,8 @@ class vsc_setup(object):
 
         def _write(self, dest, code):
             """write code to dest"""
-            fh = open(dest, 'w')
-            fh.write(code)
-            fh.close()
+            with open(dest, 'w') as fih:
+                fih.write(code)
 
         def _copy_setup_py(self, base_dir):
             """
@@ -1620,12 +1619,6 @@ class vsc_setup(object):
             log.info('makesetupcfg set to False, not (re)creating setup.cfg')
             return
 
-        try:
-            setup_cfg = open('setup.cfg', 'w')  # and truncate
-        except (IOError, OSError) as err:
-            print("Cannot create setup.cfg for target %s: %s" % (target['name'], err))
-            sys.exit(1)
-
         klass = _fvs('build_setup_cfg_for_bdist_rpm')
 
         txt = []
@@ -1653,8 +1646,13 @@ class vsc_setup(object):
         # add metadata
         txt += ['', '[metadata]', '', 'description-file = %s' % README, '']
 
-        setup_cfg.write("\n".join(txt+['']))
-        setup_cfg.close()
+        try:
+            with open('setup.cfg', 'w') as setup_cfg:
+                setup_cfg.write("\n".join(txt+['']))
+        except (IOError, OSError) as err:
+            print("Cannot create setup.cfg for target %s: %s" % (target['name'], err))
+            sys.exit(1)
+
 
     def prepare_rpm(self, target):
         """
