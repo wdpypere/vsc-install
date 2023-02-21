@@ -49,7 +49,7 @@ node {
 
 EASY_INSTALL_TOX = "        sh 'python -m easy_install -U --user tox'\n"
 PIP_INSTALL_TOX = """        sh 'pip install --user --upgrade pip'
-        sh 'export PATH=$HOME/.local/bin:$PATH && pip install --ignore-installed --prefix $PWD/.vsc-tox "zipp<3.0" tox'
+        sh 'export PATH=$HOME/.local/bin:$PATH && pip install --ignore-installed --prefix $PWD/.vsc-tox "zipp<3.7" tox'
 """
 PIP3_INSTALL_TOX = "        sh 'pip3 install --ignore-installed --prefix $PWD/.vsc-tox tox'\n"
 
@@ -58,7 +58,6 @@ TOX_RUN_PY3 = """        sh 'export PATH=$PWD/.vsc-tox/bin:$PATH && export PYTHO
 TOX_RUN_PY2 = TOX_RUN_PY3.replace('python3', 'python')
 
 JENKINSFILE_TEST_START = """    stage('test') {
-        sh 'python2.7 -V'
 """
 JENKINSFILE_END_STAGE = "    }\n"
 
@@ -99,7 +98,7 @@ EXPECTED_TOX_INI = """# tox.ini: configuration file for tox
 # DO NOT EDIT MANUALLY
 
 [tox]
-envlist = py27,py36
+envlist = py36
 skipsdist = true
 
 [testenv]
@@ -177,7 +176,7 @@ class CITest(TestCase):
             'pip_install_test_deps': None,
             'pip_install_tox': False,
             'pip3_install_tox': False,
-            'py3_only': False,
+            'py3_only': True,
             'py3_tests_must_pass': True,
             'run_shellcheck': False,
         }
@@ -298,15 +297,6 @@ class CITest(TestCase):
         self.write_vsc_ci_ini('inherit_site_packages=1')
 
         expected = EXPECTED_TOX_INI + 'sitepackages = true\n'
-        self.assertEqual(gen_tox_ini(), expected)
-
-    def test_tox_ini_py3_tests(self):
-        """Test generation of tox.ini when Python 3 tests are ignored."""
-
-        self.write_vsc_ci_ini('py3_tests_must_pass=0')
-
-        expected = EXPECTED_TOX_INI.replace('skipsdist = true', 'skipsdist = true\nskip_missing_interpreters = true')
-        expected += EXPECTED_TOX_INI_PY36_IGNORE
         self.assertEqual(gen_tox_ini(), expected)
 
     def test_tox_ini_py3_only(self):
