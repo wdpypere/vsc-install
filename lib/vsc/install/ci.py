@@ -73,8 +73,7 @@ logging.basicConfig(format="%(message)s", level=logging.INFO)
 def write_file(path, txt):
     """Write specified contents to specified path."""
 
-    if not os.path.exists(os.path.dirname(path)):
-        os.makedirs(os.path.dirname(path))
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     try:
         with open(path, 'w') as handle:
             handle.write(txt)
