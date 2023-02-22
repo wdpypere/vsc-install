@@ -42,7 +42,7 @@ except ImportError:
     # Python 2
     import ConfigParser as configparser
 
-from vsc.install.shared_setup import MAX_SETUPTOOLS_VERSION
+from vsc.install.shared_setup import MAX_SETUPTOOLS_VERSION, vsc_setup
 
 
 JENKINSFILE = 'Jenkinsfile'
@@ -82,14 +82,16 @@ def write_file(path, txt):
     except (IOError, OSError) as err:
         raise IOError("Failed to write %s: %s" % (path, err))
 
-def gen_github_action():
+def gen_github_action(repo_base_dir=os.getcwd()):
     """
     Generate tox.ini configuration file for github actions.
     """
     logging.info('[%s]', GITHUB_ACTIONS)
     vsc_ci_cfg = parse_vsc_ci_cfg()
 
-    name_url = "https://github.com/hpcugent/vsc-install"
+    setup = vsc_setup()
+    repofile = os.path.join(repo_base_dir, ".git/config")
+    name_url = setup.get_name_url(filename=repofile, version='ALL_VERSIONS')['url']
 
     if vsc_ci_cfg[ENABLE_GITHUB_ACTIONS]:
         header = [
