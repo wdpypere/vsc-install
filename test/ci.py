@@ -31,7 +31,7 @@ Test CI functionality
 import os
 import re
 
-from vsc.install.ci import gen_jenkinsfile, gen_tox_ini, parse_vsc_ci_cfg
+from vsc.install.ci import gen_jenkinsfile, gen_tox_ini, parse_vsc_ci_cfg, gen_github_action
 from vsc.install.testing import TestCase
 
 
@@ -115,6 +115,36 @@ EXPECTED_TOX_INI_PY36_IGNORE = """
 ignore_outcome = true
 """
 
+EXPECTED_GITHUB_ACTIONS = """# .github/workflows/unittest.yml: configuration file for github actions worflow
+# This file was automatically generated using 'python -m vsc.install.ci'
+# DO NOT EDIT MANUALLY
+jobs:
+  python_unittests:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python }}
+    - name: install tox
+      run: pip install tox
+    - name: add mandatory git remote
+      run: git remote add hpcugent https://github.com/hpcugent/vsc-install.git
+    - name: Run tox
+      run: tox -e py
+    strategy:
+      matrix:
+        python:
+        - 3.6
+        - 3.9
+name: run python tests
+'on':
+- push
+- pull_request
+"""
+
 
 class CITest(TestCase):
     """License related tests"""
@@ -138,6 +168,7 @@ class CITest(TestCase):
 
         default = {
             'additional_test_commands': None,
+            'enable_github_actions': False,
             'home_install': False,
             'inherit_site_packages': False,
             'install_scripts_prefix_override': False,
@@ -174,6 +205,14 @@ class CITest(TestCase):
             if default[key] is None:
                 expected[key] = 'foo'
         self.assertEqual(parse_vsc_ci_cfg(), expected)
+
+    def test_gen_github_action(self):
+        """Test generating of github_action."""
+
+        self.write_vsc_ci_ini('enable_github_actions=1')
+
+        github_actions_txt = gen_github_action()
+        self.assertEqual(github_actions_txt, EXPECTED_GITHUB_ACTIONS)
 
     def test_gen_jenkinsfile(self):
         """Test generating of Jenkinsfile."""
