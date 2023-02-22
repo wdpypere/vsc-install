@@ -42,7 +42,7 @@ except ImportError:
     # Python 2
     import ConfigParser as configparser
 
-from vsc.install.shared_setup import MAX_SETUPTOOLS_VERSION, vsc_setup
+from vsc.install.shared_setup import MAX_SETUPTOOLS_VERSION
 
 
 JENKINSFILE = 'Jenkinsfile'
