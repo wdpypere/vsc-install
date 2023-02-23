@@ -33,6 +33,7 @@ Run with: python -m vsc.install.ci
 import logging
 import os
 import sys
+import yaml
 
 try:
     # Python 3
@@ -41,7 +42,7 @@ except ImportError:
     # Python 2
     import ConfigParser as configparser
 
-from vsc.install.shared_setup import MAX_SETUPTOOLS_VERSION
+from vsc.install.shared_setup import MAX_SETUPTOOLS_VERSION, vsc_setup
 
 
 JENKINSFILE = 'Jenkinsfile'
@@ -49,6 +50,8 @@ TOX_INI = 'tox.ini'
 
 VSC_CI = 'vsc-ci'
 VSC_CI_INI = VSC_CI + '.ini'
+
+GITHUB_ACTIONS = ".github/workflows/unittest.yml"
 
 ADDITIONAL_TEST_COMMANDS = 'additional_test_commands'
 HOME_INSTALL = 'home_install'
@@ -62,12 +65,15 @@ PIP3_INSTALL_TOX = 'pip3_install_tox'
 PY3_ONLY = 'py3_only'
 PY3_TESTS_MUST_PASS = 'py3_tests_must_pass'
 RUN_SHELLCHECK = 'run_shellcheck'
+ENABLE_GITHUB_ACTIONS = 'enable_github_actions'
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
 
 def write_file(path, txt):
     """Write specified contents to specified path."""
+
+    os.makedirs(os.path.dirname(path), exist_ok=True)
     try:
         with open(path, 'w') as handle:
             handle.write(txt)
@@ -75,6 +81,53 @@ def write_file(path, txt):
     except (IOError, OSError) as err:
         raise IOError("Failed to write %s: %s" % (path, err))
 
+def gen_github_action(repo_base_dir=os.getcwd()):
+    """
+    Generate tox.ini configuration file for github actions.
+    """
+    logging.info('[%s]', GITHUB_ACTIONS)
+    vsc_ci_cfg = parse_vsc_ci_cfg()
+
+    setup = vsc_setup()
+    repofile = os.path.join(repo_base_dir, ".git/config")
+    name_url = setup.get_name_url(filename=repofile, version='ALL_VERSIONS')['url']
+
+    if vsc_ci_cfg[ENABLE_GITHUB_ACTIONS]:
+        header = [
+            "%s: configuration file for github actions worflow" % GITHUB_ACTIONS,
+            "This file was automatically generated using 'python -m vsc.install.ci'",
+            "DO NOT EDIT MANUALLY",
+        ]
+
+        txt = ['# ' + l for l in header]
+        yaml_content = {
+            'name': 'run python tests',
+            'on': ['push', 'pull_request'],
+            'jobs': {
+                'python_unittests': {
+                    'runs-on': 'ubuntu-20.04',
+                    'strategy': {
+                        'matrix': {
+                            'python': [3.6, 3.9]
+                        }
+                    },
+                    'steps': [
+                        {'name': 'Checkout code', 'uses': 'actions/checkout@v3'},
+                        {'name': 'Setup Python', 'uses': 'actions/setup-python@v4',
+                         'with': {'python-version': '${{ matrix.python }}'}},
+                        {'name': 'install tox', 'run': 'pip install tox'},
+                        {'name': 'add mandatory git remote',
+                         'run': 'git remote add hpcugent %s.git' % name_url},
+                        {'name': 'Run tox', 'run': 'tox -e py'}
+                    ]
+                }
+            }
+        }
+
+        txt.append(yaml.safe_dump(yaml_content))
+        return "\n".join(txt)
+    else:
+        return None
 
 def gen_tox_ini():
     """
@@ -194,6 +247,7 @@ def parse_vsc_ci_cfg():
         PY3_ONLY: False,
         PY3_TESTS_MUST_PASS: True,
         RUN_SHELLCHECK: False,
+        ENABLE_GITHUB_ACTIONS: False,
     }
 
     if os.path.exists(VSC_CI_INI):
@@ -368,6 +422,10 @@ def main():
     jenkinsfile_txt = gen_jenkinsfile()
     write_file(jenkinsfile, jenkinsfile_txt)
 
+    github_actions = os.path.join(cwd, GITHUB_ACTIONS)
+    github_actions_txt = gen_github_action()
+    if github_actions_txt is not None:
+        write_file(github_actions, github_actions_txt)
 
 if __name__ == '__main__':
     main()
