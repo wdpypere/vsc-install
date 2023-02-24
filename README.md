@@ -265,30 +265,6 @@ except (ExceptionOne, ExceptionTwo) ...
 
 (espcially when used like `except A, B:` which should be `except (A, B):`.
 
-Fixing print statement
-----------------------
-
-Use the oneliner:
-```bash
-find lib bin -name '*.py' | xargs futurize -w -f libfuturize.fixes.fix_print_with_import -n
-```
-Note: You need to install `python(2)-future` if you want to use `futurize` (or you have to have the `future` Python package).
-
-Metaclass assignment
---------------------
-
-```python
-class Foo(Bar):
-
-    __metaclass__ = Baz
-```
-=>
-```python
-from future.utils import with_metaclass
-
-class Foo(with_metaclass(Baz,Bar):
-```
-
 Old raise syntax
 ----------------
 Python 2’s **raise** statement was designed at a time when exceptions weren’t classes, and an exception’s _type_, _value_, and _traceback_ components were three separate objects. In Python 3, one single object includes all information about an exception.

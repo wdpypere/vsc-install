@@ -31,13 +31,9 @@ Shared module for vsc software setup
 @author: Andy Georges (Ghent University)
 """
 
-from __future__ import print_function
 import sys
 
-if sys.version_info < (3, 0):
-    import __builtin__
-else:
-    import builtins as __builtin__  # make builtins accessible via same way as in Python 3
+import builtins as __builtin__  # make builtins accessible via same way as in Python 3
 
 import glob
 import hashlib
@@ -169,7 +165,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.17.32'
+VERSION = '0.18.0'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))

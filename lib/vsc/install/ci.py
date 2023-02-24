@@ -34,14 +34,7 @@ import logging
 import os
 import sys
 import yaml
-
-try:
-    # Python 3
-    import configparser
-except ImportError:
-    # Python 2
-    import ConfigParser as configparser
-
+import configparser
 from vsc.install.shared_setup import MAX_SETUPTOOLS_VERSION, vsc_setup
 
 
@@ -150,12 +143,11 @@ def gen_tox_ini():
     # list of Python environments in which tests should be run
     envs = []
 
-    # don't run tests with Python 2 if 'py3_only' is set in vsc-ci.ini
+    # give error if 'py3_only' is set to false in vsc-ci.ini
     if not vsc_ci_cfg[PY3_ONLY]:
-        envs.append('py27')
+        logging.error("package is not py3_only. Not supported. Please set 'py3_only'. will ignore python2.")
 
     # always run tests with Python 3
-    # (failing tests may be ignored if 'py3_tests_must_pass' is set to 0 in vsc-ci.ini)
     py3_env = 'py36'
     envs.append(py3_env)
 
@@ -172,13 +164,6 @@ def gen_tox_ini():
         # (setup.py requires vsc-install, which is not installed yet when 'python setup.py sdist' is run)
         "skipsdist = true",
     ]
-
-    if not vsc_ci_cfg[PY3_TESTS_MUST_PASS]:
-        lines.extend([
-            # ignore failures due to missing Python version
-            # python2.7 must always be available though, see Jenkinsfile
-            "skip_missing_interpreters = true",
-        ])
 
     lines.extend([
         '',
@@ -222,12 +207,7 @@ def gen_tox_ini():
         lines.append("sitepackages = true")
 
     if not vsc_ci_cfg[PY3_TESTS_MUST_PASS]:
-        lines.extend([
-            '',
-            # allow failing tests in Python 3, for now...
-            '[testenv:%s]' % py3_env,
-            "ignore_outcome = true"
-        ])
+        logging.warning("py3_tests_must_pass not set to true in config. ignoring.")
 
     return '\n'.join(lines) + '\n'
 
@@ -244,7 +224,7 @@ def parse_vsc_ci_cfg():
         PIP_INSTALL_TEST_DEPS: None,
         PIP_INSTALL_TOX: False,
         PIP3_INSTALL_TOX: False,
-        PY3_ONLY: False,
+        PY3_ONLY: True,
         PY3_TESTS_MUST_PASS: True,
         RUN_SHELLCHECK: False,
         ENABLE_GITHUB_ACTIONS: False,
@@ -252,7 +232,7 @@ def parse_vsc_ci_cfg():
 
     if os.path.exists(VSC_CI_INI):
         try:
-            cfgparser = configparser.SafeConfigParser()
+            cfgparser = configparser.ConfigParser()
             cfgparser.read(VSC_CI_INI)
             cfgparser.items(VSC_CI)  # just to make sure vsc-ci section is there
         except (configparser.NoSectionError, configparser.ParsingError) as err:
@@ -286,14 +266,7 @@ def gen_jenkinsfile():
     vsc_ci_cfg = parse_vsc_ci_cfg()
 
     test_cmds = []
-    if not vsc_ci_cfg[PY3_ONLY]:
-        # make very sure Python 2.7 is available,
-        # since we've configured tox to ignore failures due to missing Python interpreters
-        # (see skip_missing_interpreters in gen_tox_ini)
-        test_cmds.append('python2.7 -V')
-
     pip_args, easy_install_args = '', ''
-
     install_subdir = '.vsc-tox'
 
     # run 'pip install' commands in $HOME (rather than in repo checkout) if desired
@@ -309,8 +282,8 @@ def gen_jenkinsfile():
     if vsc_ci_cfg[PIP_INSTALL_TOX]:
         pip_args += '--ignore-installed --prefix %s' % prefix
 
-        # tox requires zipp: require zipp < 3.0 since newer version are Python 3 only
-        tox = '"zipp<3.0" tox'
+        # tox requires zipp: require zipp < 3.7 since newer version are Python 3.7 only
+        tox = '"zipp<3.7" tox'
 
         test_cmds.extend([
             install_cmd + ' --user --upgrade pip',
