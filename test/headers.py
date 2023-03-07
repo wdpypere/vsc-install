@@ -124,13 +124,13 @@ class TestHeaders(TestCase):
             log.info('generated license header %s' % license)
 
             gen_txt_bru = gen_license_header(license, **data_brussel)
-            self.assertNotRegexpMatches(gen_txt_bru, 'Ghent University',
+            self.assertNotRegex(gen_txt_bru, 'Ghent University',
                                         msg='No reference to Ghent University in header')
-            self.assertNotRegexpMatches(gen_txt_bru, r'ugent\.be',
+            self.assertNotRegex(gen_txt_bru, r'ugent\.be',
                                         msg='No reference to ugent.be University in header')
-            self.assertRegexpMatches(gen_txt_bru, r'the HPC team of Vrije Universiteit Brussel \(https://hpc.vub.be\)',
+            self.assertRegex(gen_txt_bru, r'the HPC team of Vrije Universiteit Brussel \(https://hpc.vub.be\)',
                                      msg='generted header for Brussel is correct for %s' % license)
-            self.assertRegexpMatches(gen_txt_bru, r'support of Vrije Universiteit Brussel \(https://www.vub.be\)',
+            self.assertRegex(gen_txt_bru, r'support of Vrije Universiteit Brussel \(https://www.vub.be\)',
                                      msg='generted header for Brussel is correct for %s' % license)
 
     def test_begin_end_from_header(self):
@@ -179,8 +179,9 @@ class TestHeaders(TestCase):
             name = filename.replace('.check', '')
             compares.append(name)
             new_filename = filename.replace('.check', '.fixed')
-            self.assertEqual(content, open(new_filename).read(),
-                             msg='new content is as expected for %s' % filename)
+            with open(new_filename) as fih:
+                self.assertEqual(content, fih.read(),
+                                 msg='new content is as expected for %s' % filename)
 
         vsc.install.headers._write = compare
 
