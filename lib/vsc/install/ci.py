@@ -215,13 +215,12 @@ def parse_vsc_ci_cfg():
         JIRA_ISSUE_ID_IN_PR_TITLE: False,
         MOVE_SETUP_CFG: False,
         PIP_INSTALL_TEST_DEPS: None,
-        PIP_INSTALL_TOX: False,
         PIP3_INSTALL_TOX: False,
         RUN_SHELLCHECK: False,
         ENABLE_GITHUB_ACTIONS: False,
     }
 
-    deprecated_options = [PY3_ONLY, PY3_TESTS_MUST_PASS]
+    deprecated_options = [PY3_ONLY, PY3_TESTS_MUST_PASS, PIP_INSTALL_TOX]
 
     if os.path.exists(VSC_CI_INI):
         try:
@@ -268,36 +267,22 @@ def gen_jenkinsfile():
     pip_args, easy_install_args = '', ''
     install_subdir = '.vsc-tox'
 
-    # run 'pip install' commands in $HOME (rather than in repo checkout) if desired
+    # run 'pip3 install' commands in $HOME (rather than in repo checkout) if desired
     if vsc_ci_cfg[HOME_INSTALL]:
-        install_cmd = "export PREFIX=$PWD && cd $HOME && pip install"
+        install_cmd = "export PREFIX=$PWD && cd $HOME && pip3 install"
         prefix = os.path.join('$PREFIX', install_subdir)
     else:
-        install_cmd = "pip install"
+        install_cmd = "pip3 install"
         prefix = os.path.join('$PWD', install_subdir)
 
-    python_cmd = 'python'
+    python_cmd = 'python3'
 
-    if vsc_ci_cfg[PIP_INSTALL_TOX]:
-        pip_args += '--ignore-installed --prefix %s' % prefix
-
-        # tox requires zipp: require zipp < 3.7 since newer version are Python 3.7 only
-        tox = '"zipp<3.7" tox'
-
-        test_cmds.extend([
-            install_cmd + ' --user --upgrade pip',
-            # make sure correct 'pip' installation is used
-            'export PATH=$HOME/.local/bin:$PATH && %s %s %s' % (install_cmd, pip_args, tox),
-        ])
-
-    elif vsc_ci_cfg[PIP3_INSTALL_TOX]:
-        install_cmd = install_cmd.replace('pip ', 'pip3 ')
+    if vsc_ci_cfg[PIP3_INSTALL_TOX]:
         pip_args += '--ignore-installed --prefix %s' % prefix
         test_cmds.append('%s %s tox' % (install_cmd, pip_args))
-        python_cmd = 'python3'
 
     else:
-        install_cmd = install_cmd.replace('pip install', 'python -m easy_install')
+        install_cmd = install_cmd.replace('pip3 install', 'python -m easy_install')
         easy_install_args += '-U --user'
         test_cmds.append('%s %s tox' % (install_cmd, easy_install_args))
 
