@@ -87,7 +87,7 @@ def gen_github_action(repo_base_dir=os.getcwd()):
 
     if vsc_ci_cfg[ENABLE_GITHUB_ACTIONS]:
         header = [
-            "%s: configuration file for github actions worflow" % GITHUB_ACTIONS,
+            f"{GITHUB_ACTIONS}: configuration file for github actions worflow",
             "This file was automatically generated using 'python -m vsc.install.ci'",
             "DO NOT EDIT MANUALLY",
         ]
@@ -110,7 +110,7 @@ def gen_github_action(repo_base_dir=os.getcwd()):
                          'with': {'python-version': '${{ matrix.python }}'}},
                         {'name': 'install tox', 'run': 'pip install tox'},
                         {'name': 'add mandatory git remote',
-                         'run': 'git remote add hpcugent %s.git' % name_url},
+                         'run': f'git remote add hpcugent {name_url}.git'},
                         {'name': 'Run tox', 'run': 'tox -e py'}
                     ]
                 }
@@ -142,10 +142,6 @@ def gen_tox_ini():
 
     # list of Python environments in which tests should be run
     envs = []
-
-    # give error if 'py3_only' is set to false in vsc-ci.ini
-    if not vsc_ci_cfg[PY3_ONLY]:
-        logging.error("package is not py3_only. Not supported. Please set 'py3_only'. will ignore python2.")
 
     # always run tests with Python 3
     py3_env = 'py36'
@@ -206,9 +202,6 @@ def gen_tox_ini():
         # inherit Python packages installed on the system, if requested
         lines.append("sitepackages = true")
 
-    if not vsc_ci_cfg[PY3_TESTS_MUST_PASS]:
-        logging.warning("py3_tests_must_pass not set to true in config. ignoring.")
-
     return '\n'.join(lines) + '\n'
 
 
@@ -224,11 +217,11 @@ def parse_vsc_ci_cfg():
         PIP_INSTALL_TEST_DEPS: None,
         PIP_INSTALL_TOX: False,
         PIP3_INSTALL_TOX: False,
-        PY3_ONLY: True,
-        PY3_TESTS_MUST_PASS: True,
         RUN_SHELLCHECK: False,
         ENABLE_GITHUB_ACTIONS: False,
     }
+
+    deprecated_options = [PY3_ONLY, PY3_TESTS_MUST_PASS]
 
     if os.path.exists(VSC_CI_INI):
         try:
@@ -236,7 +229,7 @@ def parse_vsc_ci_cfg():
             cfgparser.read(VSC_CI_INI)
             cfgparser.items(VSC_CI)  # just to make sure vsc-ci section is there
         except (configparser.NoSectionError, configparser.ParsingError) as err:
-            logging.error("ERROR: Failed to parse %s: %s", VSC_CI_INI, err)
+            logging.error(f"ERROR: Failed to parse {VSC_CI_INI}: {err}")
             sys.exit(1)
 
         # every entry in the vsc-ci section is expected to be a known setting
@@ -247,7 +240,13 @@ def parse_vsc_ci_cfg():
                 else:
                     vsc_ci_cfg[key] = cfgparser.getboolean(VSC_CI, key)
             else:
-                raise ValueError("Unknown key in %s: %s" % (VSC_CI_INI, key))
+                if key not in deprecated_options:
+                    raise ValueError(f"Unknown key in {VSC_CI_INI}: {key}")
+
+            if key in deprecated_options:
+                msg = f'Deprecated: key {key} found in {VSC_CI_INI}. '
+                msg += 'It is no longer in use and can safely be removed.'
+                logging.warning(msg)
 
     return vsc_ci_cfg
 

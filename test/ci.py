@@ -176,8 +176,6 @@ class CITest(TestCase):
             'pip_install_test_deps': None,
             'pip_install_tox': False,
             'pip3_install_tox': False,
-            'py3_only': True,
-            'py3_tests_must_pass': True,
             'run_shellcheck': False,
         }
 
