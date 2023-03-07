@@ -92,7 +92,7 @@ if not hasattr(__builtin__, '__test_filter'):
 has_setuptools = True
 
 # redo log info / warn / error so it shows loglevel in log message
-# setuptools log does not support formatters
+# distutils log does not support formatters
 # don't do it twice
 if log.Log.__name__ != 'NewLog':
     # make a map between level and names
@@ -1468,68 +1468,41 @@ class vsc_setup(object):
                     new_target[k] += v
 
         tests_requires = new_target.setdefault('tests_require', [])
-        if sys.version_info < (2, 7):
-            # py26 support dropped in 0.8, and the old versions don't detect enough
-            log.info('no prospector support in py26 (or older)')
-            tests_requires = [x for x in tests_requires if 'prospector' not in x]
-        elif sys.version_info < (3, 0):
-            log.info('adding prospector to tests_require')
-            # limit version to avoid pulling in python 3.x only versions
-            tests_requires.append('zipp < 2.0')
-            tests_requires.append('configparser < 5.0')
-            # Python 2.x support was removed in pydocstyle 4.0, so stick to latest release before 4.0
-            tests_requires.append('pydocstyle < 4.0')
-            # fix from https://github.com/PyCQA/prospector/pull/323 required to avoid infinite recursion
-            tests_requires.append('prospector >= 1.1.6.4, < 1.3')
-            # mock 4.x is no longer compatible with Python 2
-            tests_requires.append('mock < 4.0')
-            # isort 5.0 is no longer compatible with Python 2
-            tests_requires.append('isort < 5.0')
-            # pyyaml > 5.4.1 fails for python 2.7
-            tests_requires.append('pyyaml >= 5.4.1, < 6.0')
-            # lazy_object_proxy 1.7.0 no longer compatible with python 2
-            tests_requires.append('lazy_object_proxy < 1.7.0')
-            # requirements-detector 1.0.0 no longer compatible with python 2
-            tests_requires.append('requirements-detector < 1.0.0')
-            # singledispatch 4.0.0 no longer compatible with python 2
-            tests_requires.append('singledispatch < 4.0.0')
-        else:
-            # soft pinning of (transitive) dependencies of prospector
-            # ('~=' means stick to compatible release, https://www.python.org/dev/peps/pep-0440/#compatible-release);
-            # updating these must be done in lockstep, see setup.cfg or pyproject.toml or whatever at:
-            # - https://github.com/PyCQA/pylint/blob/v2.12.2/setup.cfg
-            # - https://github.com/PyCQA/flake8/blob/3.9.2/setup.cfg
-            # - https://github.com/PyCQA/prospector/blob/1.5.3.1/pyproject.toml
-
-            # To figure out requirements of what needs what: grep name_of_tool .eggs.py3/*/*/requires.txt
+        # soft pinning of (transitive) dependencies of prospector
+        # ('~=' means stick to compatible release, https://www.python.org/dev/peps/pep-0440/#compatible-release);
+        # updating these must be done in lockstep, see setup.cfg or pyproject.toml or whatever at:
+        # - https://github.com/PyCQA/pylint/blob/v2.12.2/setup.cfg
+        # - https://github.com/PyCQA/flake8/blob/3.9.2/setup.cfg
+        # - https://github.com/PyCQA/prospector/blob/1.5.3.1/pyproject.toml
+        # To figure out requirements of what needs what: grep name_of_tool .eggs.py3/*/*/requires.txt
+        tests_requires.extend([
+            'mock',
+        ])
+        if sys.version_info < (3, 7):
             tests_requires.extend([
-                'mock',
+                'pyflakes~=2.3.0',
+                'pycodestyle~=2.7.0',
+                'pylint~=2.12.2',
+                'prospector~=1.5.3.1',
+                'flake8~=3.9.2',
+                'pylint-plugin-utils < 0.7',
+                'pylint-django~=2.4.4',
+                # platformdirs >= 2.4.0 requires Python 3.7, use older versions for running tests with Python 3.6
+                'platformdirs < 2.4.0',
+                'typing-extensions < 4.2.0', # higher requires python 3.7
+                'lazy-object-proxy < 1.8.0', # higher requires python 3.7
+                'jsonpickle < 3.0.0', # higher requires python 3.7
+                'importlib-metadata < 5.0.0', # no longer compatible with python 3.7
+                'isort < 5.11.0',
             ])
-            if sys.version_info < (3, 7):
-                tests_requires.extend([
-                    'pyflakes~=2.3.0',
-                    'pycodestyle~=2.7.0',
-                    'pylint~=2.12.2',
-                    'prospector~=1.5.3.1',
-                    'flake8~=3.9.2',
-                    'pylint-plugin-utils < 0.7',
-                    'pylint-django~=2.4.4',
-                    # platformdirs >= 2.4.0 requires Python 3.7, use older versions for running tests with Python 3.6
-                    'platformdirs < 2.4.0',
-                    'typing-extensions < 4.2.0', # higher requires python 3.7
-                    'lazy-object-proxy < 1.8.0', # higher requires python 3.7
-                    'jsonpickle < 3.0.0', # higher requires python 3.7
-                    'importlib-metadata < 5.0.0', # no longer compatible with python 3.7
-                    'isort < 5.11.0',
-                ])
-            else:  # tested for fedora37 py3.11
-                tests_requires.extend([
-                    'flake8 < 5.0.0',
-                    'astroid <= 2.12.0-dev0',
-                    'pyflakes < 2.5.0',
-                    'pylint~=2.14.4',
-                    'prospector~=1.7.7',
-                ])
+        else:  # tested for fedora37 py3.11
+            tests_requires.extend([
+                'flake8 < 5.0.0',
+                'astroid <= 2.12.0-dev0',
+                'pyflakes < 2.5.0',
+                'pylint~=2.14.4',
+                'prospector~=1.7.7',
+            ])
 
         new_target['tests_require'] = tests_requires
 
@@ -1729,11 +1702,7 @@ if __name__ == '__main__':
         'setuptools < %s' % MAX_SETUPTOOLS_VERSION,
     ]
 
-    # mock 4.0 only supports Python 3+
-    if sys.version_info < (3, 0):
-        install_requires.append('mock < 4.0')
-    else:
-        install_requires.append('mock')
+    install_requires.append('mock')
 
     PACKAGE = {
         'version': VERSION,
