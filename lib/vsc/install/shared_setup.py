@@ -91,7 +91,8 @@ if not hasattr(__builtin__, '__test_filter'):
 # Keep this for legacy reasons, setuptools didn't used to be a requirement
 has_setuptools = True
 
-# redo log info / warn / error
+# redo log info / warn / error so it shows loglevel in log message
+# setuptools log does not support formatters
 # don't do it twice
 if log.Log.__name__ != 'NewLog':
     # make a map between level and names
