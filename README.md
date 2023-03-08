@@ -469,40 +469,14 @@ specify this via a `vsc-ci.ini` configuration file:
 install_scripts_prefix_override=1
 ```
 
-Requiring that tests pass using Python 3
-----------------------------------------
+Use 'easy_install' to install tox
+---------------------------------
 
-To require that the test suite passes when run with Python 3, you must opt-in to generating a tox configuration file
-(tox.ini) that does not ignore a missing interpreter or failing tests, using a `vsc-ci.ini` configuration file like:
-
-```ini
-[vsc-ci]
-py3_tests_must_pass=1
-```
-
-Only testing with Python 3
---------------------------
-
-To only test with Python 3 and skip running the tests with Python, you can set `py3_only` in ` vsc-ci.ini`:
+For legacy reasons easy_install is still supported. If you still need it you can enable it (not recommended):
 
 ```ini
 [vsc-ci]
-py3_tests_must_pass=1
-py3_only=1
-```
-
-This is useful for repositories where we start adding stuff that only works in Python 3.
-
-**Note:** make sure you also enable `py3_tests_must_pass`, since that's not enabled by default (yet)!
-
-Use 'pip3' to install tox
--------------------------
-
-On systems that have Python 3 and `pip3` installed, it is recommended to opt-in to use `pip3 install` to install tox:
-
-```ini
-[vsc-ci]
-pip3_install_tox=1
+easy_install_tox=1
 ```
 
 Avoid running ``pip install`` in repo checkout
