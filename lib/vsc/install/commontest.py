@@ -34,6 +34,7 @@ Running python setup.py test will pick this up and do its magic
 @author: Stijn De Weirdt (Ghent University)
 """
 
+import optparse
 import os
 import pkg_resources
 import pprint
