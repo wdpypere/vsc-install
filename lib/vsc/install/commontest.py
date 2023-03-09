@@ -34,6 +34,7 @@ Running python setup.py test will pick this up and do its magic
 @author: Stijn De Weirdt (Ghent University)
 """
 
+import optparse
 import os
 import pkg_resources
 import pprint
@@ -144,6 +145,7 @@ def prospector_ignore_paths_add(path):
 
 def run_prospector(base_dir, clear_ignore_patterns=False):
     """Run prospector and apply white/blacklists to the results"""
+    orig_expand_default = optparse.HelpFormatter.expand_default
 
     log.info("Using prosector version %s", prospector_version)
 
@@ -203,6 +205,13 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
 
         if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in whitelist]):
             failures.append(msg.as_dict())
+
+    # The following is still the case in 3.6. seems to be fixed in 3.9:
+    # There is some ugly monkeypatch code in pylint
+    #     (or logilab if no recent enough pylint is installed)
+    # Make sure the original is restored
+    # (before any errors are reported; no need to put this in setUp/tearDown)
+    optparse.HelpFormatter.expand_default = orig_expand_default
 
     return failures
 
