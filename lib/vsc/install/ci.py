@@ -109,7 +109,8 @@ def gen_github_action(repo_base_dir=os.getcwd()):
                         {'name': 'Checkout code', 'uses': 'actions/checkout@v3'},
                         {'name': 'Setup Python', 'uses': 'actions/setup-python@v4',
                          'with': {'python-version': '${{ matrix.python }}'}},
-                        {'name': 'install tox', 'run': 'pip install tox'},
+                        # cap versions still compatible with Python 3.6
+                        {'name': 'install tox', 'run': "pip install 'virtualenv<20.22.0' 'tox<4.5.0'"},
                         {'name': 'add mandatory git remote',
                          'run': f'git remote add hpcugent {name_url}.git'},
                         {'name': 'Run tox', 'run': 'tox -e py'}
