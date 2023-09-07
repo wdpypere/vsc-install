@@ -41,6 +41,7 @@ import inspect
 import json
 import os
 import shutil
+import traceback
 import re
 
 import setuptools
@@ -167,7 +168,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.18.8'
+VERSION = '0.18.9'
 
 log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
 log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
@@ -800,8 +801,9 @@ class vsc_setup(object):
                 try:
                     # pattern is new, this can fail on some old setuptools
                     testsuites = ScanningLoader.loadTestsFromModule(self, module, pattern)
-                except TypeError:
+                except TypeError as e:
                     log.warn('pattern argument not supported on this setuptools yet, ignoring')
+                    log.warn(f'original exception {e} {traceback.format_exc()}')
                     try:
                         testsuites = ScanningLoader.loadTestsFromModule(self, module)
                     except Exception:
