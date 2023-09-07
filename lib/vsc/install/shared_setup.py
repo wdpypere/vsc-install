@@ -41,6 +41,7 @@ import inspect
 import json
 import os
 import shutil
+import traceback
 import re
 
 import setuptools
@@ -800,8 +801,9 @@ class vsc_setup(object):
                 try:
                     # pattern is new, this can fail on some old setuptools
                     testsuites = ScanningLoader.loadTestsFromModule(self, module, pattern)
-                except TypeError:
+                except TypeError as e:
                     log.warn('pattern argument not supported on this setuptools yet, ignoring')
+                    log.warn(f'original exception {e} {traceback.format_exc()}')
                     try:
                         testsuites = ScanningLoader.loadTestsFromModule(self, module)
                     except Exception:
