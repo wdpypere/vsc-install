@@ -58,40 +58,40 @@ class TestCase(OrigTestCase):
     DIFF_OFFSET = 5 # lines of text around changes
 
     # pylint: disable=arguments-differ
-    def assertEqual(self, a, b, msg=None):
+    def assertEqual(self, first, second, msg=None):
         """Make assertEqual always print useful messages"""
 
         try:
-            super(TestCase, self).assertEqual(a, b)
-        except AssertionError as e:
+            super().assertEqual(first, second)
+        except AssertionError as err:
             if msg is None:
-                msg = str(e)
+                msg = str(err)
             else:
-                msg = "%s: %s" % (msg, e)
+                msg = f"{msg}: {err}"
 
-            if isinstance(a, str):
-                txta = a
+            if isinstance(first, str):
+                txta = first
             else:
-                txta = pprint.pformat(a)
-            if isinstance(b, str):
-                txtb = b
+                txta = pprint.pformat(first)
+            if isinstance(second, str):
+                txtb = second
             else:
-                txtb = pprint.pformat(b)
+                txtb = pprint.pformat(second)
 
             diff = nicediff(txta, txtb, offset=self.DIFF_OFFSET)
             if len(diff) > self.ASSERT_MAX_DIFF:
-                limit = ' (first %s lines)' % self.ASSERT_MAX_DIFF
+                limit = f' (first {self.ASSERT_MAX_DIFF} lines)'
             else:
                 limit = ''
 
-            raise AssertionError("%s:\nDIFF%s:\n%s" % (msg, limit, ''.join(diff[:self.ASSERT_MAX_DIFF])))
+            raise AssertionError(f"{msg}:\nDIFF{limit}:\n{''.join(diff[:self.ASSERT_MAX_DIFF])}")
 
     def setUp(self):
         """Prepare test case."""
-        super(TestCase, self).setUp()
+        super().setUp()
 
-        self.maxDiff = None
-        self.longMessage = True
+        self.max_diff = None
+        self.long_message = True
 
         self.orig_sys_stdout = sys.stdout
         self.orig_sys_stderr = sys.stderr
@@ -132,12 +132,12 @@ class TestCase(OrigTestCase):
             call(*args, **kwargs)
             str_kwargs = ['='.join([k, str(v)]) for (k, v) in kwargs.items()]
             str_args = ', '.join(list(map(str, args)) + str_kwargs)
-            self.assertTrue(False, "Expected errors with %s(%s) call should occur" % (call.__name__, str_args))
+            self.assertTrue(False, f"Expected errors with {call.__name__}({str_args}) call should occur")
         except error as err:
             msg = self.convert_exception_to_str(err)
             if isinstance(regex, str):
                 regex = re.compile(regex)
-            self.assertTrue(regex.search(msg), "Pattern '%s' is found in '%s'" % (regex.pattern, msg))
+            self.assertTrue(regex.search(msg), f"Pattern '{regex.pattern}' is found in '{msg}'")
 
     def mock_stdout(self, enable):
         """Enable/disable mocking stdout."""
@@ -177,7 +177,7 @@ class TestCase(OrigTestCase):
             elif hasattr(logmethod_func, '__name__'):
                 funcname = logmethod_func.__name__
             else:
-                raise Exception("Unknown logmethod %s" % (dir(logmethod_func)))
+                raise ValueError(f"Unknown logmethod {dir(logmethod_func)}")
             logcache = self.LOGCACHE.setdefault(funcname, [])
             logcache.append({'args': args, 'kwargs': kwargs})
             logmethod_func(*args, **kwargs)
@@ -227,11 +227,14 @@ class TestCase(OrigTestCase):
         os.chdir(self.orig_workdir)
         shutil.rmtree(self.tmpdir)
 
-        super(TestCase, self).tearDown()
+        super().tearDown()
 
 
 # backwards incompatible change
 class VSCImportTest(TestCase):
+    """
+    catchall for old tests.
+    """
     def test_deprecated_fail(self):
         """
         VSCImportTest is now deprecated and will always fail, use
