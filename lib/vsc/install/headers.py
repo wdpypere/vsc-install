@@ -91,10 +91,10 @@ def get_header(filename, script=False):
     """
 
     if not os.path.isfile(filename):
-        raise Exception('get_header filename %s not found' % filename)
+        raise Exception(f'get_header filename {filename} not found')
 
-    with open(filename) as fh:
-        txt = fh.read()
+    with open(filename) as fih:
+        txt = fih.read()
 
     blocks = HEADER_REGEXP.split(txt)
     if len(blocks) == 1:
@@ -102,7 +102,7 @@ def get_header(filename, script=False):
         blocks = ['', '']
     elif blocks[0] != '':
         # the block before the begin of text is always empty
-        raise Exception('unexpected non-empty block with get_header %s: %s' % (filename, blocks))
+        raise Exception(f'unexpected non-empty block with get_header {filename}: {blocks}')
 
     header = blocks[1]
 
@@ -128,10 +128,10 @@ def gen_license_header(license_name, **kwargs):
         name: project name
         url: project url
     """
-    template_name = "%s_TEMPLATE" % license_name.replace('+', '_plus_')
+    template_name = f"{license_name.replace('+', '_plus_')}_TEMPLATE"
     template = globals().get(template_name, None)
     if template is None:
-        raise Exception('gen_license_header cannot find template name %s' % template_name)
+        raise Exception('gen_license_header cannot find template name %s', template_name)
 
     found = False
     for github_organ in institute_details.keys():
@@ -141,7 +141,7 @@ def gen_license_header(license_name, **kwargs):
             break
 
     if not found:
-        raise Exception('Unable to find a known github organization in url %s' % kwargs.get('url'))
+        raise Exception('Unable to find a known github organization in url %s', kwargs.get('url'))
 
     return template.format(**kwargs)
 
@@ -173,8 +173,8 @@ def begin_end_from_header(header):
 
 def _write(filename, content):
     """Simple wrapper around open().write for unittesting"""
-    with open(filename, 'w') as fh:
-        fh.write(content)
+    with open(filename, 'w') as fih:
+        fih.write(content)
 
 
 def check_header(filename, script=False, write=False):
@@ -200,7 +200,7 @@ def check_header(filename, script=False, write=False):
         # scripts must have an appropriate shebang
         shebang = orig_shebang
         file_ext = os.path.splitext(filename)[1]
-        log.info("Shebang found in %s (ext: %s): %s", filename, file_ext, shebang)
+        log.info(f"Shebang found in {filename} (ext: {file_ext}): {shebang}")
 
         if file_ext == '.py':
             if shebang != SHEBANG_ENV_PYTHON:
@@ -271,13 +271,13 @@ def check_header(filename, script=False, write=False):
         new_header = gen_header
 
     if orig_header != new_header:
-        log.info("Diff orig_header vs new_header for %s\n" % filename + ''.join(nicediff(orig_header, new_header)))
+        log.info("Diff orig_header vs new_header for %s\n", filename + ''.join(nicediff(orig_header, new_header)))
         changed = True
 
     if write and changed:
-        log.info('write enabled and different header. Going to modify file %s' % filename)
-        with open(filename) as fh:
-            wholetext = fh.read()
+        log.info('write enabled and different header. Going to modify file %s', filename)
+        with open(filename) as fih:
+            wholetext = fih.read()
         _write(filename, new_header + wholetext[header_end_pos:])
 
     # return different or not
@@ -383,5 +383,5 @@ if __name__ == '__main__':
         args.pop(-1)
 
     for fn in args:
-        log.info('Going to check_header for file %s (is_script=%s)' % (fn, is_script))
+        log.info(f'Going to check_header for file {fn} (is_script={is_script})')
         check_header(fn, script=is_script, write=True)

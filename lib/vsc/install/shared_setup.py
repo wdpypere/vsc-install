@@ -113,7 +113,7 @@ if log.Log.__name__ != 'NewLog':
 
         def _log(self, level, msg, args):
             """Prefix the message with human readable level"""
-            newmsg = "%s: %s" % (self._log_levels.get(level, 'UNKNOWN'), msg)
+            newmsg = f"{self._log_levels.get(level, 'UNKNOWN')}: {msg}"
             try:
                 return self._orig_log(self, level, newmsg, args)
             except Exception:
@@ -168,10 +168,10 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.18.9'
+VERSION = '0.18.10'
 
-log.info('This is (based on) vsc.install.shared_setup %s' % VERSION)
-log.info('(using setuptools version %s located at %s)' % (setuptools.__version__, setuptools.__file__))
+log.info('This is (based on) vsc.install.shared_setup %s', VERSION)
+log.info('(using setuptools version %s located at %s)', setuptools.__version__, setuptools.__file__)
 
 # list of non-vsc packages that do not need python- prefix for correct rpm dependencies
 # vsc packages should be handled with clusterbuildrpm
@@ -267,9 +267,9 @@ def _fvs(msg=None):
     klass = parent
     if subclasses:
         klass = subclasses[0]
-        log.debug("%sFound %s subclass %s" % (msg, pname, klass.__name__))
+        log.debug("%sFound %s subclass %s", msg, pname, klass.__name__)
     else:
-        log.debug("%sFound no subclasses, returning %s" % (msg, pname))
+        log.debug("%sFound no subclasses, returning %s", msg, pname)
 
     return klass
 
@@ -295,12 +295,12 @@ if hasattr(setuptools.dist.Distribution, 'get_egg_cache_dir'):
 
         # the original get_egg_cache_dir creates the .eggs directory if it doesn't exist yet,
         # but we want to have it versioned, so we rename it
-        egg_cache_dir_pyver = egg_cache_dir + '.py%s' % sys.version_info[0]
+        egg_cache_dir_pyver = f'{egg_cache_dir}.py{sys.version_info[0]}'
         try:
             if not os.path.exists(egg_cache_dir_pyver):
                 os.rename(egg_cache_dir, egg_cache_dir_pyver)
         except OSError as err:
-            raise OSError("Failed to rename %s to %s: %s" % (egg_cache_dir, egg_cache_dir_pyver, err))
+            raise OSError("Failed to rename %s to %s: %s", egg_cache_dir, egg_cache_dir_pyver, err)
 
         return egg_cache_dir_pyver
 
@@ -314,7 +314,7 @@ else:
         shutil.rmtree(eggs_dir)
 
 
-class vsc_setup(object):
+class vsc_setup():
     """
     Store these Constants in a separate class instead of creating them at runtime,
     so shared setup can setup another package that uses shared setup.
@@ -329,14 +329,14 @@ class vsc_setup(object):
         _repo_base_dir_env = os.environ.get('REPO_BASE_DIR', None)
         if _repo_base_dir_env:
             self.REPO_BASE_DIR = _repo_base_dir_env
-            log.warn('run_tests from base dir set though environment %s' % (self.REPO_BASE_DIR))
+            log.warn('run_tests from base dir set though environment %s', self.REPO_BASE_DIR)
         else:
             # we will assume that the tests are called from
             # a 'setup.py' like file in the basedirectory
             # (but could be called anything, as long as it is in the basedir)
             _setup_py = os.path.abspath(sys.argv[0])
             self.REPO_BASE_DIR = os.path.dirname(_setup_py)
-            log.info('run_tests from base dir %s (using executable %s)' % (self.REPO_BASE_DIR, _setup_py))
+            log.info('run_tests from base dir %s (using executable %s)', self.REPO_BASE_DIR, _setup_py)
         self.REPO_LIB_DIR = os.path.join(self.REPO_BASE_DIR, DEFAULT_LIB_DIR)
         self.REPO_SCRIPTS_DIR = os.path.join(self.REPO_BASE_DIR, 'bin')
         self.REPO_TEST_DIR = os.path.join(self.REPO_BASE_DIR, DEFAULT_TEST_SUITE)
@@ -366,8 +366,8 @@ class vsc_setup(object):
 
         if filename is None:
             raise Exception('no file to get name from')
-        elif not os.path.isfile(filename):
-            raise Exception('cannot find file %s to get name from' % filename)
+        if not os.path.isfile(filename):
+            raise Exception(f'cannot find file {filename} to get name from')
 
         txt = _read(filename)
 
@@ -394,24 +394,24 @@ class vsc_setup(object):
         }
 
         res = {}
-        for name, patterns in all_patterns.items():
+        for pat_name, patterns in all_patterns.items():
             for pat in patterns:
                 reg = re.search(pat, txt[:10240], re.M)
                 if reg:
-                    res[name] = reg.group(1)
-                    log.info('found match %s %s in %s' % (name, res[name], filename))
+                    res[pat_name] = reg.group(1)
+                    log.info('found match %s %s in %s', pat_name, res[pat_name], filename)
                     break
 
         # handle git@server:user/project
         reg = re.search(r'^git@(.*?):(.*)$', res.get('url', ''))
         if reg:
-            res['url'] = "https://%s/%s" % (reg.group(1), reg.group(2))
+            res['url'] = f"https://{reg.group(1)}/{reg.group(2)}"
             log.info('reg found: %s', reg.groups())
             self.private_repo = True
 
         if 'url' not in res:
             allowed_remotes = ', '.join(['%s/%s' % remote for remote in GIT_REMOTES])
-            raise KeyError("Missing url in git config %s. (Missing mandatory remote? %s)" % (res, allowed_remotes))
+            raise KeyError(f"Missing url in git config {res}. (Missing mandatory remote? {allowed_remotes})")
 
         # handle git://server/user/project
         reg = re.search(r'^(git|ssh)://', res.get('url', ''))
@@ -426,22 +426,22 @@ class vsc_setup(object):
                 # force to None
                 res['download_url'] = None
             elif 'github' in res.get('url', '') and version is not None:
-                res['download_url'] = "%s/archive/%s.tar.gz" % (res['url'], version)
+                res['download_url'] = f"{res['url']}/archive/{version}.tar.gz"
             else:
                 # other remotes have no external download url
                 res['download_url'] = None
 
         if len(res) != 3:
-            raise Exception("Cannot determine name, url and download url from filename %s: got %s" % (filename, res))
+            raise Exception(f"Cannot determine name, url and download url from filename {filename}: got {res}")
         else:
             keepers = {}
-            for name, value in res.items():
+            for keep_name, value in res.items():
                 if value is None:
-                    log.info('Removing None %s' % name)
+                    log.info('Removing None %s', keep_name)
                 else:
-                    keepers[name] = value
+                    keepers[keep_name] = value
 
-            log.info('get_name_url returns %s' % keepers)
+            log.info('get_name_url returns %s', keepers)
             return keepers
 
     def rel_gitignore(self, paths, base_dir=None):
@@ -504,8 +504,8 @@ class vsc_setup(object):
                     init = _read(os.path.join(root, '__init__.py'))
                     if not re.search(r'^import\s+pkg_resources\n{1,3}pkg_resources.declare_namespace\(__name__\)$',
                                      init, re.M):
-                        raise Exception(('vsc namespace packages do not allow non-shared namespace in dir %s.'
-                                         'Fix with pkg_resources.declare_namespace') % root)
+                        raise Exception((f'vsc namespace packages do not allow non-shared namespace in dir {root}.'
+                                         'Fix with pkg_resources.declare_namespace'))
 
                 res['packages'][package] = self.rel_gitignore([os.path.join(root, f) for f in files])
 
@@ -514,7 +514,7 @@ class vsc_setup(object):
                     if not mod_fn.endswith('.py') or mod_fn.endswith('__init__.py'):
                         continue
                     modname = os.path.basename(mod_fn)[:-len('.py')]
-                    res['modules']["%s.%s" % (package, modname)] = mod_fn
+                    res['modules'][f"{package}.{modname}"] = mod_fn
 
         return res
 
@@ -527,7 +527,7 @@ class vsc_setup(object):
             if os.path.isfile(fn):
                 filelist.append(fn)
             else:
-                log.error("sdist add_defaults Failed to find %s. Exiting." % fn)
+                log.error("sdist add_defaults Failed to find %s. Exiting.", fn)
                 sys.exit(1)
         return filelist
 
@@ -542,7 +542,7 @@ class vsc_setup(object):
             all_files = self.package_files['packages'].get(pkg, [])
             # only add overlapping files, in this case the __init__ providing/extending the namespace
             res.extend([f for f in all_files if os.path.basename(f) == '__init__.py'])
-        log.info('files to be removed from rpm: %s' % res)
+        log.info('files to be removed from rpm: %s', res)
         return res
 
     class vsc_sdist(sdist):
@@ -563,7 +563,7 @@ class vsc_setup(object):
             returns the final destination and content of the file
             """
             dest = os.path.join(base_dir, *paths)
-            log.info('recopying dest %s if hardlinked' % dest)
+            log.info('recopying dest %s if hardlinked', dest)
             if hasattr(os, 'link') and os.path.exists(dest):
                 # unlink and re-copy, since it might be hard-linked, and
                 # we don't want to change the source version
@@ -616,17 +616,17 @@ class vsc_setup(object):
             ext_dir = os.path.join(base_dir, EXTERNAL_DIR)
             os.mkdir(ext_dir)
 
-            dest = os.path.join(ext_dir, '%s.py' % NEW_SHARED_SETUP)
-            log.info('inserting shared_setup as %s' % dest)
+            dest = os.path.join(ext_dir, f'{NEW_SHARED_SETUP}.py')
+            log.info('inserting shared_setup as %s', dest)
             try:
                 source_code = inspect.getsource(sys.modules[__name__])
             except Exception as err:  # have no clue what exceptions inspect might throw
-                raise Exception("sdist requires access shared_setup source (%s)" % err)
+                raise Exception(f"sdist requires access shared_setup source ({err})")
 
             try:
                 self._write(dest, source_code)
             except IOError as err:
-                raise IOError("Failed to write NEW_SHARED_SETUP source to %s (%s)" % (dest, err))
+                raise IOError(f"Failed to write NEW_SHARED_SETUP source to dest ({err})")
 
         def make_release_tree(self, base_dir, files):
             """
@@ -635,12 +635,12 @@ class vsc_setup(object):
             and modify the to-be-packaged setup.py
             """
 
-            log.info("sdist make_release_tree original base_dir %s files %s" % (base_dir, files))
-            log.info("sdist from shared_setup %s current dir %s" % (__file__, os.getcwd()))
+            log.info("sdist make_release_tree original base_dir %s files %s", base_dir, files)
+            log.info("sdist from shared_setup %s current dir %s", __file__, os.getcwd())
             if os.path.exists(base_dir):
                 # no autocleanup?
                 # can be a leftover of earlier crash/raised exception
-                raise Exception("base_dir %s present. Please remove it" % base_dir)
+                raise Exception(f"base_dir {base_dir} present. Please remove it")
 
             sdist.make_release_tree(self, base_dir, files)
 
@@ -670,14 +670,14 @@ class vsc_setup(object):
                 build_scripts = self.get_finalized_command('build_scripts')
                 scripts = build_scripts.get_source_files()
 
-                log.info("scripts to check for shebang %s" % (scripts))
+                log.info("scripts to check for shebang %s", scripts)
                 # does not include newline
                 pyshebang_reg = re.compile(r'\A%s.*$' % SHEBANG_ENV_PYTHON, re.M)
                 for fn in scripts:
                     # includes newline
                     first_line = _read(os.path.join(base_dir, fn), read_lines=True)[0]
                     if pyshebang_reg.search(first_line):
-                        log.info("going to adapt shebang for script %s" % fn)
+                        log.info("going to adapt shebang for script %s", fn)
                         dest, code = self._recopy(base_dir, fn)
                         code = pyshebang_reg.sub(SHEBANG_STRIPPED_ENV_PYTHON, code)
                         self._write(dest, code)
@@ -699,7 +699,7 @@ class vsc_setup(object):
             cleanup = []
             setupper = _fvs('vsc_egg_info finalize_options')()
             if not os.path.exists(setupper.REPO_LIB_DIR):
-                log.warn('vsc_egg_info create missing %s (will be removed later)' % setupper.REPO_LIB_DIR)
+                log.warn('vsc_egg_info create missing %s (will be removed later)', setupper.REPO_LIB_DIR)
                 os.mkdir(setupper.REPO_LIB_DIR)
                 cleanup.append(setupper.REPO_LIB_DIR)
 
@@ -961,17 +961,17 @@ class vsc_setup(object):
                 try:
                     __import__(package)
                     log.debug('Imported package %s' % package)
-                except ImportError as e:
-                    raise ImportError("Failed to import package %s from current repository: %s" % (package, e))
+                except ImportError as err:
+                    raise ImportError(f"Failed to import package {package} from current repository: {err}")
                 sys.modules[package].__path__.insert(0, os.path.dirname(packages[package][0]))
 
             # reload the loaded modules with new __path__
             for module in reloaded_modules:
                 try:
                     __import__(module)
-                    log.debug('Imported module %s' % module)
-                except ImportError as e:
-                    raise ImportError("Failed to reload module %s: %s" % (module, e))
+                    log.debug('Imported module %s', module)
+                except ImportError as err:
+                    raise ImportError(f"Failed to reload module {module}: {err}")
 
             return cleanup
 
@@ -1057,7 +1057,7 @@ class vsc_setup(object):
             for pat in exclude:
                 reg = re.compile(pat)
                 alist = [s for s in alist if not reg.search(s)]
-        log.info('generated list: %s' % alist)
+        log.info('generated list: %s', alist)
         return alist
 
     def generate_packages(self, extra=None, exclude=None):
@@ -1070,9 +1070,9 @@ class vsc_setup(object):
             exclude is list of regex patterns to filter the packages
         """
         packages = self.package_files['packages'].keys()
-        log.info('initial packages list: %s' % packages)
+        log.info('initial packages list: %s', packages)
         res = _fvs('generate_packages').add_and_remove(packages, extra=extra, exclude=exclude)
-        log.info('generated packages list: %s' % res)
+        log.info('generated packages list: %s', res)
         return res
 
     def generate_modules(self, extra=None, exclude=None):
@@ -1082,7 +1082,7 @@ class vsc_setup(object):
         """
         res = _fvs('generate_modules').add_and_remove(self.package_files['modules'].keys(), extra=extra,
                                                       exclude=exclude)
-        log.info('generated modules list: %s' % res)
+        log.info('generated modules list: %s', res)
         return res
 
     def generate_scripts(self, extra=None, exclude=None):
@@ -1094,7 +1094,7 @@ class vsc_setup(object):
         if os.path.isdir(self.REPO_SCRIPTS_DIR):
             res = self.rel_gitignore(glob.glob("%s/*" % self.REPO_SCRIPTS_DIR))
         res = _fvs('generate_scripts').add_and_remove(res, extra=extra, exclude=exclude)
-        log.info('generated scripts list: %s' % res)
+        log.info('generated scripts list: %s', res)
         return res
 
     class vsc_release(Command):
@@ -1121,11 +1121,11 @@ class vsc_setup(object):
         def git_tag(self):
             """Tag the version in git"""
             tag = self.distribution.get_fullname()
-            log.info('Create git tag %s' % tag)
+            log.info('Create git tag %s', tag)
             self._print(['git', 'tag', tag])
             self._print(['git', 'push', 'upstream', 'tag', tag])
 
-        def github_release(self, gh='github.com'):
+        def github_release(self, gith='github.com'):
             """Make the github release"""
             version = self.distribution.get_version()
             name = self.distribution.get_name()
@@ -1133,38 +1133,38 @@ class vsc_setup(object):
             # makes funny download url, but unpacks correctly
             tag = version
 
-            log.info('making github_release for %s on %s' % (tag, gh))
+            log.info('making github_release for %s on %s', tag, gith)
 
-            if gh == 'github.com':
+            if gith == 'github.com':
                 api_url = 'api.github.com'
                 tokens = 'tokens'
                 token_suffix = ''
             else:
-                api_url = "%s/api/v3" % gh
-                # might change with future gh enterprise release?
+                api_url = f"{gith}/api/v3"
+                # might change with future github enterprise release?
                 tokens = 'applications'
-                token_suffix = '_%s' % gh.split('.')[-2].upper()  # non-country subdomain (e.g. github.ugent.be->ugent)
+                token_suffix = f"_{gith.split('.')[-2].upper()}"  # non-country subdomain (e.g. github.ugent.be->ugent)
 
-            token_var = "GH_OAUTH_TOKEN%s" % token_suffix
+            token_var = f"GH_OAUTH_TOKEN{token_suffix}"
 
-            log.info("get token from https://%s/settings/%s, set it in %s environment variable" %
-                     (gh, tokens, token_var))
+            log.info("get token from https://%s/settings/%s, set it in %s environment variable",
+                     gith, tokens, token_var)
 
             # https://developer.github.com/v3/repos/releases/#create-a-release
             api_data = {
                 "tag_name": tag,
                 "target_commitish": "master",
                 "name": tag,
-                "body": "Release %s for %s version %s" % (tag, name, version),
+                "body": f"Release {tag} for {name} version {version}",
                 "draft": False,
                 "prerelease": False,
             }
 
             owner = 'hpcugent'
-            release_url = "https://%s/repos/%s/%s/releases?access_token=$%s" % (api_url, owner, name, token_var)
+            release_url = f"https://{api_url}/repos/{owner}/{name}/releases?access_token=${token_var}"
 
-            self._print(['# Run command below to make release on %s' % gh])
-            self._print(['curl', '--data', "'%s'" % json.dumps(api_data), release_url])
+            self._print([f'# Run command below to make release on {gith}'])
+            self._print(['curl', '--data', f"'{json.dumps(api_data), release_url}'"])
 
         def pypi(self):
             """Register, sdist and upload to pypi"""
@@ -1176,12 +1176,12 @@ class vsc_setup(object):
             log.info('Register with pypi')
             # do actually do this, use self.run_command()
             # you can only upload what you just created
-            self._print(['# Run commands below to upload to PyPI (testpypi %s)' % self.testpypi])
+            self._print([f'# Run commands below to upload to PyPI (testpypi {self.testpypi})'])
             self._print(setup + ['register'] + test + ['sdist'])
-            self._print(['twine', 'upload', '--verbose', 'dist/%s.tar.gz' % self.distribution.get_fullname()])
+            self._print(['twine', 'upload', '--verbose', f'dist/{self.distribution.get_fullname()}.tar.gz'])
 
         def run(self):
-            """Print list of thinigs to do"""
+            """Print list of things to do"""
             fullname = self.distribution.get_fullname()
 
             url = self.distribution.get_url()
@@ -1192,7 +1192,7 @@ class vsc_setup(object):
             # private enterprise installs of github e.g. http://github.example.com/
             gh_reg = re.search(r'^.*?://([^/]*github[^/]*)/', url[:1024])
 
-            log.info("Release commands to perform for %s" % fullname)
+            log.info("Release commands to perform for %s", fullname)
             if gh_reg:
                 # API call below should make the tag too
                 self.github_release(gh=gh_reg.group(1))
@@ -1204,7 +1204,7 @@ class vsc_setup(object):
             if _fvs('vsc_release run').release_on_pypi(lic):
                 self.pypi()
             else:
-                log.info("%s license %s does not allow uploading to pypi" % (fullname, lic))
+                log.info("%s license %s does not allow uploading to pypi", fullname, lic)
 
     # shared target config
     # the cmdclass is updated to the _fvs() ones in parse_target
@@ -1220,7 +1220,7 @@ class vsc_setup(object):
         'command_packages': ['vsc.install.shared_setup', NEW_SHARED_SETUP, 'setuptools.command', 'distutils.command'],
         'download_url': '',
         'package_dir': {'': DEFAULT_LIB_DIR},
-        'setup_requires': ['setuptools', 'vsc-install >= %s' % VERSION],
+        'setup_requires': ['setuptools', f'vsc-install >= {VERSION}'],
         'test_suite': DEFAULT_TEST_SUITE,
         'url': '',
         'dependency_links': [],
@@ -1230,14 +1230,14 @@ class vsc_setup(object):
 
     def cleanup(self, prefix=''):
         """Remove all build cruft."""
-        dirs = [prefix + 'build'] + glob.glob('%s%s/*.egg-info' % (prefix, DEFAULT_LIB_DIR))
-        for d in dirs:
-            if os.path.isdir(d):
-                log.warn("cleanup %s" % d)
+        dirs = [prefix + 'build'] + glob.glob(f'{prefix}{DEFAULT_LIB_DIR}/*.egg-info')
+        for dirname in dirs:
+            if os.path.isdir(dirname):
+                log.warn("cleanup %s", dirname)
                 try:
-                    remove_tree(d, verbose=False)
+                    remove_tree(dirname, verbose=False)
                 except OSError:
-                    log.error("cleanup failed for %s" % d)
+                    log.error("cleanup failed for %s", dirname)
 
     @staticmethod
     def sanitize(name):
@@ -1280,11 +1280,11 @@ class vsc_setup(object):
 
                 # more sensible map
                 is_python_pkg = (not ([x for x in NO_PREFIX_PYTHON_BDIST_RPM if name.startswith(x)] or
-                                      name.startswith('python-') or name.startswith('python%s-' % pyversuff))
+                                      name.startswith('python-') or name.startswith(f'python{pyversuff}-'))
                                  or name.startswith('vsc'))
 
                 if is_python_pkg:
-                    newname = fix_range('python%s-%s' % (pyversuff, name))
+                    newname = fix_range(f'python{pyversuff}-{name}')
                     log.debug("new sanitized name %s (old %s)", newname, name)
                     return newname
 
@@ -1297,8 +1297,8 @@ class vsc_setup(object):
     def get_md5sum(filename):
         """Use this function to compute the md5sum in the KNOWN_LICENSES hash"""
         hasher = hashlib.md5()
-        with open(filename, "rb") as fh:
-            for chunk in iter(lambda: fh.read(4096), b""):
+        with open(filename, "rb") as fih:
+            for chunk in iter(lambda: fih.read(4096), b""):
                 hasher.update(chunk)
         return hasher.hexdigest()
 
@@ -1313,10 +1313,10 @@ class vsc_setup(object):
         if license_name is None:
             license_name = os.path.join(self.REPO_BASE_DIR, LICENSE)
         if not os.path.exists(license_name):
-            raise Exception('LICENSE is missing (was looking for %s)' % license)
+            raise Exception(f'LICENSE is missing (was looking for {license})')
 
         license_md5 = _fvs('get_license').get_md5sum(license_name)
-        log.info('found license %s with md5sum %s' % (license_name, license_md5))
+        log.info('found license %s with md5sum %s', license_name, license_md5)
         lic_short = None
         data = [None, None]
         for lic_short, data in KNOWN_LICENSES.items():
@@ -1326,7 +1326,7 @@ class vsc_setup(object):
             break
 
         if not lic_short:
-            raise Exception('UNKONWN LICENSE %s provided. Should be fixed or added to vsc-install' % license)
+            raise Exception(f'UNKONWN LICENSE {license} provided. Should be fixed or added to vsc-install')
 
         log.info("Found license name %s and classifier %s", lic_short, data[1])
         return lic_short, data[1]
@@ -1358,7 +1358,7 @@ class vsc_setup(object):
                 keepers[name] = getattr(vsc_setup_klass, klass.__name__)
             except AttributeError:
                 del keepers[name]
-                log.info("Not including new_target['cmdclass']['%s']" % name)
+                log.info("Not including new_target['cmdclass']['%s']", name)
         new_target['cmdclass'] = keepers
 
         # prepare classifiers
@@ -1366,7 +1366,7 @@ class vsc_setup(object):
 
         # license info
         lic_name, lic_classifier = self.get_license()
-        log.info('setting license %s' % lic_name)
+        log.info('setting license %s', lic_name)
         new_target['license'] = lic_name
         classifiers.append(lic_classifier)
 
@@ -1386,18 +1386,18 @@ class vsc_setup(object):
         if urltemplate:
             new_target['url'] = urltemplate % target
             if 'github' in urltemplate:
-                new_target['download_url'] = "%s/tarball/master" % new_target['url']
+                new_target['download_url'] = f"{new_target['url']}/tarball/master"
 
         # Readme are required
         readme = os.path.join(self.REPO_BASE_DIR, README)
         if not os.path.exists(readme):
-            raise Exception('README is missing (was looking for %s)' % readme)
+            raise Exception(f'README is missing (was looking for {readme})')
 
         vsc_description = target.pop('vsc_description', True)
         if vsc_description:
             if 'long_description' in target:
                 log.info(('Going to ignore the provided long_descripton.'
-                          'Set it in the %s or disable vsc_description') % README)
+                          'Set it in the %s or disable vsc_description'), README)
             readmetxt = _read(readme)
 
             # look for description block, read text until double empty line or new block
@@ -1414,9 +1414,8 @@ class vsc_setup(object):
                 descr = re.sub(r'[\n\t]', ' ', descr)  # replace newlines and tabs in description
                 descr = re.sub(r'\s+', ' ', descr)  # squash whitespace
             except IndexError:
-                raise Exception('Could not find a Description block in the README %s to create the long description' %
-                                readme)
-            log.info('using long_description %s' % descr)
+                raise Exception(f'Could not find a Description block in the README {readme} for the long description')
+            log.info('using long_description %s', descr)
             new_target['description'] = descr  # summary in PKG-INFO
             new_target['long_description'] = readmetxt  # description in PKG-INFO
 
@@ -1432,7 +1431,7 @@ class vsc_setup(object):
             if readme_ext in readme_content_types:
                 new_target['long_description_content_type'] = readme_content_types[readme_ext]
             else:
-                raise Exception("Failed to derive content type for README file '%s' based on extension" % readme)
+                raise Exception(f"Failed to derive content type for README file '{readme}' based on extension")
 
         vsc_scripts = target.pop('vsc_scripts', True)
         if vsc_scripts:
@@ -1441,7 +1440,7 @@ class vsc_setup(object):
                 if 'scripts' in target:
                     old_scripts = target.pop('scripts', [])
                     log.info(('Going to ignore specified scripts %s'
-                              ' Use "\'vsc_scripts\': False" if you know what you are doing') % old_scripts)
+                              ' Use "\'vsc_scripts\': False" if you know what you are doing'), old_scripts)
                 new_target['scripts'] = candidates
 
         use_vsc_sdist = target.pop('vsc_sdist', True)
@@ -1454,22 +1453,22 @@ class vsc_setup(object):
         if target.pop('vsc_namespace_pkg', True):
             new_target['namespace_packages'] = ['vsc']
 
-        for k, v in target.items():
-            if k in ('author', 'maintainer'):
-                if not isinstance(v, list):
-                    log.error("%s of config %s needs to be a list (not tuple or string)" % (k, target['name']))
+        for key, val in target.items():
+            if key in ('author', 'maintainer'):
+                if not isinstance(val, list):
+                    log.error("%s of config %s needs to be a list (not tuple or string)", key, target['name'])
                     sys.exit(1)
-                new_target[k] = ";".join([x[0] for x in v])
-                new_target["%s_email" % k] = ", ".join([x[1] for x in v])
+                new_target[key] = ";".join([x[0] for x in val])
+                new_target[f"{key}_email"] = ", ".join([x[1] for x in val])
             else:
-                if isinstance(v, dict):
+                if isinstance(val, dict):
                     # eg command_class
-                    if k not in new_target:
-                        new_target[k] = type(v)()
-                    new_target[k].update(v)
+                    if key not in new_target:
+                        new_target[key] = type(val)()
+                    new_target[key].update(val)
                 else:
-                    new_target[k] = type(v)()
-                    new_target[k] += v
+                    new_target[key] = type(val)()
+                    new_target[key] += val
 
         tests_requires = new_target.setdefault('tests_require', [])
         # soft pinning of (transitive) dependencies of prospector
@@ -1528,7 +1527,7 @@ class vsc_setup(object):
             check_whitespace = split_re.search(dependency)
 
             if check_whitespace and (check_whitespace.group(1) is None or check_whitespace.group(3) is None):
-                raise ValueError("Missing spaces around comparison operator in '%s'" % dependency)
+                raise ValueError(f"Missing spaces around comparison operator in '{dependency}'")
 
             if dependency.startswith('vsc'):
                 dep_name = split_re.split(dependency)[0]
@@ -1561,7 +1560,7 @@ class vsc_setup(object):
                     else:
                         log.debug("new vsc_filter_rpm value for %s was empty, not adding it back", key)
 
-        log.debug("New target = %s" % (new_target))
+        log.debug(f"New target = {new_target}")
         print("new target", new_target)
         return new_target
 
@@ -1603,29 +1602,29 @@ class vsc_setup(object):
         if install_scripts:
             txt.extend([
                 '[install]',
-                'install-scripts = %s' % install_scripts,
+                f'install-scripts = {install_scripts}',
                 '',
             ])
 
         txt.append("[bdist_rpm]")
         if 'install_requires' in target:
-            txt.extend(["requires = %s" % (klass.sanitize(target['install_requires']))])
+            txt.extend([f"requires = {(klass.sanitize(target['install_requires']))}"])
 
         if 'provides' in target:
-            txt.extend(["provides = %s" % (klass.sanitize(target['provides']))])
+            txt.extend([f"provides = {(klass.sanitize(target['provides']))}"])
             target.pop('provides')
 
         if 'setup_requires' in target:
-            txt.extend(["build_requires = %s" % (klass.sanitize(target['setup_requires']))])
+            txt.extend([f"build_requires = {(klass.sanitize(target['setup_requires']))}"])
 
         # add metadata
-        txt += ['', '[metadata]', '', 'description-file = %s' % README, '']
+        txt += ['', '[metadata]', '', f'description-file = {README}', '']
 
         try:
             with open('setup.cfg', 'w') as setup_cfg:
                 setup_cfg.write("\n".join(txt+['']))
         except (IOError, OSError) as err:
-            print("Cannot create setup.cfg for target %s: %s" % (target['name'], err))
+            print(f"Cannot create setup.cfg for target {target['name']}: {err}")
             sys.exit(1)
 
 
@@ -1704,7 +1703,7 @@ if __name__ == '__main__':
         # setuptools 42.0 changed easy_install to use pip if it's available,
         # but vsc-install relies on the setuptools' behaviour of ignoring failing dependency installations and
         # just continuing with the next entry in dependency_links
-        'setuptools < %s' % MAX_SETUPTOOLS_VERSION,
+        f'setuptools < {MAX_SETUPTOOLS_VERSION}',
     ]
 
     install_requires.append('mock')

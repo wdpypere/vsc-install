@@ -33,8 +33,8 @@ Run with: python -m vsc.install.ci
 import logging
 import os
 import sys
-import yaml
 import configparser
+import yaml
 from vsc.install.shared_setup import MAX_SETUPTOOLS_VERSION, vsc_setup
 
 
@@ -73,7 +73,7 @@ def write_file(path, txt):
             handle.write(txt)
         logging.info("Wrote %s", path)
     except (IOError, OSError) as err:
-        raise IOError("Failed to write %s: %s" % (path, err))
+        raise IOError(f"Failed to write {path}: {err}") from err
 
 def gen_github_action(repo_base_dir=os.getcwd()):
     """
@@ -134,7 +134,7 @@ def gen_tox_ini():
     vsc_ci_cfg = parse_vsc_ci_cfg()
 
     header = [
-        "%s: configuration file for tox" % TOX_INI,
+        f"{TOX_INI}: configuration file for tox",
         "This file was automatically generated using 'python -m vsc.install.ci'",
         "DO NOT EDIT MANUALLY",
     ]
@@ -157,7 +157,7 @@ def gen_tox_ini():
     lines = header + [
         '',
         "[tox]",
-        "envlist = %s" % ','.join(envs),
+        f"envlist = {','.join(envs)}",
         # instruct tox not to run sdist prior to installing the package in the tox environment
         # (setup.py requires vsc-install, which is not installed yet when 'python setup.py sdist' is run)
         "skipsdist = true",
@@ -175,19 +175,19 @@ def gen_tox_ini():
     pip_install_test_deps = vsc_ci_cfg[PIP_INSTALL_TEST_DEPS]
     if pip_install_test_deps:
         for dep in pip_install_test_deps.strip().split('\n'):
-            lines.append("    pip install %s'%s'" % (pip_args, dep))
+            lines.append(f"    pip install {pip_args}'{dep}'")
 
     lines.extend([
         # install required setuptools version;
         # we need a setuptools < 42.0 for now, since in 42.0 easy_install was changed to use pip when available;
         # it's important to use pip (not easy_install) here, since only pip will actually remove an older
         # already installed setuptools version
-        "    pip install %s'setuptools<%s'" % (pip_args, MAX_SETUPTOOLS_VERSION),
+        f"    pip install {pip_args}'setuptools<{MAX_SETUPTOOLS_VERSION}'",
         # install latest vsc-install release from PyPI;
         # we can't use 'pip install' here, because then we end up with a broken installation because
         # vsc/__init__.py is not installed because we're using pkg_resources.declare_namespace
         # (see https://github.com/pypa/pip/issues/1924)
-        "    python -m easy_install -U %svsc-install" % easy_install_args,
+        f"    python -m easy_install -U {easy_install_args}vsc-install",
     ])
 
     if vsc_ci_cfg[MOVE_SETUP_CFG]:
@@ -282,27 +282,27 @@ def gen_jenkinsfile():
     if vsc_ci_cfg[EASY_INSTALL_TOX]:
         install_cmd = install_cmd.replace('pip3 install', 'python -m easy_install')
         easy_install_args += '-U --user'
-        test_cmds.append('%s %s tox' % (install_cmd, easy_install_args))
+        test_cmds.append(f'{install_cmd} {easy_install_args} tox')
 
     else:
-        pip_args += '--ignore-installed --prefix %s' % prefix
-        test_cmds.append('%s %s tox' % (install_cmd, pip_args))
+        pip_args += f'--ignore-installed --prefix {prefix}'
+        test_cmds.append(f'{install_cmd} {pip_args} tox')
 
     # Python version to use for updating $PYTHONPATH must be determined dynamically, so use $(...) trick;
     # we must stick to just double strings in the command used to determine the Python version, to avoid
     # that entire shell command is wrapped in triple quotes (which causes trouble)
     pyver_cmd = python_cmd + ' -c "import sys; print(\\\\"%s.%s\\\\" % sys.version_info[:2])"'
-    pythonpath = os.path.join('$PWD', install_subdir, 'lib', 'python$(%s)' % pyver_cmd, 'site-packages')
+    pythonpath = os.path.join('$PWD', install_subdir, 'lib', f'python$({pyver_cmd})', 'site-packages')
 
     test_cmds.extend([
         # make sure 'tox' command installed is available by updating $PATH and $PYTHONPATH
         ' && '.join([
-            'export PATH=%s:$PATH' % os.path.join('$PWD', install_subdir, 'bin'),
-            'export PYTHONPATH=%s:$PYTHONPATH' % pythonpath,
-            'tox -v -c %s' % TOX_INI,
+            f"export PATH={os.path.join('$PWD', install_subdir, 'bin')}:$PATH",
+            f'export PYTHONPATH={pythonpath}:$PYTHONPATH',
+            f'tox -v -c {TOX_INI}',
         ]),
         # clean up tox installation
-        'rm -r %s' % os.path.join('$PWD', install_subdir),
+        f"rm -r {os.path.join('$PWD', install_subdir)}",
     ])
 
     additional_test_commands = vsc_ci_cfg[ADDITIONAL_TEST_COMMANDS]
@@ -310,7 +310,7 @@ def gen_jenkinsfile():
         test_cmds.extend(additional_test_commands.strip().split('\n'))
 
     header = [
-        "%s: scripted Jenkins pipefile" % JENKINSFILE,
+        f"{JENKINSFILE}: scripted Jenkins pipefile",
         "This file was automatically generated using 'python -m vsc.install.ci'",
         "DO NOT EDIT MANUALLY",
     ]
@@ -332,7 +332,7 @@ def gen_jenkinsfile():
         shellcheck_url += 'shellcheck-latest.linux.x86_64.tar.xz'
         lines.extend([
             indent("stage ('shellcheck') {"),
-            indent("sh 'curl -L --silent %s --output - | tar -xJv'" % shellcheck_url, level=2),
+            indent(f"sh 'curl -L --silent {shellcheck_url} --output - | tar -xJv'", level=2),
             indent("sh 'cp shellcheck-latest/shellcheck .'", level=2),
             indent("sh 'rm -r shellcheck-latest'", level=2),
             indent("sh './shellcheck --version'", level=2),
@@ -344,9 +344,9 @@ def gen_jenkinsfile():
     for test_cmd in test_cmds:
         # be careful with test commands that include single quotes!
         if "'" in test_cmd:
-            lines.append(indent('sh """%s"""' % test_cmd, level=2))
+            lines.append(indent(f'sh """{test_cmd}"""', level=2))
         else:
-            lines.append(indent("sh '%s'" % test_cmd, level=2))
+            lines.append(indent(f"sh '{test_cmd}'", level=2))
     lines.append(indent('}'))
 
     if vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE]:
