@@ -23,7 +23,7 @@ MethodCall = collections.namedtuple(
 )
 
 
-class MethodInspector(object):
+class MethodInspector():
     """Wrap a method and track calls to allow making assertions about them.
 
     In some cases mocking a method isn't sufficient: we need to
@@ -53,6 +53,8 @@ class MethodInspector(object):
         self.klass = klass
         self.method_name = method_name
         self.orig = getattr(klass, method_name)
+        self.calls = []
+        self._patch = None
 
     def __enter__(self):
 
