@@ -168,7 +168,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.18.10'
+VERSION = '0.18.11'
 
 log.info('This is (based on) vsc.install.shared_setup %s', VERSION)
 log.info('(using setuptools version %s located at %s)', setuptools.__version__, setuptools.__file__)
@@ -1498,6 +1498,16 @@ class vsc_setup():
                 'importlib-metadata < 5.0.0', # no longer compatible with python 3.7
                 'isort < 5.11.0',
                 'zipp < 3.16', # no longer compatible with python 3.6
+            ])
+        elif sys.version_info < (3, 10):
+            tests_requires.extend([
+                'pyflakes~=2.3.0',
+                'pycodestyle~=2.7.0',
+                'pylint~=2.12.2',
+                'prospector~=1.5.3.1',
+                'flake8~=3.9.2',
+                'pylint-plugin-utils < 0.7',
+                'pylint-django~=2.4.4',
             ])
         else:  # tested for fedora37 py3.11
             tests_requires.extend([
