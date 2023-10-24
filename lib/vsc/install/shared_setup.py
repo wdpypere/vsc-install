@@ -1499,23 +1499,18 @@ class vsc_setup():
                 'isort < 5.11.0',
                 'zipp < 3.16', # no longer compatible with python 3.6
             ])
-        elif sys.version_info < (3, 10):
+
+        # tested for python 3.9
+        # currently prospector is the failing factor
+        # it does not support newest pylint and it's plugins yet
+        else:
             tests_requires.extend([
-                'pyflakes~=2.3.0',
-                'pycodestyle~=2.7.0',
-                'pylint~=2.12.2',
-                'prospector~=1.5.3.1',
-                'flake8~=3.9.2',
-                'pylint-plugin-utils < 0.7',
-                'pylint-django~=2.4.4',
-            ])
-        else:  # tested for fedora37 py3.11
-            tests_requires.extend([
-                'flake8 < 5.0.0',
-                'astroid <= 2.12.0-dev0',
-                'pyflakes < 2.5.0',
-                'pylint~=2.14.4',
-                'prospector~=1.7.7',
+                'pylint < 3',
+                'prospector',
+                'pylint-plugin-utils < 0.8',
+                'pylint-django < 2.5.4',
+                'astroid <= 2.17.0-dev0',
+                'pycodestyle < 2.10'
             ])
 
         new_target['tests_require'] = tests_requires
