@@ -93,8 +93,11 @@ EXPECTED_TOX_INI = """# tox.ini: configuration file for tox
 # DO NOT EDIT MANUALLY
 
 [tox]
-envlist = py36
+envlist = py36,py39
 skipsdist = true
+
+[testenv:py39]
+ignore_outcome = true
 
 [testenv]
 commands_pre =
@@ -104,9 +107,20 @@ commands = python setup.py test
 passenv = USER
 """
 
-EXPECTED_TOX_INI_PY36_IGNORE = """
-[testenv:py36]
-ignore_outcome = true
+EXPECTED_TOX_INI_WITH_PY39 = """# tox.ini: configuration file for tox
+# This file was automatically generated using 'python -m vsc.install.ci'
+# DO NOT EDIT MANUALLY
+
+[tox]
+envlist = py36,py39
+skipsdist = true
+
+[testenv]
+commands_pre =
+    pip install 'setuptools<42.0'
+    python -m easy_install -U vsc-install
+commands = python setup.py test
+passenv = USER
 """
 
 EXPECTED_GITHUB_ACTIONS = """# .github/workflows/unittest.yml: configuration file for github actions worflow
@@ -171,6 +185,7 @@ class CITest(TestCase):
             'pip_install_test_deps': None,
             'easy_install_tox': False,
             'run_shellcheck': False,
+            'py39_tests_must_pass': False,
         }
 
         # (basically) empty vsc-ci.ini
@@ -275,6 +290,11 @@ class CITest(TestCase):
     def test_tox_ini(self):
         """Test generating of tox.ini."""
         self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI)
+
+    def test_tox_ini_py39_must_pass(self):
+        """test that py39 tests must pass"""
+        self.write_vsc_ci_ini('py39_tests_must_pass=1')
+        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI_WITH_PY39)
 
     def test_tox_ini_inherit_site_packages(self):
         """Test generation of tox.ini with inheriting of site packages enabled."""

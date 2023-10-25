@@ -295,7 +295,7 @@ if hasattr(setuptools.dist.Distribution, 'get_egg_cache_dir'):
 
         # the original get_egg_cache_dir creates the .eggs directory if it doesn't exist yet,
         # but we want to have it versioned, so we rename it
-        egg_cache_dir_pyver = f'{egg_cache_dir}.py{sys.version_info[0]}'
+        egg_cache_dir_pyver = f'{egg_cache_dir}.py{sys.version_info[0]}{sys.version_info[1]}'
         try:
             if not os.path.exists(egg_cache_dir_pyver):
                 os.rename(egg_cache_dir, egg_cache_dir_pyver)
