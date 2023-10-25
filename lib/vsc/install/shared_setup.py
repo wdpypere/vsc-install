@@ -168,7 +168,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.18.10'
+VERSION = '0.18.11'
 
 log.info('This is (based on) vsc.install.shared_setup %s', VERSION)
 log.info('(using setuptools version %s located at %s)', setuptools.__version__, setuptools.__file__)
@@ -1499,13 +1499,18 @@ class vsc_setup():
                 'isort < 5.11.0',
                 'zipp < 3.16', # no longer compatible with python 3.6
             ])
-        else:  # tested for fedora37 py3.11
+
+        # tested for python 3.9
+        # currently prospector is the failing factor
+        # it does not support newest pylint and it's plugins yet
+        else:
             tests_requires.extend([
-                'flake8 < 5.0.0',
-                'astroid <= 2.12.0-dev0',
-                'pyflakes < 2.5.0',
-                'pylint~=2.14.4',
-                'prospector~=1.7.7',
+                'pylint < 3',
+                'prospector',
+                'pylint-plugin-utils < 0.8',
+                'pylint-django < 2.5.4',
+                'astroid <= 2.17.0-dev0',
+                'pycodestyle < 2.10'
             ])
 
         new_target['tests_require'] = tests_requires
