@@ -63,9 +63,8 @@ class ProspectorTest(TestCase):
             all_tests.append(testfile_base)
             for failure in failures:
                 # old prospector returns strings, new prospector returns Path
-                if failure['location']['path'] == testfile or failure['location']['path'] == Path(testfile):
-                    if testfile_base in [failure['code'], failure['message']]:
-                        detected_tests.append(testfile_base)
+                if Path(failure['location']['path']) == Path(testfile) or testfile_base in [failure['code'], failure['message']]:
+                    detected_tests.append(testfile_base)
 
         log.debug("All tests = %s", all_tests)
         log.info("Detected prospector tests = %s", detected_tests)
