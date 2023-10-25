@@ -207,6 +207,7 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
                 "location": prospector_location_as_dict(message.location),
                 "message": message.message,
             }
+
     def prospector_location_as_dict(location):
         if hasattr(location, "as_dict"):
             return location.as_dict()
