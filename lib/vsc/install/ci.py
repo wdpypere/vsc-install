@@ -58,6 +58,7 @@ PIP3_INSTALL_TOX = 'pip3_install_tox'
 EASY_INSTALL_TOX = 'easy_install_tox'
 PY3_ONLY = 'py3_only'
 PY3_TESTS_MUST_PASS = 'py3_tests_must_pass'
+PY36_TESTS_MUST_PASS = 'py36_tests_must_pass'
 PY39_TESTS_MUST_PASS = 'py39_tests_must_pass'
 RUN_SHELLCHECK = 'run_shellcheck'
 ENABLE_GITHUB_ACTIONS = 'enable_github_actions'
@@ -164,6 +165,13 @@ def gen_tox_ini():
         "skipsdist = true",
     ]
 
+    if not vsc_ci_cfg[PY36_TESTS_MUST_PASS]:
+        lines.extend([
+            '',
+            '[testenv:py36]',
+            'ignore_outcome = true'
+        ])
+
     if not vsc_ci_cfg[PY39_TESTS_MUST_PASS]:
         lines.extend([
             '',
@@ -228,6 +236,7 @@ def parse_vsc_ci_cfg():
         EASY_INSTALL_TOX: False,
         RUN_SHELLCHECK: False,
         ENABLE_GITHUB_ACTIONS: False,
+        PY36_TESTS_MUST_PASS: True,
         PY39_TESTS_MUST_PASS: False,
     }
 

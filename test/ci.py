@@ -123,6 +123,25 @@ commands = python setup.py test
 passenv = USER
 """
 
+EXPECTED_TOX_INI_WITHOUT_PY36 = """# tox.ini: configuration file for tox
+# This file was automatically generated using 'python -m vsc.install.ci'
+# DO NOT EDIT MANUALLY
+
+[tox]
+envlist = py36,py39
+skipsdist = true
+
+[testenv:py36]
+ignore_outcome = true
+
+[testenv]
+commands_pre =
+    pip install 'setuptools<42.0'
+    python -m easy_install -U vsc-install
+commands = python setup.py test
+passenv = USER
+"""
+
 EXPECTED_GITHUB_ACTIONS = """# .github/workflows/unittest.yml: configuration file for github actions worflow
 # This file was automatically generated using 'python -m vsc.install.ci'
 # DO NOT EDIT MANUALLY
@@ -165,11 +184,10 @@ class CITest(TestCase):
 
     def write_vsc_ci_ini(self, txt):
         """Write vsc-ci.ini file in current directory with specified contents."""
-        fh = open('vsc-ci.ini', 'w')
-        fh.write('[vsc-ci]\n')
-        fh.write(txt)
-        fh.write('\n')
-        fh.close()
+        with open('vsc-ci.ini', 'w', encoding='utf8') as fih:
+            fih.write('[vsc-ci]\n')
+            fih.write(txt)
+            fih.write('\n')
 
     def test_parse_vsc_ci_cfg(self):
         """Test parse_vsc_ci_cfg function."""
@@ -185,6 +203,7 @@ class CITest(TestCase):
             'pip_install_test_deps': None,
             'easy_install_tox': False,
             'run_shellcheck': False,
+            'py36_tests_must_pass': True,
             'py39_tests_must_pass': False,
         }
 
@@ -295,6 +314,11 @@ class CITest(TestCase):
         """test that py39 tests must pass"""
         self.write_vsc_ci_ini('py39_tests_must_pass=1')
         self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI_WITH_PY39)
+
+    def test_tox_ini_py36_must_not_pass(self):
+        """test that py36 tests must not pass"""
+        self.write_vsc_ci_ini('py36_tests_must_pass=0\npy39_tests_must_pass=1')
+        self.assertEqual(gen_tox_ini(), EXPECTED_TOX_INI_WITHOUT_PY36)
 
     def test_tox_ini_inherit_site_packages(self):
         """Test generation of tox.ini with inheriting of site packages enabled."""
