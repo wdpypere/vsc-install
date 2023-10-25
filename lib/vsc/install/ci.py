@@ -58,6 +58,8 @@ PIP3_INSTALL_TOX = 'pip3_install_tox'
 EASY_INSTALL_TOX = 'easy_install_tox'
 PY3_ONLY = 'py3_only'
 PY3_TESTS_MUST_PASS = 'py3_tests_must_pass'
+PY36_TESTS_MUST_PASS = 'py36_tests_must_pass'
+PY39_TESTS_MUST_PASS = 'py39_tests_must_pass'
 RUN_SHELLCHECK = 'run_shellcheck'
 ENABLE_GITHUB_ACTIONS = 'enable_github_actions'
 
@@ -145,9 +147,9 @@ def gen_tox_ini():
     # list of Python environments in which tests should be run
     envs = []
 
-    # always run tests with Python 3
-    py3_env = 'py36'
-    envs.append(py3_env)
+    # always run tests with Python 3.6 and 3.9
+    py3_envs = ['py36', 'py39']
+    envs.extend(py3_envs)
 
     pip_args, easy_install_args = '', ''
     if vsc_ci_cfg[INSTALL_SCRIPTS_PREFIX_OVERRIDE]:
@@ -162,6 +164,20 @@ def gen_tox_ini():
         # (setup.py requires vsc-install, which is not installed yet when 'python setup.py sdist' is run)
         "skipsdist = true",
     ]
+
+    if not vsc_ci_cfg[PY36_TESTS_MUST_PASS]:
+        lines.extend([
+            '',
+            '[testenv:py36]',
+            'ignore_outcome = true'
+        ])
+
+    if not vsc_ci_cfg[PY39_TESTS_MUST_PASS]:
+        lines.extend([
+            '',
+            '[testenv:py39]',
+            'ignore_outcome = true'
+        ])
 
     lines.extend([
         '',
@@ -220,6 +236,8 @@ def parse_vsc_ci_cfg():
         EASY_INSTALL_TOX: False,
         RUN_SHELLCHECK: False,
         ENABLE_GITHUB_ACTIONS: False,
+        PY36_TESTS_MUST_PASS: True,
+        PY39_TESTS_MUST_PASS: False,
     }
 
     deprecated_options = [PY3_ONLY, PY3_TESTS_MUST_PASS, PIP_INSTALL_TOX, PIP3_INSTALL_TOX]

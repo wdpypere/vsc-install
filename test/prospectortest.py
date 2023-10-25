@@ -29,13 +29,15 @@ import glob
 import os
 import sys
 
+from pathlib import Path
+
 from vsc.install import commontest
 from vsc.install.shared_setup import log, vsc_setup
 from vsc.install.testing import TestCase
 
 
 class ProspectorTest(TestCase):
-    """Test ProspectorTest """
+    """Test ProspectorTest"""
 
     def setUp(self):
         """create a self.setup.instance for every test"""
@@ -45,14 +47,14 @@ class ProspectorTest(TestCase):
     def test_prospectorfail(self):
         """Test that whitelisted warnings actually fails"""
 
-        base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'prospectortest')
-        test_files = glob.glob(os.path.join(base_dir, 'lib', 'vsc', 'mockinstall', "*.py"))
-        test_files = [x for x in test_files if '__init__.py' not in x]
-        log.debug("test_files = %s" % test_files)
-        log.debug("base_dir = %s" % base_dir)
+        base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "prospectortest")
+        test_files = glob.glob(os.path.join(base_dir, "lib", "vsc", "mockinstall", "*.py"))
+        test_files = [x for x in test_files if "__init__.py" not in x]
+        log.debug("test_files = %s", test_files)
+        log.debug("base_dir = %s", base_dir)
 
         failures = commontest.run_prospector(base_dir, clear_ignore_patterns=True)
-        log.debug("Failures = %s" % failures)
+        log.debug("Failures = %s", failures)
 
         detected_tests = []
         all_tests = []
@@ -60,25 +62,38 @@ class ProspectorTest(TestCase):
             testfile_base = os.path.splitext(os.path.basename(testfile))[0].replace("_", "-")
             all_tests.append(testfile_base)
             for failure in failures:
-                if failure['location']['path'] == testfile and testfile_base in [failure['code'], failure['message']]:
+                # old prospector returns strings, new prospector returns Path
+                if Path(failure["location"]["path"]) == Path(testfile) or testfile_base in [
+                    failure["code"],
+                    failure["message"],
+                ]:
                     detected_tests.append(testfile_base)
 
-        log.debug("All tests = %s" % all_tests)
-        log.info("Detected prospector tests = %s" % detected_tests)
+        log.debug("All tests = %s", all_tests)
+        log.info("Detected prospector tests = %s", detected_tests)
         undetected_tests = [x for x in all_tests if x not in detected_tests]
 
         if sys.version_info[0] < 3:
             # some of the prospector test cases don't exist in Python 2
-            py2_invalid_tests = ['raising-bad-type']
+            py2_invalid_tests = ["raising-bad-type"]
             undetected_tests = [x for x in undetected_tests if x not in py2_invalid_tests]
-
 
         if sys.version_info[0] >= 3:
             # some of the prospector test cases don't make sense in Python 3 because they yield syntax errors,
             # or are no longer a problem in Python 3
-            py3_invalid_tests = ['backtick', 'old-octal-literal', 'import-star-module-level', 'redefine-in-handler',
-                                 'indexing-exception', 'old-raise-syntax', 'print-statement', 'unpacking-in-except',
-                                 'old-ne-operator', 'raising-string', 'metaclass-assignment']
+            py3_invalid_tests = [
+                "backtick",
+                "old-octal-literal",
+                "import-star-module-level",
+                "redefine-in-handler",
+                "indexing-exception",
+                "old-raise-syntax",
+                "print-statement",
+                "unpacking-in-except",
+                "old-ne-operator",
+                "raising-string",
+                "metaclass-assignment",
+            ]
             undetected_tests = [x for x in undetected_tests if x not in py3_invalid_tests]
 
-        self.assertFalse(undetected_tests, "\nprospector did not detect %s\n" % undetected_tests)
+        self.assertFalse(undetected_tests, f"\nprospector did not detect {undetected_tests}\n")

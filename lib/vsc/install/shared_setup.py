@@ -295,7 +295,7 @@ if hasattr(setuptools.dist.Distribution, 'get_egg_cache_dir'):
 
         # the original get_egg_cache_dir creates the .eggs directory if it doesn't exist yet,
         # but we want to have it versioned, so we rename it
-        egg_cache_dir_pyver = f'{egg_cache_dir}.py{sys.version_info[0]}'
+        egg_cache_dir_pyver = f'{egg_cache_dir}.py{sys.version_info[0]}{sys.version_info[1]}'
         try:
             if not os.path.exists(egg_cache_dir_pyver):
                 os.rename(egg_cache_dir, egg_cache_dir_pyver)
@@ -1503,10 +1503,11 @@ class vsc_setup():
         # tested for python 3.9
         # currently prospector is the failing factor
         # it does not support newest pylint and it's plugins yet
+        # last tested with prospector 1.10.3
         else:
             tests_requires.extend([
                 'pylint < 3',
-                'prospector',
+                'prospector < 1.10.4',
                 'pylint-plugin-utils < 0.8',
                 'pylint-django < 2.5.4',
                 'astroid <= 2.17.0-dev0',
