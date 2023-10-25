@@ -50,11 +50,11 @@ class ProspectorTest(TestCase):
         base_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'prospectortest')
         test_files = glob.glob(os.path.join(base_dir, 'lib', 'vsc', 'mockinstall', "*.py"))
         test_files = [x for x in test_files if '__init__.py' not in x]
-        log.debug("test_files = %s" % test_files)
-        log.debug("base_dir = %s" % base_dir)
+        log.debug("test_files = %s", test_files)
+        log.debug("base_dir = %s", base_dir)
 
         failures = commontest.run_prospector(base_dir, clear_ignore_patterns=True)
-        log.debug("Failures = %s" % failures)
+        log.debug("Failures = %s", failures)
 
         detected_tests = []
         all_tests = []
@@ -67,8 +67,8 @@ class ProspectorTest(TestCase):
                     if testfile_base in [failure['code'], failure['message']]:
                         detected_tests.append(testfile_base)
 
-        log.debug("All tests = %s" % all_tests)
-        log.info("Detected prospector tests = %s" % detected_tests)
+        log.debug("All tests = %s", all_tests)
+        log.info("Detected prospector tests = %s", detected_tests)
         undetected_tests = [x for x in all_tests if x not in detected_tests]
 
         if sys.version_info[0] < 3:
