@@ -29,6 +29,8 @@ import glob
 import os
 import sys
 
+from pathlib import Path
+
 from vsc.install import commontest
 from vsc.install.shared_setup import log, vsc_setup
 from vsc.install.testing import TestCase
@@ -60,8 +62,10 @@ class ProspectorTest(TestCase):
             testfile_base = os.path.splitext(os.path.basename(testfile))[0].replace("_", "-")
             all_tests.append(testfile_base)
             for failure in failures:
-                if failure['location']['path'] == testfile and testfile_base in [failure['code'], failure['message']]:
-                    detected_tests.append(testfile_base)
+                # old prospector returns strings, new prospector returns Path
+                if failure['location']['path'] == testfile or failure['location']['path'] == Path(testfile):
+                    if testfile_base in [failure['code'], failure['message']]:
+                        detected_tests.append(testfile_base)
 
         log.debug("All tests = %s" % all_tests)
         log.info("Detected prospector tests = %s" % detected_tests)
@@ -81,4 +85,4 @@ class ProspectorTest(TestCase):
                                  'old-ne-operator', 'raising-string', 'metaclass-assignment']
             undetected_tests = [x for x in undetected_tests if x not in py3_invalid_tests]
 
-        self.assertFalse(undetected_tests, "\nprospector did not detect %s\n" % undetected_tests)
+        self.assertFalse(undetected_tests, f"\nprospector did not detect {undetected_tests}\n")

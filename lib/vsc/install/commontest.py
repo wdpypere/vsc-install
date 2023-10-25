@@ -193,18 +193,44 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
     whitelist = list(map(re.compile, PROSPECTOR_WHITELIST))
 
     failures = []
+
+    # message.as_dict() has been removed after prospector 1.8.0
+    # same for location.as_dict()
+    # mimic old behaviour
+    def prospector_message_as_dict(message):
+        return {
+            "source": message.source,
+            "code": message.code,
+            "location": prospector_location_as_dict(message.location),
+            "message": message.message,
+        }
+    def prospector_location_as_dict(location):
+        return {
+            "path": location.path,
+            "module": location.module,
+            "function": location.function,
+            "line": location.line,
+            "character": location.character,
+        }
+
     for msg in prospector.get_messages():
         # example msg.as_dict():
         #  {'source': 'pylint', 'message': 'Missing function docstring', 'code': 'missing-docstring',
         #   'location': {'function': 'TestHeaders.test_check_header.lgpl', 'path': u'headers.py',
         #                'line': 122, 'character': 8, 'module': 'headers'}}
-        log.debug("prospector message %s", msg.as_dict())
+        try:
+            log.debug("prospector message %s", msg.as_dict())
+        except AttributeError:
+            log.debug("prospector message %s", prospector_message_as_dict(msg))
 
         if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in blacklist]):
             continue
 
         if any([bool(reg.search(msg.code) or reg.search(msg.message)) for reg in whitelist]):
-            failures.append(msg.as_dict())
+            try:
+                failures.append(msg.as_dict())
+            except AttributeError:
+                failures.append(prospector_message_as_dict(msg))
 
     # The following is still the case in 3.6. seems to be fixed in 3.9:
     # There is some ugly monkeypatch code in pylint
