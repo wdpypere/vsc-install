@@ -27,6 +27,7 @@
 
 import os
 import re
+import sys
 
 from vsc.install import shared_setup
 from vsc.install.shared_setup import action_target, vsc_setup, _fvs
@@ -254,6 +255,27 @@ class TestSetup(TestCase):
 
         package['install_requires'].append('vsc-utils<=1.0.0')
         self.assertRaises(ValueError, setup.parse_target, package)
+
+    def test_parse_remove_dataclasses(self):
+        """test if dataclasses is removed in python3.7"""
+        package = {
+            'name': 'vsc-test',
+            'excluded_pkgs_rpm': [],
+            'version': '1.0',
+            'install_requires': [
+                'vsc-config >= 2.0.0',
+                'vsc-accountpage-clients',
+                'vsc-base > 1.0.0',
+                'dataclasses'
+            ],
+        }
+        setup = vsc_setup()
+        setup.private_repo = True
+        new_target = setup.parse_target(package)
+        if sys.version_info < (3,7):
+            self.assertIn('dataclasses', new_target['install_requires'])
+        else:
+            self.assertNotIn('dataclasses', new_target['install_requires'])
 
     def test_parse_vsc_filter(self):
         """Test injecting dependency_links in parse_target"""

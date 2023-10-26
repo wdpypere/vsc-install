@@ -168,7 +168,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.19.0'
+VERSION = '0.19.1'
 
 log.info('This is (based on) vsc.install.shared_setup %s', VERSION)
 log.info('(using setuptools version %s located at %s)', setuptools.__version__, setuptools.__file__)
@@ -1524,6 +1524,13 @@ class vsc_setup():
             ]
         else:
             urls = [('github.com', 'git+https://')]
+
+        # dataclasses became part of stdlib in python 3.7
+        if sys.version_info >= (3,7):
+            for requires in ["install_requires", "setup_requires", "tests_require"]:
+                if "dataclasses" in new_target[requires]:
+                    log.info("Removing datclasses from setup, part of stdlib since python 3.7.")
+                    new_target[requires].remove("dataclasses")
 
         for dependency in set(new_target['install_requires'] + new_target['setup_requires'] +
             new_target['tests_require']):
