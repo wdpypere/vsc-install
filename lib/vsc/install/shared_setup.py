@@ -1,4 +1,3 @@
-# -*- coding: latin-1 -*-
 #
 # Copyright 2011-2023 Ghent University
 #
@@ -97,7 +96,7 @@ has_setuptools = True
 # don't do it twice
 if log.Log.__name__ != 'NewLog':
     # make a map between level and names
-    log_levels = dict([(getattr(log, x), x) for x in dir(log) if x == x.upper()])
+    log_levels = {getattr(log, x): x for x in dir(log) if x == x.upper()}
 
     OrigLog = log.Log
 
@@ -168,7 +167,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.19.1'
+VERSION = '0.19.2'
 
 log.info('This is (based on) vsc.install.shared_setup %s', VERSION)
 log.info('(using setuptools version %s located at %s)', setuptools.__version__, setuptools.__file__)
@@ -466,7 +465,7 @@ class vsc_setup():
 
             # check if we at least filter out .pyc files, since we're in a python project
             if not all([reg.search(text) for text in ['bla%s' % pattern for pattern in GITIGNORE_PATTERNS]]):
-                raise Exception("%s/.gitignore does not contain these patterns: %s " % (base_dir, GITIGNORE_PATTERNS))
+                raise Exception(f"{base_dir}/.gitignore does not contain these patterns: {GITIGNORE_PATTERNS}")
 
             if not all([l in all_patterns for l in GITIGNORE_EXACT_PATTERNS]):
                 raise Exception("%s/.gitignore does not contain all following patterns: %s ",
@@ -504,8 +503,8 @@ class vsc_setup():
                     init = _read(os.path.join(root, '__init__.py'))
                     if not re.search(r'^import\s+pkg_resources\n{1,3}pkg_resources.declare_namespace\(__name__\)$',
                                      init, re.M):
-                        raise Exception((f'vsc namespace packages do not allow non-shared namespace in dir {root}.'
-                                         'Fix with pkg_resources.declare_namespace'))
+                        raise Exception(f'vsc namespace packages do not allow non-shared namespace in dir {root}.'
+                                         'Fix with pkg_resources.declare_namespace')
 
                 res['packages'][package] = self.rel_gitignore([os.path.join(root, f) for f in files])
 
@@ -625,8 +624,8 @@ class vsc_setup():
 
             try:
                 self._write(dest, source_code)
-            except IOError as err:
-                raise IOError(f"Failed to write NEW_SHARED_SETUP source to dest ({err})")
+            except OSError as err:
+                raise OSError(f"Failed to write NEW_SHARED_SETUP source to dest ({err})")
 
         def make_release_tree(self, base_dir, files):
             """
@@ -1258,7 +1257,7 @@ class vsc_setup():
             parts = txt.split(',')
             first = parts.pop(0)
             prog = first.split(' ')[0]
-            return ", ".join([first]+["%s %s" % (prog, x.strip()) for x in parts])
+            return ", ".join([first]+["{} {}".format(prog, x.strip()) for x in parts])
 
         if isinstance(name, (list, tuple)):
             klass = _fvs('sanitize')
@@ -1636,7 +1635,7 @@ class vsc_setup():
         try:
             with open('setup.cfg', 'w') as setup_cfg:
                 setup_cfg.write("\n".join(txt+['']))
-        except (IOError, OSError) as err:
+        except OSError as err:
             print(f"Cannot create setup.cfg for target {target['name']}: {err}")
             sys.exit(1)
 

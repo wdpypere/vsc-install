@@ -82,9 +82,12 @@ PROSPECTOR_WHITELIST = [
     'bad-indentation',
     'bad-whitespace',
     'bare-except',
+    'consider-using-dict-comprehension',
+    'consider-using-set-comprehension',
     'consider-using-with', # By using 'with' the release of the allocated res is ensured in the case of an exception.
     'dangerous-default-value',
     'duplicate-key',  # when a key appears twice in a dict definition
+    'implicit-str-concat',
     'import-star-module-level',  # Import * only allowed at module level
     'inconsistent-return-statements', # Either all or no return statements in a function should return an expression.
     'indexing-exception',  # indexing exceptions doesn't work in python3, use Exc.args[index] instead (but why?)
