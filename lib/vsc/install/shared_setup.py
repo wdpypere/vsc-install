@@ -1257,7 +1257,7 @@ class vsc_setup():
             parts = txt.split(',')
             first = parts.pop(0)
             prog = first.split(' ')[0]
-            return ", ".join([first]+["{} {}".format(prog, x.strip()) for x in parts])
+            return ", ".join([first]+[f"{prog} {x.strip()}" for x in parts])
 
         if isinstance(name, (list, tuple)):
             klass = _fvs('sanitize')
