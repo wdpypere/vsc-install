@@ -91,9 +91,9 @@ def get_header(filename, script=False):
     """
 
     if not os.path.isfile(filename):
-        raise Exception(f'get_header filename {filename} not found')
+        raise ValueError(f'get_header filename {filename} not found')
 
-    with open(filename) as fih:
+    with open(filename, encoding='utf8') as fih:
         txt = fih.read()
 
     blocks = HEADER_REGEXP.split(txt)
@@ -102,7 +102,7 @@ def get_header(filename, script=False):
         blocks = ['', '']
     elif blocks[0] != '':
         # the block before the begin of text is always empty
-        raise Exception(f'unexpected non-empty block with get_header {filename}: {blocks}')
+        raise ValueError(f'unexpected non-empty block with get_header {filename}: {blocks}')
 
     header = blocks[1]
 
@@ -131,17 +131,17 @@ def gen_license_header(license_name, **kwargs):
     template_name = f"{license_name.replace('+', '_plus_')}_TEMPLATE"
     template = globals().get(template_name, None)
     if template is None:
-        raise Exception('gen_license_header cannot find template name %s', template_name)
+        raise ValueError(f'gen_license_header cannot find template name {template_name}')
 
     found = False
-    for github_organ in institute_details.keys():
+    for github_organ, details in institute_details.items():
         if github_organ in kwargs.get('url', '').lower():
-            kwargs.update(institute_details[github_organ])
+            kwargs.update(details)
             found = True
             break
 
     if not found:
-        raise Exception('Unable to find a known github organization in url %s', kwargs.get('url'))
+        raise ValueError(f"Unable to find a known github organization in url {kwargs.get('url')}")
 
     return template.format(**kwargs)
 
@@ -173,7 +173,7 @@ def begin_end_from_header(header):
 
 def _write(filename, content):
     """Simple wrapper around open().write for unittesting"""
-    with open(filename, 'w') as fih:
+    with open(filename, 'w', encoding='utf8') as fih:
         fih.write(content)
 
 
@@ -276,7 +276,7 @@ def check_header(filename, script=False, write=False):
 
     if write and changed:
         log.info('write enabled and different header. Going to modify file %s', filename)
-        with open(filename) as fih:
+        with open(filename, encoding='utf8') as fih:
             wholetext = fih.read()
         _write(filename, new_header + wholetext[header_end_pos:])
 

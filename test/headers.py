@@ -48,7 +48,7 @@ class TestHeaders(TestCase):
         vsc.install.headers._write = orig_write
         vsc.install.shared_setup.get_license = orig_get_license
         self.setup = vsc_setup()
-        super(TestHeaders, self).setUp()
+        super().setUp()
 
     def _get_header(self, filename, name, script, expected):
         """Convenience method to help test get_header"""
@@ -61,16 +61,14 @@ class TestHeaders(TestCase):
             shebang_len = len(shebang)
 
         self.assertEqual(len(header), expected[name][0],
-                         msg="header for %s (filename %s, len %s): %s\nENDOFMSG" %
-                         (name, filename, len(header), header))
+                         msg=f"header for {name} (filename {filename}, len {len(header)}): {header}\nENDOFMSG")
         self.assertEqual(shebang_len, expected[name][1],
-                         msg="shebang for %s (filename %s, len %s): %s\nENDOFMSG" %
-                         (name, filename, shebang_len, shebang))
+                         msg=f"shebang for {name} (filename {filename}, len {shebang_len}): {shebang}\nENDOFMSG")
 
     def test_get_header(self):
         """Test get_header function from .get_header files"""
 
-        self.assertTrue(vsc.install.headers.HEADER_REGEXP.pattern.startswith('\A'),
+        self.assertTrue(vsc.install.headers.HEADER_REGEXP.pattern.startswith(r'\A'),
                         msg='header regexp patterns starts with start of string: %s' %
                         vsc.install.headers.HEADER_REGEXP.pattern)
 
@@ -85,7 +83,7 @@ class TestHeaders(TestCase):
         }
 
         for filename in glob.glob(os.path.join(self.setup.REPO_TEST_DIR, 'headers', "*.get_header")):
-            log.info('test_get_header filename %s' % filename)
+            log.info(f'test_get_header filename {filename}')
 
             found = False
             name = os.path.basename(filename[:-len('.get_header')])
@@ -93,7 +91,7 @@ class TestHeaders(TestCase):
                 found = True
                 self._get_header(filename, name, False, expected)
 
-            name = '_script_%s' % name
+            name = f'_script_{name}'
             if name in expected:
                 found = True
                 self._get_header(filename, name, True, expected)
@@ -115,23 +113,23 @@ class TestHeaders(TestCase):
             'endyear': 5678,
             'url': 'https://github.com/vub-hpc/projectname',
         }
-        for license in KNOWN_LICENSES.keys():
-            res_fn = os.path.join(self.setup.REPO_TEST_DIR, 'headers', license)
-            with open(res_fn) as fh:
+        for lic in KNOWN_LICENSES:
+            res_fn = os.path.join(self.setup.REPO_TEST_DIR, 'headers', lic)
+            with open(res_fn, encoding='utf8') as fh:
                 result = fh.read()
-            gen_txt = gen_license_header(license, **data)
-            self.assertEqual(gen_txt, result, msg='generated header for license %s as expected' % license)
-            log.info('generated license header %s' % license)
+            gen_txt = gen_license_header(lic, **data)
+            self.assertEqual(gen_txt, result, msg=f'generated header for license {lic} as expected')
+            log.info(f'generated license header {lic}')
 
-            gen_txt_bru = gen_license_header(license, **data_brussel)
+            gen_txt_bru = gen_license_header(lic, **data_brussel)
             self.assertNotRegex(gen_txt_bru, 'Ghent University',
                                         msg='No reference to Ghent University in header')
             self.assertNotRegex(gen_txt_bru, r'ugent\.be',
                                         msg='No reference to ugent.be University in header')
             self.assertRegex(gen_txt_bru, r'the HPC team of Vrije Universiteit Brussel \(https://hpc.vub.be\)',
-                                     msg='generted header for Brussel is correct for %s' % license)
+                                     msg=f'generted header for Brussel is correct for {lic}')
             self.assertRegex(gen_txt_bru, r'support of Vrije Universiteit Brussel \(https://www.vub.be\)',
-                                     msg='generted header for Brussel is correct for %s' % license)
+                                     msg=f'generted header for Brussel is correct for {lic}')
 
     def test_begin_end_from_header(self):
         """Test begin_end_from_header method"""
@@ -175,13 +173,13 @@ class TestHeaders(TestCase):
         compares = []
 
         def compare(filename, content):
-            log.info('mocked write does compare for %s ' % filename)
+            log.info(f'mocked write does compare for {filename} ')
             name = filename.replace('.check', '')
             compares.append(name)
             new_filename = filename.replace('.check', '.fixed')
-            with open(new_filename) as fih:
+            with open(new_filename, encoding='utf8') as fih:
                 self.assertEqual(content, fih.read(),
-                                 msg='new content is as expected for %s' % filename)
+                                 msg=f'new content is as expected for {filename}')
 
         vsc.install.headers._write = compare
 
@@ -201,10 +199,10 @@ class TestHeaders(TestCase):
         for filename in glob.glob(os.path.join(self.setup.REPO_TEST_DIR, 'headers', "*.check*")):
             name = os.path.basename(filename).replace('.check', '')
             self.assertEqual(check_header(filename, script=expected[name][0], write=True),
-                             expected[name][1], msg='checked headers for filename %s' % filename)
+                             expected[name][1], msg=f'checked headers for filename {filename}')
 
         not_changed = [k for k, v in expected.items() if not v[1]]
         self.assertEqual(len(compares), len(expected) - len(not_changed),
                          msg='number of mocked writes/compares as expected')
         for ext in not_changed:
-            self.assertFalse(ext in compares, msg='not changed %s not compared' % ext)
+            self.assertFalse(ext in compares, msg=f'not changed {ext} not compared')

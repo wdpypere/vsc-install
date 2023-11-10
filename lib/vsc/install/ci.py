@@ -71,11 +71,11 @@ def write_file(path, txt):
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     try:
-        with open(path, 'w') as handle:
+        with open(path, 'w', encoding='utf8') as handle:
             handle.write(txt)
         logging.info("Wrote %s", path)
-    except (IOError, OSError) as err:
-        raise IOError(f"Failed to write {path}: {err}") from err
+    except OSError as err:
+        raise OSError(f"Failed to write {path}: {err}") from err
 
 def gen_github_action(repo_base_dir=os.getcwd()):
     """
@@ -248,7 +248,7 @@ def parse_vsc_ci_cfg():
             cfgparser.read(VSC_CI_INI)
             cfgparser.items(VSC_CI)  # just to make sure vsc-ci section is there
         except (configparser.NoSectionError, configparser.ParsingError) as err:
-            logging.error(f"ERROR: Failed to parse {VSC_CI_INI}: {err}")
+            logging.error("ERROR: Failed to parse %s: %s", VSC_CI_INI, err)
             sys.exit(1)
 
         # every entry in the vsc-ci section is expected to be a known setting
@@ -371,7 +371,7 @@ def gen_jenkinsfile():
         lines.extend([
             indent("stage('PR title JIRA link') {"),
             indent("if (env.CHANGE_ID) {", level=2),
-            indent("if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?/) {", level=3),
+            indent(r"if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?/) {", level=3),
             indent('echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."', level=4),
             indent("} else {", level=3),
             indent("echo \"ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'.\"", level=4),

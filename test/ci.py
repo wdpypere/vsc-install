@@ -64,7 +64,7 @@ EXPECTED_JENKINSFILE_EASY_INSTALL = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE_EA
 EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE_PIP3 + '}\n'
 EXPECTED_JENKINSFILE_DEFAULT = EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX
 
-EXPECTED_JENKINSFILE_JIRA = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE_PIP3 + """    stage('PR title JIRA link') {
+EXPECTED_JENKINSFILE_JIRA = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE_PIP3 + r"""    stage('PR title JIRA link') {
         if (env.CHANGE_ID) {
             if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?/) {
                 echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."
@@ -178,7 +178,7 @@ class CITest(TestCase):
 
     def setUp(self):
         """Test setup."""
-        super(CITest, self).setUp()
+        super().setUp()
 
         os.chdir(self.tmpdir)
 
@@ -217,17 +217,17 @@ class CITest(TestCase):
         self.assertErrorRegex(ValueError, error_msg, parse_vsc_ci_cfg)
 
         vsc_ini_txt_lines = []
-        for key in default.keys():
+        for key, value in default.items():
             # special treatment needed for non-boolean keys like additional_test_commands
-            if default[key] is None:
-                vsc_ini_txt_lines.append('%s=foo' % key)
+            if value is None:
+                vsc_ini_txt_lines.append(f'{key}=foo')
             else:
-                vsc_ini_txt_lines.append('%s=1' % key)
+                vsc_ini_txt_lines.append(f'{key}=1')
 
         self.write_vsc_ci_ini('\n'.join(vsc_ini_txt_lines))
-        expected = dict((key, True) for key in default.keys())
-        for key in default.keys():
-            if default[key] is None:
+        expected = {key: True for key in default}
+        for key, value in default.items():
+            if value is None:
                 expected[key] = 'foo'
         self.assertEqual(parse_vsc_ci_cfg(), expected)
 
