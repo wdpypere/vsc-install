@@ -29,6 +29,7 @@ import os
 import re
 import sys
 
+from pathlib import Path
 from vsc.install import shared_setup
 from vsc.install.shared_setup import action_target, vsc_setup, _fvs
 
@@ -327,8 +328,7 @@ class TestSetup(TestCase):
         """Test generating of setup.cfg."""
 
         def read_setup_cfg():
-            with open('setup.cfg') as fp:
-                return fp.read().strip()
+            return Path('setup.cfg').read_text(encoding='utf8').strip()
 
         os.chdir(self.tmpdir)
 
@@ -388,8 +388,7 @@ class TestSetup(TestCase):
 
         # if makesetupcfg is set to False, existing setup.cfg is left untouched
         setup_cfg_txt = 'thisdoesnotreallymatter'
-        with open('setup.cfg', 'w') as fp:
-            fp.write(setup_cfg_txt)
+        Path('setup.cfg').write_text(setup_cfg_txt, encoding='utf8')
 
         target['makesetupcfg'] = False
         vsc_setup.build_setup_cfg_for_bdist_rpm(target)

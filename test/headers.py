@@ -27,6 +27,8 @@
 import glob
 import os
 
+from pathlib import Path
+
 import vsc.install.headers
 import vsc.install.shared_setup
 from vsc.install.headers import get_header, gen_license_header, begin_end_from_header, check_header
@@ -115,8 +117,7 @@ class TestHeaders(TestCase):
         }
         for lic in KNOWN_LICENSES:
             res_fn = os.path.join(self.setup.REPO_TEST_DIR, 'headers', lic)
-            with open(res_fn, encoding='utf8') as fh:
-                result = fh.read()
+            result = Path(res_fn).read_text(encoding='utf8')
             gen_txt = gen_license_header(lic, **data)
             self.assertEqual(gen_txt, result, msg=f'generated header for license {lic} as expected')
             log.info(f'generated license header {lic}')
@@ -177,8 +178,8 @@ class TestHeaders(TestCase):
             name = filename.replace('.check', '')
             compares.append(name)
             new_filename = filename.replace('.check', '.fixed')
-            with open(new_filename, encoding='utf8') as fih:
-                self.assertEqual(content, fih.read(),
+            new_content = Path(new_filename).read_text(encoding='utf8')
+            self.assertEqual(content, new_content,
                                  msg=f'new content is as expected for {filename}')
 
         vsc.install.headers._write = compare

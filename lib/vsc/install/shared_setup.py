@@ -50,6 +50,8 @@ import setuptools.command.test
 from distutils import log  # also for setuptools
 from distutils.dir_util import remove_tree
 
+from pathlib import Path
+
 from setuptools import Command
 from setuptools.command.test import test as TestCommand
 from setuptools.command.test import ScanningLoader
@@ -275,12 +277,10 @@ def _fvs(msg=None):
 
 def _read(source, read_lines=False):
     """read a file, either in full or as a list (read_lines=True)"""
-    with open(source, encoding='utf8') as file_handle:
-        if read_lines:
-            txt = file_handle.readlines()
-        else:
-            txt = file_handle.read()
-    return txt
+    text = Path(source).read_text(encoding='utf8')
+    if read_lines:
+        return text.split()
+    return text
 
 
 # for sufficiently recent version of setuptools, we can hijack the 'get_egg_cache_dir' method
@@ -574,8 +574,7 @@ class vsc_setup():
 
         def _write(self, dest, code):
             """write code to dest"""
-            with open(dest, 'w', encoding='utf8') as fih:
-                fih.write(code)
+            Path(dest).write_text(code, encoding='utf8')
 
         def _copy_setup_py(self, base_dir):
             """
@@ -1296,9 +1295,10 @@ class vsc_setup():
     def get_md5sum(filename):
         """Use this function to compute the md5sum in the KNOWN_LICENSES hash"""
         hasher = hashlib.md5()
-        with open(filename, "rb") as fih:
-            for chunk in iter(lambda: fih.read(4096), b""):
-                hasher.update(chunk)
+        txt = Path(filename).read_bytes()
+        chunks = [txt[i:i+4096] for i in range(0, len(txt), 4096)]
+        for chunk in chunks:
+            hasher.update(chunk)
         return hasher.hexdigest()
 
 
@@ -1632,10 +1632,8 @@ class vsc_setup():
 
         # add metadata
         txt += ['', '[metadata]', '', f'description-file = {README}', '']
-
         try:
-            with open('setup.cfg', 'w', encoding="utf8") as setup_cfg:
-                setup_cfg.write("\n".join(txt+['']))
+            Path('setup.cfg').write_text("\n".join(txt+['']), encoding='utf8')
         except OSError as err:
             print(f"Cannot create setup.cfg for target {target['name']}: {err}")
             sys.exit(1)

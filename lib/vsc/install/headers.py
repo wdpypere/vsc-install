@@ -42,6 +42,7 @@ import os
 import re
 import sys
 
+from pathlib import Path
 from datetime import date
 from vsc.install.shared_setup import SHEBANG_BIN_BASH, SHEBANG_ENV_PYTHON, log, vsc_setup
 
@@ -93,8 +94,7 @@ def get_header(filename, script=False):
     if not os.path.isfile(filename):
         raise ValueError(f'get_header filename {filename} not found')
 
-    with open(filename, encoding='utf8') as fih:
-        txt = fih.read()
+    txt = Path(filename).read_text(encoding='utf8')
 
     blocks = HEADER_REGEXP.split(txt)
     if len(blocks) == 1:
@@ -172,10 +172,8 @@ def begin_end_from_header(header):
 
 
 def _write(filename, content):
-    """Simple wrapper around open().write for unittesting"""
-    with open(filename, 'w', encoding='utf8') as fih:
-        fih.write(content)
-
+    """Simple wrapper around Path().write_text() for unittesting"""
+    Path(filename).write_text(content, encoding='utf8')
 
 def check_header(filename, script=False, write=False):
     """
@@ -276,8 +274,7 @@ def check_header(filename, script=False, write=False):
 
     if write and changed:
         log.info('write enabled and different header. Going to modify file %s', filename)
-        with open(filename, encoding='utf8') as fih:
-            wholetext = fih.read()
+        wholetext = Path(filename).read_text(encoding='utf8')
         _write(filename, new_header + wholetext[header_end_pos:])
 
     # return different or not

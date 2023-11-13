@@ -35,6 +35,8 @@ import os
 import sys
 import configparser
 import yaml
+
+from pathlib import Path
 from vsc.install.shared_setup import MAX_SETUPTOOLS_VERSION, vsc_setup
 
 
@@ -71,8 +73,7 @@ def write_file(path, txt):
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     try:
-        with open(path, 'w', encoding='utf8') as handle:
-            handle.write(txt)
+        Path(path).write_text(txt, encoding='utf8')
         logging.info("Wrote %s", path)
     except OSError as err:
         raise OSError(f"Failed to write {path}: {err}") from err

@@ -31,6 +31,7 @@ Test CI functionality
 import os
 import re
 
+from pathlib import Path
 from vsc.install.ci import gen_jenkinsfile, gen_tox_ini, parse_vsc_ci_cfg, gen_github_action
 from vsc.install.testing import TestCase
 
@@ -184,10 +185,7 @@ class CITest(TestCase):
 
     def write_vsc_ci_ini(self, txt):
         """Write vsc-ci.ini file in current directory with specified contents."""
-        with open('vsc-ci.ini', 'w', encoding='utf8') as fih:
-            fih.write('[vsc-ci]\n')
-            fih.write(txt)
-            fih.write('\n')
+        Path('vsc-ci.ini').write_text("\n".join(['[vsc-ci]', txt]), encoding='utf8')
 
     def test_parse_vsc_ci_cfg(self):
         """Test parse_vsc_ci_cfg function."""
