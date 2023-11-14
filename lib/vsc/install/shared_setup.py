@@ -1010,11 +1010,11 @@ class vsc_setup():
         def run_tests(self):
             """
             Actually run the tests, but start with
-                passing the filter options via __builtin__
+                passing the filter options via builtins
                 set sys.path
                 reload vsc modules
             """
-            getattr(__builtin__, '__test_filter').update({
+            getattr(builtins, '__test_filter').update({
                 'function': self.test_filterf,
                 'module': self.test_filterm,
             })
