@@ -48,7 +48,6 @@ import setuptools.dist
 import setuptools.command.test
 
 from distutils import log  # also for setuptools
-from distutils.dir_util import remove_tree
 
 from setuptools import Command
 from setuptools.command.test import test as TestCommand
@@ -1234,7 +1233,7 @@ class vsc_setup():
             if os.path.isdir(dirname):
                 log.warn("cleanup %s", dirname)
                 try:
-                    remove_tree(dirname, verbose=False)
+                    shutil.rmtree(dirname)
                 except OSError:
                     log.error("cleanup failed for %s", dirname)
 
