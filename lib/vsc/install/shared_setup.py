@@ -279,7 +279,7 @@ def _read(source, read_lines=False):
     """read a file, either in full or as a list (read_lines=True)"""
     text = Path(source).read_text(encoding='utf8')
     if read_lines:
-        return text.split()
+        return text.splitlines()
     return text
 
 

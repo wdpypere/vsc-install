@@ -109,7 +109,7 @@ def get_header(filename, script=False):
     shebang = None
     if script:
         log.info('get_header for script %s', filename)
-        lines = header.split("\n")
+        lines = header.splitlines()
         if lines[0].startswith('#!/'):
             shebang = lines[0]
             header = "\n".join(lines[1:])
