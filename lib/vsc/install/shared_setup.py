@@ -1296,8 +1296,8 @@ class vsc_setup():
         """Use this function to compute the md5sum in the KNOWN_LICENSES hash"""
         hasher = hashlib.md5()
         txt = Path(filename).read_bytes()
-        for chunk in [txt[i:i+4096] for i in range(0, len(txt), 4096)]:
-            hasher.update(chunk)
+        for i in range(0, len(txt), 4096):
+            hasher.update(txt[i:i+4096])
         return hasher.hexdigest()
 
 
