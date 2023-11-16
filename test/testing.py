@@ -32,7 +32,7 @@ import logging
 import os
 import re
 import sys
-from unittest import TestLoader, main
+from unittest import TestLoader
 
 from vsc.install.testing import TestCase
 
@@ -52,7 +52,7 @@ class TestTesting(TestCase):
                 return repr(self.msg)
 
         for exception in OSError, Exception, TestException:
-            msg = 'test_%s' % exception.__name__
+            msg = f'test_{exception.__name__}'
             err = exception(msg)
             self.assertEqual(self.convert_exception_to_str(err), msg)
 

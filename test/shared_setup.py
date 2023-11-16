@@ -29,6 +29,7 @@ import os
 import re
 import sys
 
+from pathlib import Path
 from vsc.install import shared_setup
 from vsc.install.shared_setup import action_target, vsc_setup, _fvs
 
@@ -40,7 +41,7 @@ class TestSetup(TestCase):
 
     def setUp(self):
         """create a self.setup.instance for every test"""
-        super(TestSetup, self).setUp()
+        super().setUp()
         self.setup = vsc_setup()
 
     def test_get_name_url(self):
@@ -54,13 +55,13 @@ class TestSetup(TestCase):
                    'git_config_5']:
             self.assertEqual(self.setup.get_name_url(os.path.join(self.setup.REPO_TEST_DIR, 'setup', fn),
                              version='0.1.2'), res,
-                             msg='determined name and url from %s file' % fn)
+                             msg=f'determined name and url from {fn} file')
 
         res.pop('download_url')
         fn = 'git_config'
         self.assertEqual(self.setup.get_name_url(os.path.join(self.setup.REPO_TEST_DIR, 'setup', fn), version='0.1.2',
                          license_name='LGPLv2+'), res,
-                         msg='determined name and url from %s file with license' % fn)
+                         msg=f'determined name and url from {fn} file with license')
 
         fn = 'git_config_6'
         res_brussel = {
@@ -70,7 +71,7 @@ class TestSetup(TestCase):
         }
         self.assertEqual(self.setup.get_name_url(os.path.join(self.setup.REPO_TEST_DIR, 'setup', fn), version='0.1.0'),
                          res_brussel,
-                         msg='determined name and url from %s file with license' % fn)
+                         msg=f'determined name and url from {fn} file with license')
 
     def test_sanitize(self):
         """Test sanitize function"""
@@ -154,8 +155,8 @@ class TestSetup(TestCase):
         """Test action_target function, mostly w.r.t. backward compatibility."""
         def fake_setup(*args, **kwargs):
             """Fake setup function to test action_target with."""
-            print('args: %s' % str(args))
-            print('kwargs: %s' % kwargs)
+            print(f'args: {str(args)}')
+            print(f'kwargs: {kwargs}')
 
         self.mock_stdout(True)
         action_target({'name': 'vsc-test', 'version': '1.0.0'}, setupfn=fake_setup)
@@ -305,7 +306,7 @@ class TestSetup(TestCase):
             'vsc_filter_rpm': {
                 'install_requires': [
                     ['vsc-base.*', ''],
-                    ['^(vsc-config).*', '\g<1>'], # strip version info for vsc-config
+                    ['^(vsc-config).*', r'\g<1>'], # strip version info for vsc-config
                 ],
             },
         }
@@ -327,8 +328,7 @@ class TestSetup(TestCase):
         """Test generating of setup.cfg."""
 
         def read_setup_cfg():
-            with open('setup.cfg') as fp:
-                return fp.read().strip()
+            return Path('setup.cfg').read_text(encoding='utf8').strip()
 
         os.chdir(self.tmpdir)
 
@@ -388,8 +388,7 @@ class TestSetup(TestCase):
 
         # if makesetupcfg is set to False, existing setup.cfg is left untouched
         setup_cfg_txt = 'thisdoesnotreallymatter'
-        with open('setup.cfg', 'w') as fp:
-            fp.write(setup_cfg_txt)
+        Path('setup.cfg').write_text(setup_cfg_txt, encoding='utf8')
 
         target['makesetupcfg'] = False
         vsc_setup.build_setup_cfg_for_bdist_rpm(target)

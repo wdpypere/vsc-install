@@ -41,7 +41,7 @@ class ProspectorTest(TestCase):
 
     def setUp(self):
         """create a self.setup.instance for every test"""
-        super(ProspectorTest, self).setUp()
+        super().setUp()
         self.setup = vsc_setup()
 
     def test_prospectorfail(self):
