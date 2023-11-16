@@ -27,4 +27,4 @@
 import vsc.install.commontest
 
 class ImportTest(vsc.install.commontest.CommonTest):
-    EXCLUDE_MODS = ['^vsc\.fancylogger$'] # it requires vsc-base
+    EXCLUDE_MODS = [r'^vsc\.fancylogger$'] # it requires vsc-base

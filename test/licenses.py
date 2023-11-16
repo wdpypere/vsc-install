@@ -36,7 +36,7 @@ class LicenseTest(TestCase):
 
     def setUp(self):
         """Create a vsc_setup instance for each test"""
-        super(LicenseTest, self).setUp()
+        super().setUp()
         self.setup = vsc_setup()
 
     def test_known_licenses(self):
@@ -44,34 +44,34 @@ class LicenseTest(TestCase):
 
         total_licenses = len(KNOWN_LICENSES)
         self.assertEqual(total_licenses, 3,
-                         msg='shared_setup has %s licenses' % total_licenses)
+                         msg=f'shared_setup has {total_licenses} licenses')
 
         md5sums = []
         for short, data in KNOWN_LICENSES.items():
             # the known text must be in known_licenses dir with the short name
             fn = os.path.join(self.setup.REPO_BASE_DIR, 'known_licenses', short)
             self.assertTrue(os.path.isfile(fn),
-                            msg='license %s is in known_licenses directory' % short)
+                            msg=f'license {short} is in known_licenses directory')
 
             md5sum = self.setup.get_md5sum(fn)
-            self.assertEqual(data[0], md5sum,
-                             msg='md5sum from KNOWN_LICENSES %s matches the one in known_licenses dir %s for %s' %
-                             (data[0], md5sum, short))
+            self.assertEqual(
+                data[0], md5sum,
+                msg=f'md5sum from KNOWN_LICENSES {data[0]} matches the one in known_licenses dir {md5sum} for {short}')
             self.assertFalse(md5sum in md5sums,
-                             msg='md5sum for license %s is unique' % md5sum)
+                             msg=f'md5sum for license {md5sum} is unique')
 
             lic_name, classifier = self.setup.get_license(license_name=fn)
             self.assertEqual(lic_name, os.path.basename(fn),
-                             msg='file %s is license %s' % (fn, lic_name))
+                             msg=f'file {fn} is license {lic_name}')
             self.assertTrue(classifier.startswith('License :: OSI Approved :: ') or
                             classifier == 'License :: Other/Proprietary License',
-                            msg='classifier as expected for %s' % short)
+                            msg=f'classifier as expected for {short}')
 
     def test_release_on_pypi(self):
         """Release on pypi or not"""
 
         self.assertEqual(PYPI_LICENSES, ['LGPLv2+', 'GPLv2'], 'Expected licenses that allow releasing on pypi')
 
-        for short in KNOWN_LICENSES.keys():
+        for short in KNOWN_LICENSES:
             self.assertEqual(self.setup.release_on_pypi(short), short in PYPI_LICENSES,
-                             msg='can %s be usd to release on pypi' % short)
+                             msg=f'can {short} be usd to release on pypi')

@@ -138,7 +138,7 @@ because it helps developers catch weird errors on their side better.
 if you do something like
 ```python
 try:
-    open(int(somestring)).write('important data')
+    Path(int(somestring)).write_text('important data')
 except Exception:
     pass # if somestring is not an integer, we didn't need to write anyway, but otherwise we do
 ```
