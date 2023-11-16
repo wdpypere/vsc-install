@@ -31,9 +31,6 @@ Shared module for vsc software setup
 """
 
 import sys
-
-import builtins as __builtin__  # make builtins accessible via same way as in Python 3
-
 import glob
 import hashlib
 import inspect
@@ -42,6 +39,7 @@ import os
 import shutil
 import traceback
 import re
+import builtins
 
 import setuptools
 import setuptools.dist
@@ -78,13 +76,13 @@ GITIGNORE_EXACT_PATTERNS = ['.eggs*']
 
 # private class variables to communicate
 # between VscScanningLoader and VscTestCommand
-# stored in __builtin__ because the (Vsc)TestCommand.run_tests
+# stored in builtins because the (Vsc)TestCommand.run_tests
 # reloads and cleans up the modules
-if not hasattr(__builtin__, '__target'):
-    setattr(__builtin__, '__target', {})
+if not hasattr(builtins, '__target'):
+    setattr(builtins, '__target', {})
 
-if not hasattr(__builtin__, '__test_filter'):
-    setattr(__builtin__, '__test_filter', {
+if not hasattr(builtins, '__test_filter'):
+    setattr(builtins, '__test_filter', {
         'module': None,
         'function': None,
         'allowmods': [],
@@ -169,7 +167,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.19.4'
+VERSION = '0.19.5'
 
 log.info('This is (based on) vsc.install.shared_setup %s', VERSION)
 log.info('(using setuptools version %s located at %s)', setuptools.__version__, setuptools.__file__)
@@ -533,7 +531,7 @@ class vsc_setup():
         """For list of packages pkgs, make the function to exclude all conflicting files from rpm"""
 
         if pkgs is None:
-            pkgs = getattr(__builtin__, '__target').get('excluded_pkgs_rpm', [])
+            pkgs = getattr(builtins, '__target').get('excluded_pkgs_rpm', [])
 
         res = []
         for pkg in pkgs:
@@ -773,7 +771,7 @@ class vsc_setup():
     @staticmethod
     def filter_testsuites(testsuites):
         """(Recursive) filtering of (suites of) tests"""
-        test_filter = getattr(__builtin__, '__test_filter')['function']
+        test_filter = getattr(builtins, '__test_filter')['function']
 
         res = type(testsuites)()
 
@@ -823,7 +821,7 @@ class vsc_setup():
 
                 raise
 
-            test_filter = getattr(__builtin__, '__test_filter')
+            test_filter = getattr(builtins, '__test_filter')
 
             res = testsuites
 
@@ -1012,11 +1010,11 @@ class vsc_setup():
         def run_tests(self):
             """
             Actually run the tests, but start with
-                passing the filter options via __builtin__
+                passing the filter options via builtins
                 set sys.path
                 reload vsc modules
             """
-            getattr(__builtin__, '__test_filter').update({
+            getattr(builtins, '__test_filter').update({
                 'function': self.test_filterf,
                 'module': self.test_filterm,
             })
@@ -1647,7 +1645,7 @@ class vsc_setup():
         """
         pkgs = target.pop('excluded_pkgs_rpm', ['vsc'])
         if pkgs is not None:
-            getattr(__builtin__, '__target')['excluded_pkgs_rpm'] = pkgs
+            getattr(builtins, '__target')['excluded_pkgs_rpm'] = pkgs
 
         # Add (default) and excluded_pkgs_rpm packages to SHARED_TARGET
         # the default ones are only the ones with a __init__.py file
