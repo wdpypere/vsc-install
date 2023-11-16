@@ -242,7 +242,8 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
     #     (or logilab if no recent enough pylint is installed)
     # Make sure the original is restored
     # (before any errors are reported; no need to put this in setUp/tearDown)
-    optparse.HelpFormatter.expand_default = orig_expand_default
+    if sys.version_info < (3,9):
+        optparse.HelpFormatter.expand_default = orig_expand_default
 
     return failures
 
