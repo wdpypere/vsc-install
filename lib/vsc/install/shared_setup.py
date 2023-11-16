@@ -166,7 +166,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.19.5'
+VERSION = '0.19.6'
 
 log.info('This is (based on) vsc.install.shared_setup %s', VERSION)
 log.info('(using setuptools version %s located at %s)', setuptools.__version__, setuptools.__file__)
@@ -372,7 +372,7 @@ class vsc_setup():
 
         # multiline search
         # github pattern for hpcugent, not fork
-        git_remote_patterns = ['%s.*?[:/]%s' % remote for remote in GIT_REMOTES]
+        git_remote_patterns = [f'{remote}.*?[:/]{value}' for remote, value in GIT_REMOTES]
         git_domain_pattern = f"(?:{'|'.join(git_remote_patterns)})"
         all_patterns = {
             'name': [
@@ -406,7 +406,7 @@ class vsc_setup():
             self.private_repo = True
 
         if 'url' not in res:
-            allowed_remotes = ', '.join(['%s/%s' % remote for remote in GIT_REMOTES])
+            allowed_remotes = ', '.join([f'{remote}/{value}' for remote, value in GIT_REMOTES])
             raise KeyError(f"Missing url in git config {res}. (Missing mandatory remote? {allowed_remotes})")
 
         # handle git://server/user/project

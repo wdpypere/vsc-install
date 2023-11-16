@@ -84,6 +84,7 @@ PROSPECTOR_WHITELIST = [
     'bad-whitespace',
     'bare-except',
     'consider-using-dict-comprehension',
+    'consider-using-f-string',
     'consider-using-set-comprehension',
     'consider-using-with', # By using 'with' the release of the allocated res is ensured in the case of an exception.
     'dangerous-default-value',
@@ -107,14 +108,18 @@ PROSPECTOR_WHITELIST = [
     'redefine-in-handler',  # except A, B -> except (A, B)
     'redefined-builtin',
     'reimported',
+    'super-with-arguments',
     'syntax-error',
     'trailing-whitespace',
     'undefined',
+    'unidiomatic-typecheck',
+    'unnecessary-pass',
     'unnecessary-semicolon',
     'unpacking-in-except', # will stop working in python3
     'unused-argument',
     'unused-import',
     'unused-variable',
+    'useless-object-inheritance',
 ]
 
 # Prospector commandline options (positional path is added automatically)
