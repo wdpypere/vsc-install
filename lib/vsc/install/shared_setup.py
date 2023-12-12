@@ -166,7 +166,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.19.6'
+VERSION = '0.19.7'
 
 log.info('This is (based on) vsc.install.shared_setup %s', VERSION)
 log.info('(using setuptools version %s located at %s)', setuptools.__version__, setuptools.__file__)
@@ -1506,7 +1506,8 @@ class vsc_setup():
                 'pylint-plugin-utils < 0.8',
                 'pylint-django < 2.5.4',
                 'astroid <= 2.17.0-dev0',
-                'pycodestyle < 2.10'
+                'pycodestyle < 2.10',
+                'requirementslib < 2.3.1',  # newer pulls in pydantic which doesn't do setup.py
             ])
 
         new_target['tests_require'] = tests_requires
