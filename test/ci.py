@@ -97,13 +97,20 @@ EXPECTED_TOX_INI = """# tox.ini: configuration file for tox
 envlist = py36,py39
 skipsdist = true
 
-[testenv:py39]
-ignore_outcome = true
-
-[testenv]
+[testenv:py36]
 commands_pre =
     pip install 'setuptools<42.0'
     python -m easy_install -U vsc-install
+
+[testenv:py39]
+ignore_outcome = true
+setenv = SETUPTOOLS_USE_DISTUTILS=local
+commands_pre =
+    pip install 'setuptools<54.0' wheel
+    python setup.py -q easy_install -v -U vsc-install
+
+[testenv]
+setenv = SETUPTOOLS_USE_DISTUTILS=local
 commands = python setup.py test
 passenv = USER
 """
@@ -116,10 +123,19 @@ EXPECTED_TOX_INI_WITH_PY39 = """# tox.ini: configuration file for tox
 envlist = py36,py39
 skipsdist = true
 
-[testenv]
+[testenv:py36]
 commands_pre =
     pip install 'setuptools<42.0'
     python -m easy_install -U vsc-install
+
+[testenv:py39]
+setenv = SETUPTOOLS_USE_DISTUTILS=local
+commands_pre =
+    pip install 'setuptools<54.0' wheel
+    python setup.py -q easy_install -v -U vsc-install
+
+[testenv]
+setenv = SETUPTOOLS_USE_DISTUTILS=local
 commands = python setup.py test
 passenv = USER
 """
@@ -134,11 +150,18 @@ skipsdist = true
 
 [testenv:py36]
 ignore_outcome = true
-
-[testenv]
 commands_pre =
     pip install 'setuptools<42.0'
     python -m easy_install -U vsc-install
+
+[testenv:py39]
+setenv = SETUPTOOLS_USE_DISTUTILS=local
+commands_pre =
+    pip install 'setuptools<54.0' wheel
+    python setup.py -q easy_install -v -U vsc-install
+
+[testenv]
+setenv = SETUPTOOLS_USE_DISTUTILS=local
 commands = python setup.py test
 passenv = USER
 """
@@ -335,8 +358,8 @@ class CITest(TestCase):
         pip_regex = re.compile('pip install')
         pip_install_scripts = 'pip install --install-option="--install-scripts={envdir}/bin"'
         expected_tox_ini = pip_regex.sub(pip_install_scripts, expected_tox_ini)
-        easy_install_regex = re.compile('easy_install -U')
-        expected_tox_ini = easy_install_regex.sub('easy_install -U --script-dir={envdir}/bin', expected_tox_ini)
+        easy_install_regex = re.compile('easy_install( -v)? -U')
+        expected_tox_ini = easy_install_regex.sub(r'easy_install\1 -U --script-dir={envdir}/bin', expected_tox_ini)
 
         self.assertEqual(gen_tox_ini(), expected_tox_ini)
 
@@ -352,9 +375,9 @@ class CITest(TestCase):
             'commands_pre =',
             '    mv setup.cfg setup.cfg.moved',
         ]))
-        expected_tox_ini = expected_tox_ini.replace('commands =', '\n'.join([
+        expected_tox_ini = expected_tox_ini.replace('vsc-install', '\n'.join([
+            'vsc-install',
             '    mv setup.cfg.moved setup.cfg',
-            'commands =',
         ]))
 
         self.assertEqual(gen_tox_ini(), expected_tox_ini)

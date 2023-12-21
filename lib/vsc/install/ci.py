@@ -37,7 +37,10 @@ import configparser
 import yaml
 
 from pathlib import Path
-from vsc.install.shared_setup import MAX_SETUPTOOLS_VERSION, vsc_setup
+from vsc.install.shared_setup import (
+    MAX_SETUPTOOLS_VERSION_PY36, MAX_SETUPTOOLS_VERSION_PY39,
+    vsc_setup,
+    )
 
 
 JENKINSFILE = 'Jenkinsfile'
@@ -166,51 +169,70 @@ def gen_tox_ini():
         "skipsdist = true",
     ]
 
-    if not vsc_ci_cfg[PY36_TESTS_MUST_PASS]:
-        lines.extend([
+    test36 = [
             '',
             '[testenv:py36]',
-            'ignore_outcome = true'
-        ])
-
-    if not vsc_ci_cfg[PY39_TESTS_MUST_PASS]:
-        lines.extend([
+    ]
+    test39 = [
             '',
             '[testenv:py39]',
-            'ignore_outcome = true'
+    ]
+
+    if not vsc_ci_cfg[PY36_TESTS_MUST_PASS]:
+        test36.append('ignore_outcome = true')
+
+    if not vsc_ci_cfg[PY39_TESTS_MUST_PASS]:
+        test39.append('ignore_outcome = true')
+
+    def make_commands_pre(minor, tlines):
+        if minor > 6:
+            tlines.append("setenv = SETUPTOOLS_USE_DISTUTILS=local")
+
+        tlines.extend([
+            "commands_pre =",
         ])
+        if vsc_ci_cfg[MOVE_SETUP_CFG]:
+            tlines.append("    mv setup.cfg setup.cfg.moved")
 
-    lines.extend([
-        '',
-        '[testenv]',
-        "commands_pre =",
-    ])
+        pip_install_test_deps = vsc_ci_cfg[PIP_INSTALL_TEST_DEPS]
+        if pip_install_test_deps:
+            for dep in pip_install_test_deps.strip().split('\n'):
+                tlines.append(f"    pip install {pip_args}'{dep}'")
 
-    if vsc_ci_cfg[MOVE_SETUP_CFG]:
-        lines.append("    mv setup.cfg setup.cfg.moved")
-
-    pip_install_test_deps = vsc_ci_cfg[PIP_INSTALL_TEST_DEPS]
-    if pip_install_test_deps:
-        for dep in pip_install_test_deps.strip().split('\n'):
-            lines.append(f"    pip install {pip_args}'{dep}'")
-
-    lines.extend([
         # install required setuptools version;
         # we need a setuptools < 42.0 for now, since in 42.0 easy_install was changed to use pip when available;
         # it's important to use pip (not easy_install) here, since only pip will actually remove an older
         # already installed setuptools version
-        f"    pip install {pip_args}'setuptools<{MAX_SETUPTOOLS_VERSION}'",
+        if minor > 6:
+            tlines.append(f"    pip install {pip_args}'setuptools<{MAX_SETUPTOOLS_VERSION_PY39}' wheel")
+        else:
+            tlines.append(f"    pip install {pip_args}'setuptools<{MAX_SETUPTOOLS_VERSION_PY36}'")
         # install latest vsc-install release from PyPI;
         # we can't use 'pip install' here, because then we end up with a broken installation because
         # vsc/__init__.py is not installed because we're using pkg_resources.declare_namespace
         # (see https://github.com/pypa/pip/issues/1924)
-        f"    python -m easy_install -U {easy_install_args}vsc-install",
-    ])
+        if minor > 6:
+            tlines.append(f"    python setup.py -q easy_install -v -U {easy_install_args}vsc-install")
+        else:
+            tlines.append(f"    python -m easy_install -U {easy_install_args}vsc-install")
 
-    if vsc_ci_cfg[MOVE_SETUP_CFG]:
-        lines.append("    mv setup.cfg.moved setup.cfg")
+        if vsc_ci_cfg[MOVE_SETUP_CFG]:
+            tlines.append("    mv setup.cfg.moved setup.cfg")
+
+    make_commands_pre(6, test36)
+    make_commands_pre(9, test39)
+
+    lines.extend(test36)
+    lines.extend(test39)
 
     lines.extend([
+        '',
+        '[testenv]',
+    ])
+
+    lines.extend([
+        # harmless for setuptools 42
+        "setenv = SETUPTOOLS_USE_DISTUTILS=local",
         "commands = python setup.py test",
         # $USER is not defined in tox environment, so pass it
         # see https://tox.readthedocs.io/en/latest/example/basic.html#passing-down-environment-variables
@@ -299,6 +321,7 @@ def gen_jenkinsfile():
     python_cmd = 'python3'
 
     if vsc_ci_cfg[EASY_INSTALL_TOX]:
+        # worst case, use 'SETUPTOOLS_USE_DISTUTILS=local python $PREFIX/setup.py -q easy_install -v ' as "easy_install"
         install_cmd = install_cmd.replace('pip3 install', 'python -m easy_install')
         easy_install_args += '-U --user'
         test_cmds.append(f'{install_cmd} {easy_install_args} tox')

@@ -41,6 +41,28 @@ import traceback
 import re
 import builtins
 
+MAX_SETUPTOOLS_VERSION_PY39 = '54.0'
+MAX_SETUPTOOLS_VERSION_PY36 = '42.0'
+
+if sys.version_info.major == 3 and sys.version_info.minor > 6:
+    # Must run before importing setuptools
+    dmod = sys.modules.get('distutils', None)
+    if dmod is not None and 'setuptools/_distutils' not in dmod.__file__:
+        print(f'WARN: distutils already loaded with unexpected path.')
+        print("  If you get this, set 'SETUPTOOLS_USE_DISTUTILS=local' or check the setuptools version >= 53.0")
+
+
+    # only for sys.version_info.minor == 9 (rhel9 setup)
+    MAX_SETUPTOOLS_VERSION = MAX_SETUPTOOLS_VERSION_PY39
+
+    sud = os.environ.get('SETUPTOOLS_USE_DISTUTILS', None)
+    if sud is None:
+        os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'local'
+    elif sud != 'local':
+        print(f"WARN: Found SETUPTOOLS_USE_DISTUTILS in environ with value '{sud}', only tested with 'local'")
+else:
+    MAX_SETUPTOOLS_VERSION = MAX_SETUPTOOLS_VERSION_PY36
+
 import setuptools
 import setuptools.dist
 import setuptools.command.test
@@ -1726,8 +1748,6 @@ def main():
     }
 
     action_target(PACKAGE)
-
-MAX_SETUPTOOLS_VERSION = '42.0'
 
 if __name__ == '__main__':
     main()
