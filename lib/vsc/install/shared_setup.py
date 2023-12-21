@@ -131,6 +131,7 @@ if log.Log.__name__ != 'NewLog':
             self._log_levels.update(log_levels)
             OrigLog.__init__(self, *args, **kwargs)
 
+        # pylint: disable=arguments-differ
         def _log(self, level, msg, args):
             """Prefix the message with human readable level"""
             newmsg = f"{self._log_levels.get(level, 'UNKNOWN')}: {msg}"
