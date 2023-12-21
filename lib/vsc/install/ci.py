@@ -228,11 +228,6 @@ def gen_tox_ini():
     lines.extend([
         '',
         '[testenv]',
-    ])
-
-    lines.extend([
-        # harmless for setuptools 42
-        "setenv = SETUPTOOLS_USE_DISTUTILS=local",
         "commands = python setup.py test",
         # $USER is not defined in tox environment, so pass it
         # see https://tox.readthedocs.io/en/latest/example/basic.html#passing-down-environment-variables

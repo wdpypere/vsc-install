@@ -110,7 +110,6 @@ commands_pre =
     python setup.py -q easy_install -v -U vsc-install
 
 [testenv]
-setenv = SETUPTOOLS_USE_DISTUTILS=local
 commands = python setup.py test
 passenv = USER
 """
@@ -135,7 +134,6 @@ commands_pre =
     python setup.py -q easy_install -v -U vsc-install
 
 [testenv]
-setenv = SETUPTOOLS_USE_DISTUTILS=local
 commands = python setup.py test
 passenv = USER
 """
@@ -161,7 +159,6 @@ commands_pre =
     python setup.py -q easy_install -v -U vsc-install
 
 [testenv]
-setenv = SETUPTOOLS_USE_DISTUTILS=local
 commands = python setup.py test
 passenv = USER
 """

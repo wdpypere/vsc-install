@@ -324,13 +324,50 @@ if hasattr(setuptools.dist.Distribution, 'get_egg_cache_dir'):
         return egg_cache_dir_pyver
 
     setuptools.dist.Distribution.get_egg_cache_dir = get_egg_cache_dir_pyver
-
-# for ancient setuptools version (< 7.0), get_egg_cache_dir is not there yet
-# in that case, just hard remove the existing .eggs directory, to force re-creating it
 else:
-    eggs_dir = os.path.join(os.getcwd(), '.eggs')
-    if os.path.exists(eggs_dir):
-        shutil.rmtree(eggs_dir)
+    # old workaround is not needed anymore, this code was still around in 53
+    print('ERROR: no get_egg_cache_dir found in setuptools.dist.Distribution')
+
+
+# fetch_build_egg was updated in setuptools 42 to use 'from setuptools.installer import fetch_build_egg'
+# however, that one has logic to use pip
+# reverting this code to the pre-42 behaviour
+if hasattr(setuptools.dist.Distribution, 'fetch_build_egg'):
+    setuptools.dist.Distribution._orig_fetch_build_egg = setuptools.dist.Distribution.fetch_build_egg
+
+    # verbatim copy of 41.6.0-1.el8 setuptools.dist code
+    def fetch_build_egg_pyver(self, req):
+        """Fetch an egg needed for building"""
+        from setuptools.command.easy_install import easy_install
+        dist = self.__class__({'script_args': ['easy_install']})
+        opts = dist.get_option_dict('easy_install')
+        opts.clear()
+        opts.update(
+            (k, v)
+            for k, v in self.get_option_dict('easy_install').items()
+            if k in (
+                # don't use any other settings
+                'find_links', 'site_dirs', 'index_url',
+                'optimize', 'site_dirs', 'allow_hosts',
+            ))
+        if self.dependency_links:
+            links = self.dependency_links[:]
+            if 'find_links' in opts:
+                links = opts['find_links'][1] + links
+            opts['find_links'] = ('setup', links)
+        install_dir = self.get_egg_cache_dir()
+        cmd = easy_install(
+            dist, args=["x"], install_dir=install_dir,
+            exclude_scripts=True,
+            always_copy=False, build_directory=None, editable=False,
+            upgrade=False, multi_version=True, no_report=True, user=False
+        )
+        cmd.ensure_finalized()
+        return cmd.easy_install(req)
+
+    setuptools.dist.Distribution.fetch_build_egg = fetch_build_egg_pyver
+else:
+    print('ERROR: no fetch_build_egg found in setuptools.dist.Distribution')
 
 
 class vsc_setup():
