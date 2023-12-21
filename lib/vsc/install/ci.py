@@ -155,10 +155,10 @@ def gen_tox_ini():
     py3_envs = ['py36', 'py39']
     envs.extend(py3_envs)
 
-    pip_args, easy_install_args = '', ''
+    pip_args, easy_install_args = '', ['-U']
     if vsc_ci_cfg[INSTALL_SCRIPTS_PREFIX_OVERRIDE]:
-        pip_args = '--install-option="--install-scripts={envdir}/bin" '
-        easy_install_args = '--script-dir={envdir}/bin '
+        pip_args += '--install-option="--install-scripts={envdir}/bin" '
+        easy_install_args += ['--script-dir={envdir}/bin']
 
     lines = header + [
         '',
@@ -212,9 +212,10 @@ def gen_tox_ini():
         # vsc/__init__.py is not installed because we're using pkg_resources.declare_namespace
         # (see https://github.com/pypa/pip/issues/1924)
         if minor > 6:
-            tlines.append(f"    python setup.py -q easy_install -v -U {easy_install_args}vsc-install")
+            ezargs = ['-q', 'easy_install', '-v'] + easy_install_args + ['vsc-install']
+            tlines.append(f'    python -c "from setuptools import setup;setup(script_args={ezargs})"')
         else:
-            tlines.append(f"    python -m easy_install -U {easy_install_args}vsc-install")
+            tlines.append(f'    python -m easy_install {" ".join(easy_install_args)} vsc-install')
 
         if vsc_ci_cfg[MOVE_SETUP_CFG]:
             tlines.append("    mv setup.cfg.moved setup.cfg")

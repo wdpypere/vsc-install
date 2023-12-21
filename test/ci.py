@@ -107,7 +107,7 @@ ignore_outcome = true
 setenv = SETUPTOOLS_USE_DISTUTILS=local
 commands_pre =
     pip install 'setuptools<54.0' wheel
-    python setup.py -q easy_install -v -U vsc-install
+    python -c "from setuptools import setup;setup(script_args=['-q', 'easy_install', '-v', '-U', 'vsc-install'])"
 
 [testenv]
 commands = python setup.py test
@@ -131,7 +131,7 @@ commands_pre =
 setenv = SETUPTOOLS_USE_DISTUTILS=local
 commands_pre =
     pip install 'setuptools<54.0' wheel
-    python setup.py -q easy_install -v -U vsc-install
+    python -c "from setuptools import setup;setup(script_args=['-q', 'easy_install', '-v', '-U', 'vsc-install'])"
 
 [testenv]
 commands = python setup.py test
@@ -156,7 +156,7 @@ commands_pre =
 setenv = SETUPTOOLS_USE_DISTUTILS=local
 commands_pre =
     pip install 'setuptools<54.0' wheel
-    python setup.py -q easy_install -v -U vsc-install
+    python -c "from setuptools import setup;setup(script_args=['-q', 'easy_install', '-v', '-U', 'vsc-install'])"
 
 [testenv]
 commands = python setup.py test
@@ -355,8 +355,11 @@ class CITest(TestCase):
         pip_regex = re.compile('pip install')
         pip_install_scripts = 'pip install --install-option="--install-scripts={envdir}/bin"'
         expected_tox_ini = pip_regex.sub(pip_install_scripts, expected_tox_ini)
-        easy_install_regex = re.compile('easy_install( -v)? -U')
-        expected_tox_ini = easy_install_regex.sub(r'easy_install\1 -U --script-dir={envdir}/bin', expected_tox_ini)
+        easy_install_regex_36 = re.compile('easy_install -U')
+        expected_tox_ini = easy_install_regex_36.sub(r'easy_install -U --script-dir={envdir}/bin', expected_tox_ini)
+        easy_install_regex_39 = re.compile("'easy_install', '-v', '-U'")
+        expected_tox_ini = easy_install_regex_39.sub(
+            "'easy_install', '-v', '-U', '--script-dir={envdir}/bin'", expected_tox_ini)
 
         self.assertEqual(gen_tox_ini(), expected_tox_ini)
 
@@ -372,10 +375,10 @@ class CITest(TestCase):
             'commands_pre =',
             '    mv setup.cfg setup.cfg.moved',
         ]))
-        expected_tox_ini = expected_tox_ini.replace('vsc-install', '\n'.join([
-            'vsc-install',
-            '    mv setup.cfg.moved setup.cfg',
-        ]))
+
+        for suff in ['' , '\'])"']:
+            newtxt = '\n'.join([f'vsc-install{suff}', '    mv setup.cfg.moved setup.cfg', ''])
+            expected_tox_ini = expected_tox_ini.replace(f'vsc-install{suff}\n', newtxt)
 
         self.assertEqual(gen_tox_ini(), expected_tox_ini)
 
