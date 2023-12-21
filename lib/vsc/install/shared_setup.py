@@ -41,6 +41,28 @@ import traceback
 import re
 import builtins
 
+MAX_SETUPTOOLS_VERSION_PY39 = '54.0'
+MAX_SETUPTOOLS_VERSION_PY36 = '42.0'
+
+if sys.version_info.major == 3 and sys.version_info.minor > 6:
+    # Must run before importing setuptools
+    dmod = sys.modules.get('distutils', None)
+    if dmod is not None and 'setuptools/_distutils' not in dmod.__file__:
+        print(f'WARN: distutils already loaded with unexpected path.')
+        print("  If you get this, set 'SETUPTOOLS_USE_DISTUTILS=local' or check the setuptools version >= 53.0")
+
+
+    # only for sys.version_info.minor == 9 (rhel9 setup)
+    MAX_SETUPTOOLS_VERSION = MAX_SETUPTOOLS_VERSION_PY39
+
+    sud = os.environ.get('SETUPTOOLS_USE_DISTUTILS', None)
+    if sud is None:
+        os.environ['SETUPTOOLS_USE_DISTUTILS'] = 'local'
+    elif sud != 'local':
+        print(f"WARN: Found SETUPTOOLS_USE_DISTUTILS in environ with value '{sud}', only tested with 'local'")
+else:
+    MAX_SETUPTOOLS_VERSION = MAX_SETUPTOOLS_VERSION_PY36
+
 import setuptools
 import setuptools.dist
 import setuptools.command.test
@@ -109,6 +131,7 @@ if log.Log.__name__ != 'NewLog':
             self._log_levels.update(log_levels)
             OrigLog.__init__(self, *args, **kwargs)
 
+        # pylint: disable=arguments-differ
         def _log(self, level, msg, args):
             """Prefix the message with human readable level"""
             newmsg = f"{self._log_levels.get(level, 'UNKNOWN')}: {msg}"
@@ -301,13 +324,50 @@ if hasattr(setuptools.dist.Distribution, 'get_egg_cache_dir'):
         return egg_cache_dir_pyver
 
     setuptools.dist.Distribution.get_egg_cache_dir = get_egg_cache_dir_pyver
-
-# for ancient setuptools version (< 7.0), get_egg_cache_dir is not there yet
-# in that case, just hard remove the existing .eggs directory, to force re-creating it
 else:
-    eggs_dir = os.path.join(os.getcwd(), '.eggs')
-    if os.path.exists(eggs_dir):
-        shutil.rmtree(eggs_dir)
+    # old workaround is not needed anymore, this code was still around in 53
+    print('ERROR: no get_egg_cache_dir found in setuptools.dist.Distribution')
+
+
+# fetch_build_egg was updated in setuptools 42 to use 'from setuptools.installer import fetch_build_egg'
+# however, that one has logic to use pip
+# reverting this code to the pre-42 behaviour
+if hasattr(setuptools.dist.Distribution, 'fetch_build_egg'):
+    setuptools.dist.Distribution._orig_fetch_build_egg = setuptools.dist.Distribution.fetch_build_egg
+
+    # verbatim copy of 41.6.0-1.el8 setuptools.dist code
+    def fetch_build_egg_pyver(self, req):
+        """Fetch an egg needed for building"""
+        from setuptools.command.easy_install import easy_install
+        dist = self.__class__({'script_args': ['easy_install']})
+        opts = dist.get_option_dict('easy_install')
+        opts.clear()
+        opts.update(
+            (k, v)
+            for k, v in self.get_option_dict('easy_install').items()
+            if k in (
+                # don't use any other settings
+                'find_links', 'site_dirs', 'index_url',
+                'optimize', 'site_dirs', 'allow_hosts',
+            ))
+        if self.dependency_links:
+            links = self.dependency_links[:]
+            if 'find_links' in opts:
+                links = opts['find_links'][1] + links
+            opts['find_links'] = ('setup', links)
+        install_dir = self.get_egg_cache_dir()
+        cmd = easy_install(
+            dist, args=["x"], install_dir=install_dir,
+            exclude_scripts=True,
+            always_copy=False, build_directory=None, editable=False,
+            upgrade=False, multi_version=True, no_report=True, user=False
+        )
+        cmd.ensure_finalized()
+        return cmd.easy_install(req)
+
+    setuptools.dist.Distribution.fetch_build_egg = fetch_build_egg_pyver
+else:
+    print('ERROR: no fetch_build_egg found in setuptools.dist.Distribution')
 
 
 class vsc_setup():
@@ -1726,8 +1786,6 @@ def main():
     }
 
     action_target(PACKAGE)
-
-MAX_SETUPTOOLS_VERSION = '42.0'
 
 if __name__ == '__main__':
     main()
