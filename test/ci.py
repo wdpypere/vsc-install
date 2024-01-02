@@ -181,7 +181,7 @@ jobs:
     - name: add mandatory git remote
       run: git remote add hpcugent https://github.com/hpcugent/vsc-install.git
     - name: Run tox
-      run: tox -e py
+      run: tox -e py$(echo ${{ matrix.python }} | sed 's/\.//g')
     strategy:
       matrix:
         python:
