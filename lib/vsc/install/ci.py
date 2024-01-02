@@ -119,7 +119,7 @@ def gen_github_action(repo_base_dir=os.getcwd()):
                         {'name': 'install tox', 'run': "pip install 'virtualenv<20.22.0' 'tox<4.5.0'"},
                         {'name': 'add mandatory git remote',
                          'run': f'git remote add hpcugent {name_url}.git'},
-                        {'name': 'Run tox', 'run': 'tox -e py'}
+                        {'name': 'Run tox', 'run': "tox -e py$(echo ${{ matrix.python }} | sed 's/\.//g')"}
                     ]
                 }
             }
