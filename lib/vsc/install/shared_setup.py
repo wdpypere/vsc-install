@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Ghent University
+# Copyright 2011-2024 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -189,7 +189,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.20.0'
+VERSION = '0.20.1'
 
 log.info('This is (based on) vsc.install.shared_setup %s', VERSION)
 log.info('(using setuptools version %s located at %s)', setuptools.__version__, setuptools.__file__)

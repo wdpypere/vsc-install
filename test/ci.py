@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2023 Ghent University
+# Copyright 2019-2024 Ghent University
 #
 # This file is part of vsc-install,
 # originally created by the HPC team of Ghent University (http://ugent.be/hpc/en),
@@ -181,7 +181,7 @@ jobs:
     - name: add mandatory git remote
       run: git remote add hpcugent https://github.com/hpcugent/vsc-install.git
     - name: Run tox
-      run: tox -e py
+      run: tox -e py$(echo ${{ matrix.python }} | sed 's/\.//g')
     strategy:
       matrix:
         python:
