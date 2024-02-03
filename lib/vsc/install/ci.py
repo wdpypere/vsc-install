@@ -112,8 +112,8 @@ def gen_github_action(repo_base_dir=os.getcwd()):
                         }
                     },
                     'steps': [
-                        {'name': 'Checkout code', 'uses': 'actions/checkout@v3'},
-                        {'name': 'Setup Python', 'uses': 'actions/setup-python@v4',
+                        {'name': 'Checkout code', 'uses': 'actions/checkout@v4'},
+                        {'name': 'Setup Python', 'uses': 'actions/setup-python@v5',
                          'with': {'python-version': '${{ matrix.python }}'}},
                         # cap versions still compatible with Python 3.6
                         {'name': 'install tox', 'run': "pip install 'virtualenv<20.22.0' 'tox<4.5.0'"},
