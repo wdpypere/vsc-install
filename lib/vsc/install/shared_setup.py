@@ -1541,6 +1541,7 @@ class vsc_setup():
                 'pyflakes~=2.3.0',
                 'pycodestyle~=2.7.0',
                 'pylint~=2.12.2',
+                'pyyaml <= 6.0.1',
                 'prospector~=1.5.3.1',
                 'flake8~=3.9.2',
                 'pylint-plugin-utils < 0.7',
