@@ -256,7 +256,7 @@ def parse_vsc_ci_cfg():
         RUN_SHELLCHECK: False,
         ENABLE_GITHUB_ACTIONS: False,
         PY36_TESTS_MUST_PASS: True,
-        PY39_TESTS_MUST_PASS: False,
+        PY39_TESTS_MUST_PASS: True,
     }
 
     deprecated_options = [PY3_ONLY, PY3_TESTS_MUST_PASS, PIP_INSTALL_TOX, PIP3_INSTALL_TOX]

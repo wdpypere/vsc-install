@@ -103,7 +103,6 @@ commands_pre =
     python -m easy_install -U vsc-install
 
 [testenv:py39]
-ignore_outcome = true
 setenv = SETUPTOOLS_USE_DISTUTILS=local
 commands_pre =
     pip install 'setuptools<54.0' wheel
@@ -222,7 +221,7 @@ class CITest(TestCase):
             'easy_install_tox': False,
             'run_shellcheck': False,
             'py36_tests_must_pass': True,
-            'py39_tests_must_pass': False,
+            'py39_tests_must_pass': True,
         }
 
         # (basically) empty vsc-ci.ini
