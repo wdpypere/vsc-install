@@ -41,8 +41,10 @@ import traceback
 import re
 import builtins
 
-MAX_SETUPTOOLS_VERSION_PY39 = '54.0'
-MAX_SETUPTOOLS_VERSION_PY36 = '42.0'
+MAX_SETUPTOOLS_VERSION_INFINITE = '72.0'  # current limit due to removal of test command
+MAX_SETUPTOOLS_VERSION_PY312 = '70.0'
+MAX_SETUPTOOLS_VERSION_PY39 = '54.0'  # el9 ships 53.X
+MAX_SETUPTOOLS_VERSION_PY36 = '42.0'  # el8 ships 41.X
 
 if sys.version_info.major == 3 and sys.version_info.minor > 6:
     # Must run before importing setuptools
@@ -52,8 +54,12 @@ if sys.version_info.major == 3 and sys.version_info.minor > 6:
         print("  If you get this, set 'SETUPTOOLS_USE_DISTUTILS=local' or check the setuptools version >= 53.0")
 
 
-    # only for sys.version_info.minor == 9 (rhel9 setup)
-    MAX_SETUPTOOLS_VERSION = MAX_SETUPTOOLS_VERSION_PY39
+    if sys.version_info.minor == 9:  # el9
+        MAX_SETUPTOOLS_VERSION = MAX_SETUPTOOLS_VERSION_PY39
+    elif sys.version_info.minor == 12:  # el10
+        MAX_SETUPTOOLS_VERSION = MAX_SETUPTOOLS_VERSION_PY312
+    else:
+        MAX_SETUPTOOLS_VERSION = MAX_SETUPTOOLS_VERSION_INFINITE
 
     sud = os.environ.get('SETUPTOOLS_USE_DISTUTILS', None)
     if sud is None:
