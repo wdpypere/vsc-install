@@ -195,7 +195,7 @@ URL_GHUGENT_HPCUGENT = 'https://github.ugent.be/hpcugent/%(name)s'
 
 RELOAD_VSC_MODS = False
 
-VERSION = '0.21.4'
+VERSION = '0.21.5'
 
 log.info('This is (based on) vsc.install.shared_setup %s', VERSION)
 log.info('(using setuptools version %s located at %s)', setuptools.__version__, setuptools.__file__)
@@ -1539,11 +1539,9 @@ class vsc_setup():
         # - https://github.com/PyCQA/flake8/blob/3.9.2/setup.cfg
         # - https://github.com/PyCQA/prospector/blob/1.5.3.1/pyproject.toml
         # To figure out requirements of what needs what: grep name_of_tool .eggs.py3/*/*/requires.txt
-        tests_requires.extend([
-            'mock',
-        ])
         if sys.version_info < (3, 7):
             tests_requires.extend([
+                'mock',  # part of Python core since 3.3
                 'pyflakes~=2.3.0',
                 'pycodestyle~=2.7.0',
                 'pylint~=2.12.2',
@@ -1781,7 +1779,9 @@ def main():
         f'setuptools < {MAX_SETUPTOOLS_VERSION}',
     ]
 
-    install_requires.append('mock')
+    # mock is part of Python standard library now
+    if sys.version_info < (3, 7):
+        install_requires.append('mock')
 
     PACKAGE = {
         'version': VERSION,
