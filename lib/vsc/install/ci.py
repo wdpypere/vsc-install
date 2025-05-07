@@ -105,10 +105,10 @@ def gen_github_action(repo_base_dir=os.getcwd()):
             'on': ['push', 'pull_request'],
             'jobs': {
                 'python_unittests': {
-                    'runs-on': 'ubuntu-20.04',
+                    'runs-on': 'ubuntu-24.04',
                     'strategy': {
                         'matrix': {
-                            'python': [3.6, 3.9]
+                            'python': [3.9]
                         }
                     },
                     'steps': [
