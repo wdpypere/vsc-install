@@ -105,18 +105,17 @@ def gen_github_action(repo_base_dir=os.getcwd()):
             'on': ['push', 'pull_request'],
             'jobs': {
                 'python_unittests': {
-                    'runs-on': 'ubuntu-20.04',
+                    'runs-on': 'ubuntu-24.04',
                     'strategy': {
                         'matrix': {
-                            'python': [3.6, 3.9]
+                            'python': [3.9]
                         }
                     },
                     'steps': [
                         {'name': 'Checkout code', 'uses': 'actions/checkout@v4'},
                         {'name': 'Setup Python', 'uses': 'actions/setup-python@v5',
                          'with': {'python-version': '${{ matrix.python }}'}},
-                        # cap versions still compatible with Python 3.6
-                        {'name': 'install tox', 'run': "pip install 'virtualenv<20.22.0' 'tox<4.5.0'"},
+                        {'name': 'install tox', 'run': "pip install 'virtualenv' 'tox'"},
                         {'name': 'add mandatory git remote',
                          'run': f'git remote add hpcugent {name_url}.git'},
                         {'name': 'Run tox', 'run': "tox -e py$(echo ${{ matrix.python }} | sed 's/\.//g')"}
