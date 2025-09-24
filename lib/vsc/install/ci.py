@@ -45,6 +45,7 @@ from vsc.install.shared_setup import (
 RUFF_VERSION = "0.13.1"
 
 JENKINSFILE = 'Jenkinsfile'
+RUFF_TOML = "ruff.toml"
 TOX_INI = 'tox.ini'
 
 VSC_CI = 'vsc-ci'
@@ -131,6 +132,108 @@ def gen_github_action(repo_base_dir=os.getcwd()):
         return "\n".join(txt)
     else:
         return None
+
+def gen_ruff_toml():
+    """Generate the configuration for Ruff checks and formatting"""
+    logging.info('Generating Ruff configuration: [%s', RUFF_TOML)
+
+    # General settings
+    lines = [
+        'line-length = 120',
+        'indent-width = 4',
+        'preview = true',
+    ]
+
+    excludelist = [
+        ".bzr",
+        ".direnv",
+        ".eggs",
+        ".git",
+        ".git-rewrite",
+        ".hg",
+        ".ipynb_checkpoints",
+        ".mypy_cache",
+        ".nox",
+        ".pants.d",
+        ".pyenv",
+        ".pytest_cache",
+        ".pytype",
+        ".ruff_cache",
+        ".svn",
+        ".tox",
+        ".venv",
+        ".vscode",
+        "__pypackages__",
+        "_build",
+        "buck-out",
+        "build",
+        "dist",
+        "node_modules",
+        "site-packages",
+        "venv",
+    ]
+
+    extend_selectlist = [
+        "E101",
+        #"E111",
+        "E501",
+        "E713",
+        "E4",
+        "E7",
+        "E9",
+        "F",
+        "F811",
+        "W291",
+        "PLR0911", # inconsistent-return-statements
+        "PLW0602", # redefined-builtin
+        "PLW0604", # reimported
+        "PLW0108", # unnecessary-pass
+        "PLW0127", # assignment-from-no-return
+        "PLW0129", # assert-on-tuple
+        "PLW1501", # logging-not-lazy
+        "PLR0124", # redefined-in-handler
+        "PLR0202", # no-value-for-parameter
+        "PLR0203", # no-member
+        "PLR0402", # import-star-module-level
+        "PLR0913", # too-many-arguments (close match to "arguments-differ")
+
+        # Style / cleanup rules (flake8-bugbear, pyupgrade, etc.):
+        "B028", # no explicit f-string required
+        "B905", # consider-using-with
+        "C402", # consider-using-dict-comprehension
+        "C403", # consider-using-set-comprehension
+        "UP032", # consider-using-f-string
+        "UP037", # super-with-arguments
+        "UP025", # old-ne-operator
+        "UP036", # old-octal-literal
+        "UP034", # old-raise-syntax
+        "UP033", # print-statement
+        "UP031", # backtick repr
+        "UP004", # useless-object-inheritance
+    ]
+
+    ignore_list = [
+        "E731", # do not assign a lambda expression, use a def
+    ]
+
+    lines += [
+        '[lint]',
+        f'extend-select = {extend_selectlist}',
+        f'exclude = {excludelist}',
+        f'ignore = {ignore_list}',
+    ]
+
+    lines += [
+        '[format]',
+        'quote-style = "double"',
+        'indent-style = "space"',
+        'docstring-code-format = true',
+        'docstring-code-line-length = 120',
+        'line-ending = "lf"',
+    ]
+
+    return "\n".join(lines) + '\n'
+
 
 def gen_tox_ini():
     """
@@ -444,6 +547,10 @@ def main():
     jenkinsfile = os.path.join(cwd, JENKINSFILE)
     jenkinsfile_txt = gen_jenkinsfile()
     write_file(jenkinsfile, jenkinsfile_txt)
+
+    ruff_toml = os.path.join(cwd, RUFF_TOML)
+    ruff_toml_txt = gen_ruff_toml()
+    write_file(ruff_toml, ruff_toml_txt)
 
     github_actions = os.path.join(cwd, GITHUB_ACTIONS)
     github_actions_txt = gen_github_action()
