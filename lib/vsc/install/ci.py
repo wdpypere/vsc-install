@@ -42,6 +42,7 @@ from vsc.install.shared_setup import (
     vsc_setup,
     )
 
+RUFF_VERSION = "0.13.1"
 
 JENKINSFILE = 'Jenkinsfile'
 TOX_INI = 'tox.ini'
@@ -382,20 +383,24 @@ def gen_jenkinsfile():
         ])
 
     if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
+        ruff_url = f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
         lines.extend([
             indent("stage ('ruff') {"),
-            indent("curl --proto '=https' --tlsv1.2 -LsSf https://github.com/astral-sh/ruff/releases/download/0.13.1/ruff-installer.sh | sh", level=2),
-            indent("sh 'ruff --version'", level=2),
-            indent("sh 'ruff format --check .'", level=2),
+            indent(f"sh 'curl -L --silent {ruff_url} --output - | tar -xzv'", level=2),
+            indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'",level=2),
+            indent("sh './ruff --version'", level=2),
+            indent("sh './ruff format --check .'", level=2),
             indent('}')
         ])
 
     if vsc_ci_cfg[RUN_RUFF_CHECK]:
+        ruff_url = f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
         lines.extend([
             indent("stage ('ruff') {"),
-            indent("curl --proto '=https' --tlsv1.2 -LsSf https://github.com/astral-sh/ruff/releases/download/0.13.1/ruff-installer.sh | sh", level=2),
-            indent("sh 'ruff --version'", level=2),
-            indent("sh 'ruff check .'", level=2),
+            indent(f"sh 'curl -L --silent {ruff_url} --output - | tar -xzv'", level=2),
+            indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'",level=2),
+            indent("sh './ruff --version'", level=2),
+            indent("sh './ruff check .'", level=2),
             indent('}')
         ])
 
