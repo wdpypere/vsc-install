@@ -67,6 +67,7 @@ PY36_TESTS_MUST_PASS = 'py36_tests_must_pass'
 PY39_TESTS_MUST_PASS = 'py39_tests_must_pass'
 RUN_SHELLCHECK = 'run_shellcheck'
 RUN_RUFF_FORMAT_CHECK = 'run_ruff_format_check'
+RUN_RUFF_CHECK = 'run_ruff_check'
 ENABLE_GITHUB_ACTIONS = 'enable_github_actions'
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
@@ -255,6 +256,7 @@ def parse_vsc_ci_cfg():
         EASY_INSTALL_TOX: False,
         RUN_SHELLCHECK: False,
         RUN_RUFF_FORMAT_CHECK: False,
+        RUN_RUFF_CHECK: False,
         ENABLE_GITHUB_ACTIONS: False,
         PY36_TESTS_MUST_PASS: True,
         PY39_TESTS_MUST_PASS: True,
@@ -385,6 +387,15 @@ def gen_jenkinsfile():
             indent("sh 'pip install ruff'", level=2),
             indent("sh 'ruff --version'", level=2),
             indent("sh 'ruff format --check .'", level=2),
+            indent('}')
+        ])
+
+    if vsc_ci_cfg[RUN_RUFF_CHECK]:
+        lines.extend([
+            indent("stage ('ruff') {"),
+            indent("sh 'pip install ruff'", level=2),
+            indent("sh 'ruff --version'", level=2),
+            indent("sh 'ruff check .'", level=2),
             indent('}')
         ])
 
