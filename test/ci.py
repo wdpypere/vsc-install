@@ -219,6 +219,7 @@ class CITest(TestCase):
             'pip_install_test_deps': None,
             'easy_install_tox': False,
             'run_shellcheck': False,
+            'run_ruff_format_check': False,
             'py36_tests_must_pass': True,
             'py39_tests_must_pass': True,
         }
