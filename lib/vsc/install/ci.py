@@ -489,7 +489,7 @@ def gen_jenkinsfile():
     ruff_url = f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
     if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
         lines.extend([
-            indent("stage ('ruff') {"),
+            indent("stage ('ruff format') {"),
             indent(f"sh 'curl -L --silent {ruff_url} --output - | tar -xzv'", level=2),
             indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'",level=2),
             indent("sh './ruff --version'", level=2),
@@ -499,7 +499,7 @@ def gen_jenkinsfile():
 
     if vsc_ci_cfg[RUN_RUFF_CHECK]:
         lines.extend([
-            indent("stage ('ruff') {"),
+            indent("stage ('ruff check') {"),
             indent(f"sh 'curl -L --silent {ruff_url} --output - | tar -xzv'", level=2),
             indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'",level=2),
             indent("sh './ruff --version'", level=2),
