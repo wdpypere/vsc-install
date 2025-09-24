@@ -221,6 +221,7 @@ def gen_ruff_toml():
         f'extend-select = {extend_selectlist}',
         f'exclude = {excludelist}',
         f'ignore = {ignore_list}',
+        'pylint.max-args = 11',
     ]
 
     lines += [
