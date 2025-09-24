@@ -384,7 +384,7 @@ def gen_jenkinsfile():
     if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
         lines.extend([
             indent("stage ('ruff') {"),
-            indent("sh 'pip install ruff'", level=2),
+            indent("curl --proto '=https' --tlsv1.2 -LsSf https://github.com/astral-sh/ruff/releases/download/0.13.1/ruff-installer.sh | sh", level=2),
             indent("sh 'ruff --version'", level=2),
             indent("sh 'ruff format --check .'", level=2),
             indent('}')
@@ -393,7 +393,7 @@ def gen_jenkinsfile():
     if vsc_ci_cfg[RUN_RUFF_CHECK]:
         lines.extend([
             indent("stage ('ruff') {"),
-            indent("sh 'pip install ruff'", level=2),
+            indent("curl --proto '=https' --tlsv1.2 -LsSf https://github.com/astral-sh/ruff/releases/download/0.13.1/ruff-installer.sh | sh", level=2),
             indent("sh 'ruff --version'", level=2),
             indent("sh 'ruff check .'", level=2),
             indent('}')
