@@ -191,6 +191,68 @@ name: run python tests
 - pull_request
 """
 
+PYTHON_RUFF_CHECK_GH_ACTION = """
+    python_ruff_check:
+      runs-on: ubuntu-24.04
+      steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{matrix.python}}
+      - name: install ruff
+        run: pip install 'ruff'
+      - name: Run ruff
+        run: ruff check .
+      strategy:
+        matrix:
+          python:
+          - 3.9
+"""
+
+PYTHON_RUFF_FORMAT_GH_ACTION = """
+    python_ruff_format:
+      runs-on: ubuntu-24.04
+      steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{matrix.python}}
+      - name: install ruff
+        run: pip install 'ruff'
+      - name: Run ruff format
+        run: ruff format --check .
+      strategy:
+        matrix:
+          python:
+          - 3.9
+"""
+
+PYTHON_UNITTESTS_GH_ACTION = """
+  python_unittests:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python }}
+    - name: install tox
+      run: pip install 'virtualenv' 'tox'
+    - name: add mandatory git remote
+      run: git remote add hpcugent https://github.com/hpcugent/vsc-install.git
+    - name: Run tox
+      run: tox -e py$(echo ${{ matrix.python }} | sed 's/\.//g')
+    strategy:
+      matrix:
+        python:
+        - 3.9
+"""
+
 
 class CITest(TestCase):
     """License related tests"""
@@ -219,6 +281,8 @@ class CITest(TestCase):
             'pip_install_test_deps': None,
             'easy_install_tox': False,
             'run_shellcheck': False,
+            'run_ruff_format_check': False,
+            'run_ruff_check': False,
             'py36_tests_must_pass': True,
             'py39_tests_must_pass': True,
         }

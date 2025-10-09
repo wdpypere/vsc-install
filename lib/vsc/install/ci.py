@@ -42,8 +42,10 @@ from vsc.install.shared_setup import (
     vsc_setup,
     )
 
+RUFF_VERSION = "0.13.1"
 
 JENKINSFILE = 'Jenkinsfile'
+RUFF_TOML = "ruff.toml"
 TOX_INI = 'tox.ini'
 
 VSC_CI = 'vsc-ci'
@@ -66,6 +68,8 @@ PY3_TESTS_MUST_PASS = 'py3_tests_must_pass'
 PY36_TESTS_MUST_PASS = 'py36_tests_must_pass'
 PY39_TESTS_MUST_PASS = 'py39_tests_must_pass'
 RUN_SHELLCHECK = 'run_shellcheck'
+RUN_RUFF_FORMAT_CHECK = 'run_ruff_format_check'
+RUN_RUFF_CHECK = 'run_ruff_check'
 ENABLE_GITHUB_ACTIONS = 'enable_github_actions'
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
@@ -120,14 +124,142 @@ def gen_github_action(repo_base_dir=os.getcwd()):
                          'run': f'git remote add hpcugent {name_url}.git'},
                         {'name': 'Run tox', 'run': "tox -e py$(echo ${{ matrix.python }} | sed 's/\.//g')"}
                     ]
-                }
-            }
+                },
+            },
         }
+        RUFF_COMMON_STEPS =  {
+            "runs-on": "ubuntu-24.04",
+            "strategy": {"matrix": {"python": [3.9]}},
+            "steps": [
+                {"name": "Checkout code", "uses": "actions/checkout@v4"},
+                {
+                        "name": "Setup Python",
+                        "uses": "actions/setup-python@v5",
+                        "with": {"python-version": "${{matrix.python}}"},
+                },
+                {"name": "install ruff", "run": "pip install 'ruff'"},
+            ],
+        }
+        if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
+            yaml_content["jobs"]["python_ruff_format"] = RUFF_COMMON_STEPS
+            yaml_content["jobs"]["python_ruff_format"]["steps"].append(
+                {"name": "Run ruff format", "run": "ruff format --check ."}
+            )
+        if vsc_ci_cfg[RUN_RUFF_CHECK]:
+            yaml_content["jobs"]["python_ruff_check"] = RUFF_COMMON_STEPS
+            yaml_content["jobs"]["python_ruff_check"]["steps"].append(
+                {"name": "Run ruff", "run": "ruff check ."}
+            )
 
         txt.append(yaml.safe_dump(yaml_content))
         return "\n".join(txt)
     else:
         return None
+
+def gen_ruff_toml():
+    """Generate the configuration for Ruff checks and formatting"""
+    logging.info('Generating Ruff configuration: [%s', RUFF_TOML)
+
+    # General settings
+    lines = [
+        'line-length = 120',
+        'indent-width = 4',
+        'preview = true',
+    ]
+
+    excludelist = [
+        ".bzr",
+        ".direnv",
+        ".eggs",
+        ".git",
+        ".git-rewrite",
+        ".hg",
+        ".ipynb_checkpoints",
+        ".mypy_cache",
+        ".nox",
+        ".pants.d",
+        ".pyenv",
+        ".pytest_cache",
+        ".pytype",
+        ".ruff_cache",
+        ".svn",
+        ".tox",
+        ".venv",
+        ".vscode",
+        "__pypackages__",
+        "_build",
+        "buck-out",
+        "build",
+        "dist",
+        "node_modules",
+        "site-packages",
+        "venv",
+        "test/*",
+    ]
+
+    extend_selectlist = [
+        "E101",
+        #"E111",
+        "E501",
+        "E713",
+        "E4",
+        "E7",
+        "E9",
+        "F",
+        "F811",
+        "W291",
+        "PLR0911", # inconsistent-return-statements
+        "PLW0602", # redefined-builtin
+        "PLW0604", # reimported
+        "PLW0108", # unnecessary-pass
+        "PLW0127", # assignment-from-no-return
+        "PLW0129", # assert-on-tuple
+        "PLW1501", # logging-not-lazy
+        "PLR0124", # redefined-in-handler
+        "PLR0202", # no-value-for-parameter
+        "PLR0203", # no-member
+        "PLR0402", # import-star-module-level
+        "PLR0913", # too-many-arguments (close match to "arguments-differ")
+
+        # Style / cleanup rules (flake8-bugbear, pyupgrade, etc.):
+        "B028", # no explicit f-string required
+        "B905", # consider-using-with
+        "C402", # consider-using-dict-comprehension
+        "C403", # consider-using-set-comprehension
+        "UP032", # consider-using-f-string
+        "UP037", # super-with-arguments
+        "UP025", # old-ne-operator
+        "UP036", # old-octal-literal
+        "UP034", # old-raise-syntax
+        "UP033", # print-statement
+        "UP031", # backtick repr
+        "UP004", # useless-object-inheritance
+    ]
+
+    ignore_list = [
+        "E731", # do not assign a lambda expression, use a def
+    ]
+
+    lines += [
+        '[lint]',
+        f'extend-select = {extend_selectlist}',
+        f'exclude = {excludelist}',
+        f'ignore = {ignore_list}',
+        'pylint.max-args = 11',
+    ]
+
+    lines += [
+        '[format]',
+        'quote-style = "double"',
+        'indent-style = "space"',
+        'docstring-code-format = true',
+        'docstring-code-line-length = 120',
+        'line-ending = "lf"',
+        'exclude = ["test/*"]'
+    ]
+
+    return "\n".join(lines) + '\n'
+
 
 def gen_tox_ini():
     """
@@ -253,6 +385,8 @@ def parse_vsc_ci_cfg():
         PIP_INSTALL_TEST_DEPS: None,
         EASY_INSTALL_TOX: False,
         RUN_SHELLCHECK: False,
+        RUN_RUFF_FORMAT_CHECK: False,
+        RUN_RUFF_CHECK: False,
         ENABLE_GITHUB_ACTIONS: False,
         PY36_TESTS_MUST_PASS: True,
         PY39_TESTS_MUST_PASS: True,
@@ -377,6 +511,28 @@ def gen_jenkinsfile():
             indent('}')
         ])
 
+    r_url = f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
+    ruff_install_lines = [
+        indent(f"sh 'curl -L --silent {r_url} --output - | tar -xzv'", level=2),
+        indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'",level=2),
+        indent("sh './ruff --version'", level=2),
+    ]
+    if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
+        lines.extend([indent("stage ('ruff format') {")])
+        lines.extend(ruff_install_lines)
+        lines.extend([
+            indent("sh './ruff format --check .'", level=2),
+            indent('}')
+        ])
+
+    if vsc_ci_cfg[RUN_RUFF_CHECK]:
+        lines.extend([indent("stage ('ruff check') {")])
+        lines.extend(ruff_install_lines)
+        lines.extend([
+            indent("sh './ruff check .'", level=2),
+            indent('}')
+        ])
+
     lines.append(indent("stage('test') {"))
     for test_cmd in test_cmds:
         # be careful with test commands that include single quotes!
@@ -417,6 +573,10 @@ def main():
     jenkinsfile = os.path.join(cwd, JENKINSFILE)
     jenkinsfile_txt = gen_jenkinsfile()
     write_file(jenkinsfile, jenkinsfile_txt)
+
+    ruff_toml = os.path.join(cwd, RUFF_TOML)
+    ruff_toml_txt = gen_ruff_toml()
+    write_file(ruff_toml, ruff_toml_txt)
 
     github_actions = os.path.join(cwd, GITHUB_ACTIONS)
     github_actions_txt = gen_github_action()
