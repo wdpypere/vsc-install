@@ -127,36 +127,29 @@ def gen_github_action(repo_base_dir=os.getcwd()):
                 },
             },
         }
-        if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
-            yaml_content["jobs"]["python_ruff_format"] = {
-                "runs-on": "ubuntu-24.04",
-                "strategy": {"matrix": {"python": [3.9]}},
-                "steps": [
-                    {"name": "Checkout code", "uses": "actions/checkout@v4"},
-                    {
-                         "name": "Setup Python",
-                         "uses": "actions/setup-python@v5",
-                         "with": {"python-version": "${{matrix.python}}"},
-                    },
-                         {"name": "install ruff", "run": "pip install 'ruff'"},
-                         {"name": "Run ruff format", "run": "ruff format --check ."},
-                    ],
-                }
-        if vsc_ci_cfg[RUN_RUFF_CHECK]:
-            yaml_content["jobs"]["python_ruff_check"] = {
-                "runs-on": "ubuntu-24.04",
-                "strategy": {"matrix": {"python": [3.9]}},
-                "steps": [
-                    {"name": "Checkout code", "uses": "actions/checkout@v4"},
-                    {
+        RUFF_COMMON_STEPS =  {
+            "runs-on": "ubuntu-24.04",
+            "strategy": {"matrix": {"python": [3.9]}},
+            "steps": [
+                {"name": "Checkout code", "uses": "actions/checkout@v4"},
+                {
                         "name": "Setup Python",
                         "uses": "actions/setup-python@v5",
                         "with": {"python-version": "${{matrix.python}}"},
-                    },
-                    {"name": "install ruff", "run": "pip install 'ruff'"},
-                    {"name": "Run ruff", "run": "ruff check ."},
-                ],
-            }
+                },
+                {"name": "install ruff", "run": "pip install 'ruff'"},
+            ],
+        }
+        if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
+            yaml_content["jobs"]["python_ruff_format"] = RUFF_COMMON_STEPS
+            yaml_content["jobs"]["python_ruff_format"]["steps"].append(
+                {"name": "Run ruff format", "run": "ruff format --check ."}
+            )
+        if vsc_ci_cfg[RUN_RUFF_CHECK]:
+            yaml_content["jobs"]["python_ruff_check"] = RUFF_COMMON_STEPS
+            yaml_content["jobs"]["python_ruff_check"]["steps"].append(
+                {"name": "Run ruff", "run": "ruff check ."}
+            )
 
         txt.append(yaml.safe_dump(yaml_content))
         return "\n".join(txt)
