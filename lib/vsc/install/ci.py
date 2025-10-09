@@ -201,6 +201,7 @@ def gen_ruff_toml():
         "node_modules",
         "site-packages",
         "venv",
+        "test/*",
     ]
 
     extend_selectlist = [
