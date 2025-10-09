@@ -128,10 +128,10 @@ def gen_github_action(repo_base_dir=os.getcwd()):
             },
         }
         if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
-             yaml_content["jobs"]["python_ruff_format"] = {
-                 "runs-on": "ubuntu-24.04",
-                 "strategy": {"matrix": {"python": [3.9]}},
-                 "steps": [
+            yaml_content["jobs"]["python_ruff_format"] = {
+                "runs-on": "ubuntu-24.04",
+                "strategy": {"matrix": {"python": [3.9]}},
+                "steps": [
                     {"name": "Checkout code", "uses": "actions/checkout@v4"},
                     {
                          "name": "Setup Python",
@@ -517,11 +517,11 @@ def gen_jenkinsfile():
             indent('}')
         ])
 
-    ruff_url = f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
+    r_url = f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
     if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
         lines.extend([
             indent("stage ('ruff format') {"),
-            indent(f"sh 'curl -L --silent {ruff_url} --output - | tar -xzv'", level=2),
+            indent(f"sh 'curl -L --silent {r_url} --output - | tar -xzv'", level=2),
             indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'",level=2),
             indent("sh './ruff --version'", level=2),
             indent("sh './ruff format --check .'", level=2),
@@ -531,7 +531,7 @@ def gen_jenkinsfile():
     if vsc_ci_cfg[RUN_RUFF_CHECK]:
         lines.extend([
             indent("stage ('ruff check') {"),
-            indent(f"sh 'curl -L --silent {ruff_url} --output - | tar -xzv'", level=2),
+            indent(f"sh 'curl -L --silent {r_url} --output - | tar -xzv'", level=2),
             indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'",level=2),
             indent("sh './ruff --version'", level=2),
             indent("sh './ruff check .'", level=2),
