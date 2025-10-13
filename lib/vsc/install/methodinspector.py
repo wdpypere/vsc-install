@@ -11,7 +11,7 @@ Wrap a method and track calls to allow making assertions about them.
 """
 
 import collections
-from mock import patch
+from unittest.mock import patch
 
 
 MethodCall = collections.namedtuple(
