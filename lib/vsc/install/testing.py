@@ -44,7 +44,7 @@ from copy import deepcopy
 from unittest import TestCase as OrigTestCase
 from vsc.install.headers import nicediff
 from vsc.install.methodinspector import MethodInspector
-from mock import patch
+from unittest.mock import patch
 
 
 class TestCase(OrigTestCase):
