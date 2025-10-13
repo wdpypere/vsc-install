@@ -255,7 +255,6 @@ def gen_ruff_toml():
         'docstring-code-format = true',
         'docstring-code-line-length = 120',
         'line-ending = "lf"',
-        'exclude = ["test/*"]'
     ]
 
     return "\n".join(lines) + '\n'
