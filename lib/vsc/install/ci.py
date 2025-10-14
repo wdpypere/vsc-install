@@ -160,12 +160,6 @@ def gen_ruff_toml():
     """Generate the configuration for Ruff checks and formatting"""
     logging.info('Generating Ruff configuration: [%s', RUFF_TOML)
 
-    # General settings
-    lines = [
-        'line-length = 120',
-        'indent-width = 4',
-        'preview = true',
-    ]
 
     excludelist = [
         ".bzr",
@@ -240,10 +234,17 @@ def gen_ruff_toml():
         "E731", # do not assign a lambda expression, use a def
     ]
 
+    # General settings
+    lines = [
+        'line-length = 120',
+        'indent-width = 4',
+        'preview = true',
+        f'exclude = {excludelist}',
+    ]
+
     lines += [
         '[lint]',
         f'extend-select = {extend_selectlist}',
-        f'exclude = {excludelist}',
         f'ignore = {ignore_list}',
         'pylint.max-args = 11',
     ]
@@ -255,7 +256,6 @@ def gen_ruff_toml():
         'docstring-code-format = true',
         'docstring-code-line-length = 120',
         'line-ending = "lf"',
-        'exclude = ["test/*"]'
     ]
 
     return "\n".join(lines) + '\n'
