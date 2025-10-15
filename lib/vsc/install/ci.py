@@ -43,6 +43,7 @@ from vsc.install.shared_setup import (
     )
 
 RUFF_VERSION = "0.13.1"
+TARGET_MINIMUM_PYTHON_VERSION = "py39"
 
 JENKINSFILE = 'Jenkinsfile'
 RUFF_TOML = "ruff.toml"
@@ -223,6 +224,7 @@ def gen_ruff_toml():
         "UP032", # consider-using-f-string
         "UP037", # super-with-arguments
         "UP025", # old-ne-operator
+        "UP026", # deprecated mock
         "UP036", # old-octal-literal
         "UP034", # old-raise-syntax
         "UP033", # print-statement
@@ -239,6 +241,7 @@ def gen_ruff_toml():
         'line-length = 120',
         'indent-width = 4',
         'preview = true',
+        f'target-version = {TARGET_MINIMUM_PYTHON_VERSION}',
         f'exclude = {excludelist}',
     ]
 
