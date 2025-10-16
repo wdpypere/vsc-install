@@ -43,7 +43,7 @@ from vsc.install.shared_setup import (
     )
 
 RUFF_VERSION = "0.13.1"
-TARGET_MINIMUM_PYTHON_VERSION = "py36"
+TARGET_MINIMUM_PYTHON_VERSION = "py37"
 
 JENKINSFILE = 'Jenkinsfile'
 RUFF_TOML = "ruff.toml"
