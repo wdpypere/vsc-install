@@ -107,7 +107,7 @@ def gen_github_action(repo_base_dir=os.getcwd()):
             "DO NOT EDIT MANUALLY",
         ]
 
-        txt = ["# " + l for l in header]
+        txt = ["# " + line for line in header]
         yaml_content = {
             "name": "run python tests",
             "on": ["push", "pull_request"],
@@ -277,7 +277,7 @@ def gen_tox_ini():
         "This file was automatically generated using 'python -m vsc.install.ci'",
         "DO NOT EDIT MANUALLY",
     ]
-    header = ["# " + l for l in header]
+    header = ["# " + line for line in header]
 
     vsc_ci_cfg = parse_vsc_ci_cfg()
 

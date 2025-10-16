@@ -50,7 +50,7 @@ if sys.version_info.major == 3 and sys.version_info.minor > 6:
     # Must run before importing setuptools
     dmod = sys.modules.get("distutils", None)
     if dmod is not None and "setuptools/_distutils" not in dmod.__file__:
-        print(f"WARN: distutils already loaded with unexpected path.")
+        print("WARN: distutils already loaded with unexpected path.")
         print("  If you get this, set 'SETUPTOOLS_USE_DISTUTILS=local' or check the setuptools version >= 53.0")
 
     if sys.version_info.minor == 9:  # el9
@@ -68,30 +68,30 @@ if sys.version_info.major == 3 and sys.version_info.minor > 6:
 else:
     MAX_SETUPTOOLS_VERSION = MAX_SETUPTOOLS_VERSION_PY36
 
-import setuptools
-import setuptools.dist
-import setuptools.command.test
+import setuptools  # noqa: E402
+import setuptools.dist  # noqa:E402
+import setuptools.command.test  # noqa:E402
 
-from distutils import log  # also for setuptools
+from distutils import log  # also for setuptools # noqa:E402
 
-from pathlib import Path
+from pathlib import Path  # noqa:E402
 
-from setuptools import Command
-from setuptools.command.test import test as TestCommand
-from setuptools.command.test import ScanningLoader
-from setuptools.command.bdist_rpm import bdist_rpm as orig_bdist_rpm
-from setuptools.command.build_py import build_py
-from setuptools.command.egg_info import egg_info
-from setuptools.command.install_scripts import install_scripts
+from setuptools import Command  # noqa:E402
+from setuptools.command.test import test as TestCommand  # noqa:E402
+from setuptools.command.test import ScanningLoader  # noqa:E402
+from setuptools.command.bdist_rpm import bdist_rpm as orig_bdist_rpm  # noqa:E402
+from setuptools.command.build_py import build_py  # noqa:E402
+from setuptools.command.egg_info import egg_info  # noqa:E402
+from setuptools.command.install_scripts import install_scripts  # noqa:E402
 
 # egg_info uses sdist directly through manifest_maker
-from setuptools.command.sdist import sdist
+from setuptools.command.sdist import sdist  # noqa:E402
 
-from unittest import TestSuite
+from unittest import TestSuite  # noqa:E402
 
 have_xmlrunner = None
 try:
-    import xmlrunner
+    import xmlrunner  # noqa:E402
 
     have_xmlrunner = True
 except ImportError:
@@ -544,17 +544,19 @@ class vsc_setup:
         gitignore = os.path.join(base_dir, ".gitignore")
         if os.path.isfile(gitignore):
             all_patterns = [
-                l for l in [l.strip() for l in _read(gitignore, read_lines=True)] if l and not l.startswith("#")
+                line
+                for line in [line.strip() for line in _read(gitignore, read_lines=True)]
+                if line and not line.startswith("#")
             ]
 
-            patterns = [l.replace("*", ".*") for l in all_patterns if l.startswith("*")]
+            patterns = [line.replace("*", ".*") for line in all_patterns if line.startswith("*")]
             reg = re.compile("^(" + "|".join(patterns) + ")$")
 
             # check if we at least filter out .pyc files, since we're in a python project
             if not all([reg.search(text) for text in [f"bla{pattern}" for pattern in GITIGNORE_PATTERNS]]):
                 raise ValueError(f"{base_dir}/.gitignore does not contain these patterns: {GITIGNORE_PATTERNS}")
 
-            if not all(l in all_patterns for l in GITIGNORE_EXACT_PATTERNS):
+            if not all(line in all_patterns for line in GITIGNORE_EXACT_PATTERNS):
                 raise ValueError(
                     f"{base_dir}/.gitignore does not contain all following patterns: {GITIGNORE_EXACT_PATTERNS}"
                 )
@@ -1581,7 +1583,7 @@ class vsc_setup:
         # - https://github.com/PyCQA/flake8/blob/3.9.2/setup.cfg
         # - https://github.com/PyCQA/prospector/blob/1.5.3.1/pyproject.toml
         # To figure out requirements of what needs what: grep name_of_tool .eggs.py3/*/*/requires.txt
-        if sys.version_info < (3, 7):
+        if sys.version_info < (3, 7):  # noqa: UP036
             tests_requires.extend([
                 "mock",  # part of Python core since 3.3
                 "pyflakes~=2.3.0",
@@ -1631,7 +1633,7 @@ class vsc_setup:
             urls = [("github.com", "git+https://")]
 
         # dataclasses became part of stdlib in python 3.7
-        if sys.version_info >= (3, 7):
+        if sys.version_info >= (3, 7):  # noqa:UP036
             for requires in ["install_requires", "setup_requires", "tests_require"]:
                 if "dataclasses" in new_target[requires]:
                     log.info("Removing datclasses from setup, part of stdlib since python 3.7.")
@@ -1824,7 +1826,7 @@ def main():
     ]
 
     # mock is part of Python standard library now
-    if sys.version_info < (3, 7):
+    if sys.version_info < (3, 7):  # noqa:UP036
         install_requires.append("mock")
 
     PACKAGE = {
