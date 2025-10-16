@@ -241,7 +241,7 @@ def gen_ruff_toml():
         'line-length = 120',
         'indent-width = 4',
         'preview = true',
-        f'target-version = {TARGET_MINIMUM_PYTHON_VERSION}',
+        f'target-version = "{TARGET_MINIMUM_PYTHON_VERSION}"',
         f'exclude = {excludelist}',
     ]
 
