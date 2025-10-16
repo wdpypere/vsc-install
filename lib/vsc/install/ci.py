@@ -30,6 +30,7 @@ Run with: python -m vsc.install.ci
 
 @author: Kenneth Hoste (Ghent University)
 """
+
 import logging
 import os
 import sys
@@ -38,40 +39,41 @@ import yaml
 
 from pathlib import Path
 from vsc.install.shared_setup import (
-    MAX_SETUPTOOLS_VERSION_PY36, MAX_SETUPTOOLS_VERSION_PY39,
+    MAX_SETUPTOOLS_VERSION_PY36,
+    MAX_SETUPTOOLS_VERSION_PY39,
     vsc_setup,
-    )
+)
 
 RUFF_VERSION = "0.13.1"
 TARGET_MINIMUM_PYTHON_VERSION = "py37"
 
-JENKINSFILE = 'Jenkinsfile'
+JENKINSFILE = "Jenkinsfile"
 RUFF_TOML = "ruff.toml"
-TOX_INI = 'tox.ini'
+TOX_INI = "tox.ini"
 
-VSC_CI = 'vsc-ci'
-VSC_CI_INI = VSC_CI + '.ini'
+VSC_CI = "vsc-ci"
+VSC_CI_INI = VSC_CI + ".ini"
 
 GITHUB_ACTIONS = ".github/workflows/unittest.yml"
 
-ADDITIONAL_TEST_COMMANDS = 'additional_test_commands'
-HOME_INSTALL = 'home_install'
-INHERIT_SITE_PACKAGES = 'inherit_site_packages'
-INSTALL_SCRIPTS_PREFIX_OVERRIDE = 'install_scripts_prefix_override'
-JIRA_ISSUE_ID_IN_PR_TITLE = 'jira_issue_id_in_pr_title'
-MOVE_SETUP_CFG = 'move_setup_cfg'
-PIP_INSTALL_TEST_DEPS = 'pip_install_test_deps'
-PIP_INSTALL_TOX = 'pip_install_tox'
-PIP3_INSTALL_TOX = 'pip3_install_tox'
-EASY_INSTALL_TOX = 'easy_install_tox'
-PY3_ONLY = 'py3_only'
-PY3_TESTS_MUST_PASS = 'py3_tests_must_pass'
-PY36_TESTS_MUST_PASS = 'py36_tests_must_pass'
-PY39_TESTS_MUST_PASS = 'py39_tests_must_pass'
-RUN_SHELLCHECK = 'run_shellcheck'
-RUN_RUFF_FORMAT_CHECK = 'run_ruff_format_check'
-RUN_RUFF_CHECK = 'run_ruff_check'
-ENABLE_GITHUB_ACTIONS = 'enable_github_actions'
+ADDITIONAL_TEST_COMMANDS = "additional_test_commands"
+HOME_INSTALL = "home_install"
+INHERIT_SITE_PACKAGES = "inherit_site_packages"
+INSTALL_SCRIPTS_PREFIX_OVERRIDE = "install_scripts_prefix_override"
+JIRA_ISSUE_ID_IN_PR_TITLE = "jira_issue_id_in_pr_title"
+MOVE_SETUP_CFG = "move_setup_cfg"
+PIP_INSTALL_TEST_DEPS = "pip_install_test_deps"
+PIP_INSTALL_TOX = "pip_install_tox"
+PIP3_INSTALL_TOX = "pip3_install_tox"
+EASY_INSTALL_TOX = "easy_install_tox"
+PY3_ONLY = "py3_only"
+PY3_TESTS_MUST_PASS = "py3_tests_must_pass"
+PY36_TESTS_MUST_PASS = "py36_tests_must_pass"
+PY39_TESTS_MUST_PASS = "py39_tests_must_pass"
+RUN_SHELLCHECK = "run_shellcheck"
+RUN_RUFF_FORMAT_CHECK = "run_ruff_format_check"
+RUN_RUFF_CHECK = "run_ruff_check"
+ENABLE_GITHUB_ACTIONS = "enable_github_actions"
 
 logging.basicConfig(format="%(message)s", level=logging.INFO)
 
@@ -81,21 +83,22 @@ def write_file(path, txt):
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
     try:
-        Path(path).write_text(txt, encoding='utf8')
+        Path(path).write_text(txt, encoding="utf8")
         logging.info("Wrote %s", path)
     except OSError as err:
         raise OSError(f"Failed to write {path}: {err}") from err
+
 
 def gen_github_action(repo_base_dir=os.getcwd()):
     """
     Generate tox.ini configuration file for github actions.
     """
-    logging.info('[%s]', GITHUB_ACTIONS)
+    logging.info("[%s]", GITHUB_ACTIONS)
     vsc_ci_cfg = parse_vsc_ci_cfg()
 
     setup = vsc_setup()
     repofile = os.path.join(repo_base_dir, ".git/config")
-    name_url = setup.get_name_url(filename=repofile, version='ALL_VERSIONS')['url']
+    name_url = setup.get_name_url(filename=repofile, version="ALL_VERSIONS")["url"]
 
     if vsc_ci_cfg[ENABLE_GITHUB_ACTIONS]:
         header = [
@@ -104,63 +107,60 @@ def gen_github_action(repo_base_dir=os.getcwd()):
             "DO NOT EDIT MANUALLY",
         ]
 
-        txt = ['# ' + l for l in header]
+        txt = ["# " + l for l in header]
         yaml_content = {
-            'name': 'run python tests',
-            'on': ['push', 'pull_request'],
-            'jobs': {
-                'python_unittests': {
-                    'runs-on': 'ubuntu-24.04',
-                    'strategy': {
-                        'matrix': {
-                            'python': [3.9]
-                        }
-                    },
-                    'steps': [
-                        {'name': 'Checkout code', 'uses': 'actions/checkout@v4'},
-                        {'name': 'Setup Python', 'uses': 'actions/setup-python@v5',
-                         'with': {'python-version': '${{ matrix.python }}'}},
-                        {'name': 'install tox', 'run': "pip install 'virtualenv' 'tox'"},
-                        {'name': 'add mandatory git remote',
-                         'run': f'git remote add hpcugent {name_url}.git'},
-                        {'name': 'Run tox', 'run': "tox -e py$(echo ${{ matrix.python }} | sed 's/\.//g')"}
-                    ]
+            "name": "run python tests",
+            "on": ["push", "pull_request"],
+            "jobs": {
+                "python_unittests": {
+                    "runs-on": "ubuntu-24.04",
+                    "strategy": {"matrix": {"python": [3.9]}},
+                    "steps": [
+                        {"name": "Checkout code", "uses": "actions/checkout@v4"},
+                        {
+                            "name": "Setup Python",
+                            "uses": "actions/setup-python@v5",
+                            "with": {"python-version": "${{ matrix.python }}"},
+                        },
+                        {"name": "install tox", "run": "pip install 'virtualenv' 'tox'"},
+                        {"name": "add mandatory git remote", "run": f"git remote add hpcugent {name_url}.git"},
+                        {"name": "Run tox", "run": "tox -e py$(echo ${{ matrix.python }} | sed 's/\.//g')"},
+                    ],
                 },
             },
         }
-        RUFF_COMMON_STEPS =  {
+        RUFF_COMMON_STEPS = {
             "runs-on": "ubuntu-24.04",
             "strategy": {"matrix": {"python": [3.9]}},
             "steps": [
                 {"name": "Checkout code", "uses": "actions/checkout@v4"},
                 {
-                        "name": "Setup Python",
-                        "uses": "actions/setup-python@v5",
-                        "with": {"python-version": "${{matrix.python}}"},
+                    "name": "Setup Python",
+                    "uses": "actions/setup-python@v5",
+                    "with": {"python-version": "${{matrix.python}}"},
                 },
                 {"name": "install ruff", "run": "pip install 'ruff'"},
             ],
         }
         if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
             yaml_content["jobs"]["python_ruff_format"] = RUFF_COMMON_STEPS
-            yaml_content["jobs"]["python_ruff_format"]["steps"].append(
-                {"name": "Run ruff format", "run": "ruff format --check ."}
-            )
+            yaml_content["jobs"]["python_ruff_format"]["steps"].append({
+                "name": "Run ruff format",
+                "run": "ruff format --check .",
+            })
         if vsc_ci_cfg[RUN_RUFF_CHECK]:
             yaml_content["jobs"]["python_ruff_check"] = RUFF_COMMON_STEPS
-            yaml_content["jobs"]["python_ruff_check"]["steps"].append(
-                {"name": "Run ruff", "run": "ruff check ."}
-            )
+            yaml_content["jobs"]["python_ruff_check"]["steps"].append({"name": "Run ruff", "run": "ruff check ."})
 
         txt.append(yaml.safe_dump(yaml_content))
         return "\n".join(txt)
     else:
         return None
 
+
 def gen_ruff_toml():
     """Generate the configuration for Ruff checks and formatting"""
-    logging.info('Generating Ruff configuration: [%s', RUFF_TOML)
-
+    logging.info("Generating Ruff configuration: [%s", RUFF_TOML)
 
     excludelist = [
         ".bzr",
@@ -194,7 +194,7 @@ def gen_ruff_toml():
 
     extend_selectlist = [
         "E101",
-        #"E111",
+        # "E111",
         "E501",
         "E713",
         "E4",
@@ -203,65 +203,64 @@ def gen_ruff_toml():
         "F",
         "F811",
         "W291",
-        "PLR0911", # inconsistent-return-statements
-        "PLW0602", # redefined-builtin
-        "PLW0604", # reimported
-        "PLW0108", # unnecessary-pass
-        "PLW0127", # assignment-from-no-return
-        "PLW0129", # assert-on-tuple
-        "PLW1501", # logging-not-lazy
-        "PLR0124", # redefined-in-handler
-        "PLR0202", # no-value-for-parameter
-        "PLR0203", # no-member
-        "PLR0402", # import-star-module-level
-        "PLR0913", # too-many-arguments (close match to "arguments-differ")
-
+        "PLR0911",  # inconsistent-return-statements
+        "PLW0602",  # redefined-builtin
+        "PLW0604",  # reimported
+        "PLW0108",  # unnecessary-pass
+        "PLW0127",  # assignment-from-no-return
+        "PLW0129",  # assert-on-tuple
+        "PLW1501",  # logging-not-lazy
+        "PLR0124",  # redefined-in-handler
+        "PLR0202",  # no-value-for-parameter
+        "PLR0203",  # no-member
+        "PLR0402",  # import-star-module-level
+        "PLR0913",  # too-many-arguments (close match to "arguments-differ")
         # Style / cleanup rules (flake8-bugbear, pyupgrade, etc.):
-        "B028", # no explicit f-string required
-        "B905", # consider-using-with
-        "C402", # consider-using-dict-comprehension
-        "C403", # consider-using-set-comprehension
-        "UP032", # consider-using-f-string
-        "UP037", # super-with-arguments
-        "UP025", # old-ne-operator
-        "UP026", # deprecated mock
-        "UP036", # old-octal-literal
-        "UP034", # old-raise-syntax
-        "UP033", # print-statement
-        "UP031", # backtick repr
-        "UP004", # useless-object-inheritance
+        "B028",  # no explicit f-string required
+        "B905",  # consider-using-with
+        "C402",  # consider-using-dict-comprehension
+        "C403",  # consider-using-set-comprehension
+        "UP032",  # consider-using-f-string
+        "UP037",  # super-with-arguments
+        "UP025",  # old-ne-operator
+        "UP026",  # deprecated mock
+        "UP036",  # old-octal-literal
+        "UP034",  # old-raise-syntax
+        "UP033",  # print-statement
+        "UP031",  # backtick repr
+        "UP004",  # useless-object-inheritance
     ]
 
     ignore_list = [
-        "E731", # do not assign a lambda expression, use a def
+        "E731",  # do not assign a lambda expression, use a def
     ]
 
     # General settings
     lines = [
-        'line-length = 120',
-        'indent-width = 4',
-        'preview = true',
+        "line-length = 120",
+        "indent-width = 4",
+        "preview = true",
         f'target-version = "{TARGET_MINIMUM_PYTHON_VERSION}"',
-        f'exclude = {excludelist}',
+        f"exclude = {excludelist}",
     ]
 
     lines += [
-        '[lint]',
-        f'extend-select = {extend_selectlist}',
-        f'ignore = {ignore_list}',
-        'pylint.max-args = 11',
+        "[lint]",
+        f"extend-select = {extend_selectlist}",
+        f"ignore = {ignore_list}",
+        "pylint.max-args = 11",
     ]
 
     lines += [
-        '[format]',
+        "[format]",
         'quote-style = "double"',
         'indent-style = "space"',
-        'docstring-code-format = true',
-        'docstring-code-line-length = 120',
+        "docstring-code-format = true",
+        "docstring-code-line-length = 120",
         'line-ending = "lf"',
     ]
 
-    return "\n".join(lines) + '\n'
+    return "\n".join(lines) + "\n"
 
 
 def gen_tox_ini():
@@ -269,7 +268,7 @@ def gen_tox_ini():
     Generate tox.ini configuration file for tox
     see also https://tox.readthedocs.io/en/latest/config.html
     """
-    logging.info('[%s]', TOX_INI)
+    logging.info("[%s]", TOX_INI)
 
     vsc_ci_cfg = parse_vsc_ci_cfg()
 
@@ -278,7 +277,7 @@ def gen_tox_ini():
         "This file was automatically generated using 'python -m vsc.install.ci'",
         "DO NOT EDIT MANUALLY",
     ]
-    header = ['# ' + l for l in header]
+    header = ["# " + l for l in header]
 
     vsc_ci_cfg = parse_vsc_ci_cfg()
 
@@ -286,16 +285,16 @@ def gen_tox_ini():
     envs = []
 
     # always run tests with Python 3.6 and 3.9
-    py3_envs = ['py36', 'py39']
+    py3_envs = ["py36", "py39"]
     envs.extend(py3_envs)
 
-    pip_args, easy_install_args = '', ['-U']
+    pip_args, easy_install_args = "", ["-U"]
     if vsc_ci_cfg[INSTALL_SCRIPTS_PREFIX_OVERRIDE]:
         pip_args += '--install-option="--install-scripts={envdir}/bin" '
-        easy_install_args += ['--script-dir={envdir}/bin']
+        easy_install_args += ["--script-dir={envdir}/bin"]
 
     lines = header + [
-        '',
+        "",
         "[tox]",
         f"envlist = {','.join(envs)}",
         # instruct tox not to run sdist prior to installing the package in the tox environment
@@ -304,19 +303,19 @@ def gen_tox_ini():
     ]
 
     test36 = [
-            '',
-            '[testenv:py36]',
+        "",
+        "[testenv:py36]",
     ]
     test39 = [
-            '',
-            '[testenv:py39]',
+        "",
+        "[testenv:py39]",
     ]
 
     if not vsc_ci_cfg[PY36_TESTS_MUST_PASS]:
-        test36.append('ignore_outcome = true')
+        test36.append("ignore_outcome = true")
 
     if not vsc_ci_cfg[PY39_TESTS_MUST_PASS]:
-        test39.append('ignore_outcome = true')
+        test39.append("ignore_outcome = true")
 
     def make_commands_pre(minor, tlines):
         if minor > 6:
@@ -330,7 +329,7 @@ def gen_tox_ini():
 
         pip_install_test_deps = vsc_ci_cfg[PIP_INSTALL_TEST_DEPS]
         if pip_install_test_deps:
-            for dep in pip_install_test_deps.strip().split('\n'):
+            for dep in pip_install_test_deps.strip().split("\n"):
                 tlines.append(f"    pip install {pip_args}'{dep}'")
 
         # install required setuptools version;
@@ -346,10 +345,10 @@ def gen_tox_ini():
         # vsc/__init__.py is not installed because we're using pkg_resources.declare_namespace
         # (see https://github.com/pypa/pip/issues/1924)
         if minor > 6:
-            ezargs = ['-q', 'easy_install', '-v'] + easy_install_args + ['vsc-install']
+            ezargs = ["-q", "easy_install", "-v"] + easy_install_args + ["vsc-install"]
             tlines.append(f'    python -c "from setuptools import setup;setup(script_args={ezargs})"')
         else:
-            tlines.append(f'    python -m easy_install {" ".join(easy_install_args)} vsc-install')
+            tlines.append(f"    python -m easy_install {' '.join(easy_install_args)} vsc-install")
 
         if vsc_ci_cfg[MOVE_SETUP_CFG]:
             tlines.append("    mv setup.cfg.moved setup.cfg")
@@ -361,19 +360,19 @@ def gen_tox_ini():
     lines.extend(test39)
 
     lines.extend([
-        '',
-        '[testenv]',
+        "",
+        "[testenv]",
         "commands = python setup.py test",
         # $USER is not defined in tox environment, so pass it
         # see https://tox.readthedocs.io/en/latest/example/basic.html#passing-down-environment-variables
-        'passenv = USER',
+        "passenv = USER",
     ])
 
     if vsc_ci_cfg[INHERIT_SITE_PACKAGES]:
         # inherit Python packages installed on the system, if requested
         lines.append("sitepackages = true")
 
-    return '\n'.join(lines) + '\n'
+    return "\n".join(lines) + "\n"
 
 
 def parse_vsc_ci_cfg():
@@ -418,8 +417,8 @@ def parse_vsc_ci_cfg():
                     raise ValueError(f"Unknown key in {VSC_CI_INI}: {key}")
 
             if key in deprecated_options:
-                msg = f'Deprecated: key {key} found in {VSC_CI_INI}. '
-                msg += 'It is no longer in use and can safely be removed.'
+                msg = f"Deprecated: key {key} found in {VSC_CI_INI}. "
+                msg += "It is no longer in use and can safely be removed."
                 logging.warning(msg)
 
     return vsc_ci_cfg
@@ -430,50 +429,50 @@ def gen_jenkinsfile():
     Generate Jenkinsfile (in Groovy syntax),
     see also https://jenkins.io/doc/book/pipeline/syntax/#scripted-pipeline
     """
-    logging.info('[%s]', JENKINSFILE)
+    logging.info("[%s]", JENKINSFILE)
 
     def indent(line, level=1):
         """Indent string value with level*4 spaces."""
-        return ' ' * 4 * level + line
+        return " " * 4 * level + line
 
     vsc_ci_cfg = parse_vsc_ci_cfg()
 
     test_cmds = []
-    pip_args, easy_install_args = '', ''
-    install_subdir = '.vsc-tox'
+    pip_args, easy_install_args = "", ""
+    install_subdir = ".vsc-tox"
 
     # run 'pip3 install' commands in $HOME (rather than in repo checkout) if desired
     if vsc_ci_cfg[HOME_INSTALL]:
         install_cmd = "export PREFIX=$PWD && cd $HOME && pip3 install"
-        prefix = os.path.join('$PREFIX', install_subdir)
+        prefix = os.path.join("$PREFIX", install_subdir)
     else:
         install_cmd = "pip3 install"
-        prefix = os.path.join('$PWD', install_subdir)
+        prefix = os.path.join("$PWD", install_subdir)
 
-    python_cmd = 'python3'
+    python_cmd = "python3"
 
     if vsc_ci_cfg[EASY_INSTALL_TOX]:
         # worst case, use 'SETUPTOOLS_USE_DISTUTILS=local python $PREFIX/setup.py -q easy_install -v ' as "easy_install"
-        install_cmd = install_cmd.replace('pip3 install', 'python -m easy_install')
-        easy_install_args += '-U --user'
-        test_cmds.append(f'{install_cmd} {easy_install_args} tox')
+        install_cmd = install_cmd.replace("pip3 install", "python -m easy_install")
+        easy_install_args += "-U --user"
+        test_cmds.append(f"{install_cmd} {easy_install_args} tox")
 
     else:
-        pip_args += f'--ignore-installed --prefix {prefix}'
-        test_cmds.append(f'{install_cmd} {pip_args} tox')
+        pip_args += f"--ignore-installed --prefix {prefix}"
+        test_cmds.append(f"{install_cmd} {pip_args} tox")
 
     # Python version to use for updating $PYTHONPATH must be determined dynamically, so use $(...) trick;
     # we must stick to just double strings in the command used to determine the Python version, to avoid
     # that entire shell command is wrapped in triple quotes (which causes trouble)
     pyver_cmd = python_cmd + ' -c "import sys; print(\\\\"%s.%s\\\\" % sys.version_info[:2])"'
-    pythonpath = os.path.join('$PWD', install_subdir, 'lib', f'python$({pyver_cmd})', 'site-packages')
+    pythonpath = os.path.join("$PWD", install_subdir, "lib", f"python$({pyver_cmd})", "site-packages")
 
     test_cmds.extend([
         # make sure 'tox' command installed is available by updating $PATH and $PYTHONPATH
-        ' && '.join([
+        " && ".join([
             f"export PATH={os.path.join('$PWD', install_subdir, 'bin')}:$PATH",
-            f'export PYTHONPATH={pythonpath}:$PYTHONPATH',
-            f'tox -v -c {TOX_INI}',
+            f"export PYTHONPATH={pythonpath}:$PYTHONPATH",
+            f"tox -v -c {TOX_INI}",
         ]),
         # clean up tox installation
         f"rm -r {os.path.join('$PWD', install_subdir)}",
@@ -481,29 +480,29 @@ def gen_jenkinsfile():
 
     additional_test_commands = vsc_ci_cfg[ADDITIONAL_TEST_COMMANDS]
     if additional_test_commands:
-        test_cmds.extend(additional_test_commands.strip().split('\n'))
+        test_cmds.extend(additional_test_commands.strip().split("\n"))
 
     header = [
         f"{JENKINSFILE}: scripted Jenkins pipefile",
         "This file was automatically generated using 'python -m vsc.install.ci'",
         "DO NOT EDIT MANUALLY",
     ]
-    header = ['// ' + line for line in header]
+    header = ["// " + line for line in header]
 
     lines = header + [
-        '',
+        "",
         "node {",
         indent("stage('checkout git') {"),
         indent("checkout scm", level=2),
         indent("// remove untracked files (*.pyc for example)", level=2),
         indent("sh 'git clean -fxd'", level=2),
-        indent('}'),
+        indent("}"),
     ]
 
     if vsc_ci_cfg[RUN_SHELLCHECK]:
         # see https://github.com/koalaman/shellcheck#installing-a-pre-compiled-binary
-        shellcheck_url = 'https://github.com/koalaman/shellcheck/releases/download/latest/'
-        shellcheck_url += 'shellcheck-latest.linux.x86_64.tar.xz'
+        shellcheck_url = "https://github.com/koalaman/shellcheck/releases/download/latest/"
+        shellcheck_url += "shellcheck-latest.linux.x86_64.tar.xz"
         lines.extend([
             indent("stage ('shellcheck') {"),
             indent(f"sh 'curl -L --silent {shellcheck_url} --output - | tar -xJv'", level=2),
@@ -511,30 +510,24 @@ def gen_jenkinsfile():
             indent("sh 'rm -r shellcheck-latest'", level=2),
             indent("sh './shellcheck --version'", level=2),
             indent("sh './shellcheck bin/*.sh'", level=2),
-            indent('}')
+            indent("}"),
         ])
 
     r_url = f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
     ruff_install_lines = [
         indent(f"sh 'curl -L --silent {r_url} --output - | tar -xzv'", level=2),
-        indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'",level=2),
+        indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'", level=2),
         indent("sh './ruff --version'", level=2),
     ]
     if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
         lines.extend([indent("stage ('ruff format') {")])
         lines.extend(ruff_install_lines)
-        lines.extend([
-            indent("sh './ruff format --check .'", level=2),
-            indent('}')
-        ])
+        lines.extend([indent("sh './ruff format --check .'", level=2), indent("}")])
 
     if vsc_ci_cfg[RUN_RUFF_CHECK]:
         lines.extend([indent("stage ('ruff check') {")])
         lines.extend(ruff_install_lines)
-        lines.extend([
-            indent("sh './ruff check .'", level=2),
-            indent('}')
-        ])
+        lines.extend([indent("sh './ruff check .'", level=2), indent("}")])
 
     lines.append(indent("stage('test') {"))
     for test_cmd in test_cmds:
@@ -543,7 +536,7 @@ def gen_jenkinsfile():
             lines.append(indent(f'sh """{test_cmd}"""', level=2))
         else:
             lines.append(indent(f"sh '{test_cmd}'", level=2))
-    lines.append(indent('}'))
+    lines.append(indent("}"))
 
     if vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE]:
         lines.extend([
@@ -554,14 +547,14 @@ def gen_jenkinsfile():
             indent("} else {", level=3),
             indent("echo \"ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'.\"", level=4),
             indent('error("malformed PR title ${env.CHANGE_TITLE}.")', level=4),
-            indent('}', level=3),
-            indent('}', level=2),
-            indent('}'),
+            indent("}", level=3),
+            indent("}", level=2),
+            indent("}"),
         ])
 
-    lines.append('}')
+    lines.append("}")
 
-    return '\n'.join(lines) + '\n'
+    return "\n".join(lines) + "\n"
 
 
 def main():
@@ -586,5 +579,6 @@ def main():
     if github_actions_txt is not None:
         write_file(github_actions, github_actions_txt)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

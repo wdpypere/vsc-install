@@ -32,6 +32,7 @@ TestCase: use instead of unittest TestCase
 @author: Stijn De Weirdt (Ghent University)
 @author: Kenneth Hoste (Ghent University)
 """
+
 import pprint
 import os
 import re
@@ -50,12 +51,12 @@ from unittest.mock import patch
 class TestCase(OrigTestCase):
     """Enhanced test case, provides extra functionality (e.g. an assertErrorRegex method)."""
 
-    longMessage = True # print both standard messgae and custom message
+    longMessage = True  # print both standard messgae and custom message
 
     LOGCACHE = {}
 
     ASSERT_MAX_DIFF = 100
-    DIFF_OFFSET = 5 # lines of text around changes
+    DIFF_OFFSET = 5  # lines of text around changes
 
     # pylint: disable=arguments-differ
     def assertEqual(self, first, second, msg=None):
@@ -80,11 +81,11 @@ class TestCase(OrigTestCase):
 
             diff = nicediff(txta, txtb, offset=self.DIFF_OFFSET)
             if len(diff) > self.ASSERT_MAX_DIFF:
-                limit = f' (first {self.ASSERT_MAX_DIFF} lines)'
+                limit = f" (first {self.ASSERT_MAX_DIFF} lines)"
             else:
-                limit = ''
+                limit = ""
 
-            raise AssertionError(f"{msg}:\nDIFF{limit}:\n{''.join(diff[:self.ASSERT_MAX_DIFF])}")
+            raise AssertionError(f"{msg}:\nDIFF{limit}:\n{''.join(diff[: self.ASSERT_MAX_DIFF])}")
 
     def setUp(self):
         """Prepare test case."""
@@ -105,21 +106,21 @@ class TestCase(OrigTestCase):
     def convert_exception_to_str(self, err):
         """Convert an Exception instance to a string."""
         msg = err
-        if hasattr(err, 'msg'):
+        if hasattr(err, "msg"):
             msg = err.msg
-        elif hasattr(err, 'message'):
+        elif hasattr(err, "message"):
             msg = err.message
             if not msg:
                 # rely on str(msg) in case err.message is empty
                 msg = err
-        elif hasattr(err, 'args'):  # KeyError in Python 2.4 only provides message via 'args' attribute
+        elif hasattr(err, "args"):  # KeyError in Python 2.4 only provides message via 'args' attribute
             msg = err.args[0]
         else:
             msg = err
         try:
             res = str(msg)
         except UnicodeEncodeError:
-            res = msg.encode('utf8', 'replace')
+            res = msg.encode("utf8", "replace")
 
         return res
 
@@ -130,8 +131,8 @@ class TestCase(OrigTestCase):
         """
         try:
             call(*args, **kwargs)
-            str_kwargs = ['='.join([k, str(v)]) for (k, v) in kwargs.items()]
-            str_args = ', '.join(list(map(str, args)) + str_kwargs)
+            str_kwargs = ["=".join([k, str(v)]) for (k, v) in kwargs.items()]
+            str_args = ", ".join(list(map(str, args)) + str_kwargs)
             self.assertTrue(False, f"Expected errors with {call.__name__}({str_args}) call should occur")
         except error as err:
             msg = self.convert_exception_to_str(err)
@@ -169,17 +170,18 @@ class TestCase(OrigTestCase):
             mylogger = logging.getLogger
             mylogger.error = self.mock_logmethod(mylogger.error)
         """
+
         def logmethod(*args, **kwargs):
-            if hasattr(logmethod_func, 'func_name'):
+            if hasattr(logmethod_func, "func_name"):
                 funcname = logmethod_func.func_name
-            elif hasattr(logmethod_func, 'im_func'):
+            elif hasattr(logmethod_func, "im_func"):
                 funcname = logmethod_func.im_func.__name__
-            elif hasattr(logmethod_func, '__name__'):
+            elif hasattr(logmethod_func, "__name__"):
                 funcname = logmethod_func.__name__
             else:
                 raise ValueError(f"Unknown logmethod {dir(logmethod_func)}")
             logcache = self.LOGCACHE.setdefault(funcname, [])
-            logcache.append({'args': args, 'kwargs': kwargs})
+            logcache.append({"args": args, "kwargs": kwargs})
             logmethod_func(*args, **kwargs)
 
         return logmethod
@@ -235,6 +237,7 @@ class VSCImportTest(TestCase):
     """
     catchall for old tests.
     """
+
     def test_deprecated_fail(self):
         """
         VSCImportTest is now deprecated and will always fail, use

@@ -47,7 +47,7 @@ from datetime import date
 from vsc.install.shared_setup import SHEBANG_BIN_BASH, SHEBANG_ENV_PYTHON, log, vsc_setup
 
 HEADER_REGEXP = re.compile(r'\A(.*?)^(?:\'\'\'|"""|### END OF HEADER)', re.M | re.S)
-ENCODING_REGEXP = re.compile(r'^(\s*#\s*.*?coding[:=]\s*([-\w.]+).*).*$', re.M)  # PEP0263, 1st or 2nd line
+ENCODING_REGEXP = re.compile(r"^(\s*#\s*.*?coding[:=]\s*([-\w.]+).*).*$", re.M)  # PEP0263, 1st or 2nd line
 
 
 def nicediff(txta, txtb, offset=5):
@@ -60,7 +60,7 @@ def nicediff(txta, txtb, offset=5):
     return list with diff (one per line) (not a generator like ndiff or unified_diff)
     """
     diff = list(difflib.ndiff(txta.splitlines(1), txtb.splitlines(1)))
-    different_idx = [idx for idx, line in enumerate(diff) if not line.startswith(' ')]
+    different_idx = [idx for idx, line in enumerate(diff) if not line.startswith(" ")]
     res_idx = []
     # very bruteforce
     for didx in different_idx:
@@ -78,6 +78,7 @@ def nicediff(txta, txtb, offset=5):
 # generate new header based on license
 # allow easy tool to fixup headers
 
+
 def get_header(filename, script=False):
     """
     Given filename, retrieve header.
@@ -92,25 +93,25 @@ def get_header(filename, script=False):
     """
 
     if not os.path.isfile(filename):
-        raise ValueError(f'get_header filename {filename} not found')
+        raise ValueError(f"get_header filename {filename} not found")
 
-    txt = Path(filename).read_text(encoding='utf8')
+    txt = Path(filename).read_text(encoding="utf8")
 
     blocks = HEADER_REGEXP.split(txt)
     if len(blocks) == 1:
         # no headers, fake blocks with empty header
-        blocks = ['', '']
-    elif blocks[0] != '':
+        blocks = ["", ""]
+    elif blocks[0] != "":
         # the block before the begin of text is always empty
-        raise ValueError(f'unexpected non-empty block with get_header {filename}: {blocks}')
+        raise ValueError(f"unexpected non-empty block with get_header {filename}: {blocks}")
 
     header = blocks[1]
 
     shebang = None
     if script:
-        log.info('get_header for script %s', filename)
+        log.info("get_header for script %s", filename)
         lines = header.split("\n")
-        if lines[0].startswith('#!/'):
+        if lines[0].startswith("#!/"):
             shebang = lines[0]
             header = "\n".join(lines[1:])
 
@@ -131,11 +132,11 @@ def gen_license_header(license_name, **kwargs):
     template_name = f"{license_name.replace('+', '_plus_')}_TEMPLATE"
     template = globals().get(template_name, None)
     if template is None:
-        raise ValueError(f'gen_license_header cannot find template name {template_name}')
+        raise ValueError(f"gen_license_header cannot find template name {template_name}")
 
     found = False
     for github_organ, details in institute_details.items():
-        if github_organ in kwargs.get('url', '').lower():
+        if github_organ in kwargs.get("url", "").lower():
             kwargs.update(details)
             found = True
             break
@@ -161,11 +162,11 @@ def begin_end_from_header(header):
     thisyear = _this_year()
     endyear = thisyear
 
-    reg_begin_endyear = re.search(r'^#\s*Copyright\s+(?P<beginyear>\d+)(?:-(?P<endyear>\d+))?($|\s+)', header, re.M)
+    reg_begin_endyear = re.search(r"^#\s*Copyright\s+(?P<beginyear>\d+)(?:-(?P<endyear>\d+))?($|\s+)", header, re.M)
     if reg_begin_endyear:
-        beginyear = int(reg_begin_endyear.groupdict()['beginyear'])
+        beginyear = int(reg_begin_endyear.groupdict()["beginyear"])
     else:
-        log.error('No begin/endyear found, using this year as begin (and end)')
+        log.error("No begin/endyear found, using this year as begin (and end)")
         beginyear = thisyear
 
     return beginyear, endyear
@@ -173,7 +174,8 @@ def begin_end_from_header(header):
 
 def _write(filename, content):
     """Simple wrapper around Path().write_text() for unittesting"""
-    Path(filename).write_text(content, encoding='utf8')
+    Path(filename).write_text(content, encoding="utf8")
+
 
 def check_header(filename, script=False, write=False):
     """
@@ -200,21 +202,29 @@ def check_header(filename, script=False, write=False):
         file_ext = os.path.splitext(filename)[1]
         log.info(f"Shebang found in {filename} (ext: {file_ext}): {shebang}")
 
-        if file_ext == '.py':
+        if file_ext == ".py":
             if shebang != SHEBANG_ENV_PYTHON:
-                log.info("Wrong shebang for Python script %s: found '%s', should be '%s'",
-                         filename, shebang, SHEBANG_ENV_PYTHON)
+                log.info(
+                    "Wrong shebang for Python script %s: found '%s', should be '%s'",
+                    filename,
+                    shebang,
+                    SHEBANG_ENV_PYTHON,
+                )
                 shebang = SHEBANG_ENV_PYTHON
 
-        elif file_ext in ['.sh', '']:
+        elif file_ext in [".sh", ""]:
             if shebang != SHEBANG_BIN_BASH:
-                log.info("Wrong shebang for shell script %s: found '%s', should be '%s'",
-                         filename, shebang, SHEBANG_BIN_BASH)
+                log.info(
+                    "Wrong shebang for shell script %s: found '%s', should be '%s'", filename, shebang, SHEBANG_BIN_BASH
+                )
                 shebang = SHEBANG_BIN_BASH
 
         else:
-            log.warn("Don't know expected shebang based on extension '%s' for script '%s', assuming it's OK...",
-                     file_ext, filename)
+            log.warn(
+                "Don't know expected shebang based on extension '%s' for script '%s', assuming it's OK...",
+                file_ext,
+                filename,
+            )
 
         changed = shebang != orig_shebang
 
@@ -222,34 +232,34 @@ def check_header(filename, script=False, write=False):
         # original position
         header_end_pos += 1 + len(orig_shebang)  # 1 is from splitted newline
 
-        if 'python' in shebang and shebang != SHEBANG_ENV_PYTHON:
-            log.info('python in shebang, forcing env python (header modified)')
+        if "python" in shebang and shebang != SHEBANG_ENV_PYTHON:
+            log.info("python in shebang, forcing env python (header modified)")
             changed = True
             shebang = SHEBANG_ENV_PYTHON
 
-    if re.search(r'^### External compatible license\s*$', header, re.M):
-        log.info('Header is an external compatible license. Leaving the header as-is.')
+    if re.search(r"^### External compatible license\s*$", header, re.M):
+        log.info("Header is an external compatible license. Leaving the header as-is.")
         return changed
 
     # genheader
     # version is irrelevant
     setup = vsc_setup()
-    name_url = setup.get_name_url(version='ALL_VERSIONS')
+    name_url = setup.get_name_url(version="ALL_VERSIONS")
     license_name, _ = setup.get_license()
 
     # begin and endyear from copyright rule
     beginyear, endyear = begin_end_from_header(header)
 
     data = {
-        'beginyear': beginyear,
-        'endyear': endyear,
-        'name': name_url['name'],
-        'url': name_url['url'],
+        "beginyear": beginyear,
+        "endyear": endyear,
+        "name": name_url["name"],
+        "url": name_url["url"],
     }
 
     # reconstruct original header, incl. shebang (if any)
     if orig_shebang:
-        orig_header = orig_shebang + '\n' + header
+        orig_header = orig_shebang + "\n" + header
     else:
         orig_header = header
 
@@ -264,17 +274,17 @@ def check_header(filename, script=False, write=False):
 
     # compose header like it should be, incl. shebang
     if shebang:
-        new_header = shebang + '\n' + gen_header
+        new_header = shebang + "\n" + gen_header
     else:
         new_header = gen_header
 
     if orig_header != new_header:
-        log.info("Diff orig_header vs new_header for %s\n", filename + ''.join(nicediff(orig_header, new_header)))
+        log.info("Diff orig_header vs new_header for %s\n", filename + "".join(nicediff(orig_header, new_header)))
         changed = True
 
     if write and changed:
-        log.info('write enabled and different header. Going to modify file %s', filename)
-        wholetext = Path(filename).read_text(encoding='utf8')
+        log.info("write enabled and different header. Going to modify file %s", filename)
+        wholetext = Path(filename).read_text(encoding="utf8")
         _write(filename, new_header + wholetext[header_end_pos:])
 
     # return different or not
@@ -284,15 +294,15 @@ def check_header(filename, script=False, write=False):
 # mapping of the github organization to the details
 # to fill in the license templates
 institute_details = {
-    'hpcugent': {
-        'university_name': 'Ghent University',
-        'university_url': 'http://ugent.be/hpc',
-        'university_team_url': 'http://ugent.be/hpc/en',
+    "hpcugent": {
+        "university_name": "Ghent University",
+        "university_url": "http://ugent.be/hpc",
+        "university_team_url": "http://ugent.be/hpc/en",
     },
-    'vub': {
-        'university_name': 'Vrije Universiteit Brussel',
-        'university_url': 'https://www.vub.be',
-        'university_team_url': 'https://hpc.vub.be',
+    "vub": {
+        "university_name": "Vrije Universiteit Brussel",
+        "university_url": "https://www.vub.be",
+        "university_team_url": "https://hpc.vub.be",
     },
 }
 
@@ -369,7 +379,7 @@ ARR_TEMPLATE = """#
 #
 """
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = sys.argv[1:]
     try:
         is_script = int(args[-1]) == 1
@@ -380,5 +390,5 @@ if __name__ == '__main__':
         args.pop(-1)
 
     for fn in args:
-        log.info(f'Going to check_header for file {fn} (is_script={is_script})')
+        log.info(f"Going to check_header for file {fn} (is_script={is_script})")
         check_header(fn, script=is_script, write=True)
