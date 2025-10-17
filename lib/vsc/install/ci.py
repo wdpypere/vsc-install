@@ -31,6 +31,7 @@ Run with: python -m vsc.install.ci
 @author: Kenneth Hoste (Ghent University)
 """
 
+import copy
 import logging
 import os
 import sys
@@ -143,13 +144,13 @@ def gen_github_action(repo_base_dir=os.getcwd()):
             ],
         }
         if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
-            yaml_content["jobs"]["python_ruff_format"] = RUFF_COMMON_STEPS
+            yaml_content["jobs"]["python_ruff_format"] = copy.deepcopy(RUFF_COMMON_STEPS)
             yaml_content["jobs"]["python_ruff_format"]["steps"].append({
                 "name": "Run ruff format",
                 "run": "ruff format --check .",
             })
         if vsc_ci_cfg[RUN_RUFF_CHECK]:
-            yaml_content["jobs"]["python_ruff_check"] = RUFF_COMMON_STEPS
+            yaml_content["jobs"]["python_ruff_check"] = copy.deepcopy(RUFF_COMMON_STEPS)
             yaml_content["jobs"]["python_ruff_check"]["steps"].append({"name": "Run ruff", "run": "ruff check ."})
 
         txt.append(yaml.safe_dump(yaml_content))
