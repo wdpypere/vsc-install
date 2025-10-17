@@ -15,15 +15,16 @@ from unittest.mock import patch
 
 
 MethodCall = collections.namedtuple(
-    'MethodCall',
-    ('args',
-     'kwargs',
-     'return_value',
-     ),
+    "MethodCall",
+    (
+        "args",
+        "kwargs",
+        "return_value",
+    ),
 )
 
 
-class MethodInspector():
+class MethodInspector:
     """Wrap a method and track calls to allow making assertions about them.
 
     In some cases mocking a method isn't sufficient: we need to
@@ -49,7 +50,6 @@ class MethodInspector():
     """
 
     def __init__(self, klass, method_name):
-
         self.klass = klass
         self.method_name = method_name
         self.orig = getattr(klass, method_name)
@@ -57,11 +57,9 @@ class MethodInspector():
         self._patch = None
 
     def __enter__(self):
-
         self.calls = []
 
         def wrapper(*a, **kw):
-
             result = self.orig(*a, **kw)
             self.calls.append(
                 MethodCall(
@@ -78,10 +76,8 @@ class MethodInspector():
         return self
 
     def __exit__(self, *a):
-
         self._patch.stop()
 
     def assertCalledOnce(self, msg=None):
-
         if len(self.calls) != 1:
-            raise AssertionError(msg or '')
+            raise AssertionError(msg or "")

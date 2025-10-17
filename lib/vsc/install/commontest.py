@@ -46,8 +46,17 @@ from prospector.config import ProspectorConfig
 
 from distutils import log
 from vsc.install.ci import (
-    JENKINSFILE, TOX_INI, GITHUB_ACTIONS, RUFF_TOML, gen_ruff_toml, gen_jenkinsfile, gen_tox_ini,
-    gen_github_action, parse_vsc_ci_cfg, ENABLE_GITHUB_ACTIONS)
+    JENKINSFILE,
+    TOX_INI,
+    GITHUB_ACTIONS,
+    RUFF_TOML,
+    gen_ruff_toml,
+    gen_jenkinsfile,
+    gen_tox_ini,
+    gen_github_action,
+    parse_vsc_ci_cfg,
+    ENABLE_GITHUB_ACTIONS,
+)
 from vsc.install.headers import check_header
 from vsc.install.shared_setup import vsc_setup
 from vsc.install.testing import TestCase
@@ -63,88 +72,88 @@ PROSPECTOR_USE_LIBS = []
 #   Whitelist: if match, fail test
 PROSPECTOR_BLACKLIST = [
     # 'wrong-import-position',  # not sure about this, these usually have a good reason
-    'Locally disabling',  # shows up when you locally disable a warning, this is the point
-    'Useless suppression',  # shows up when you locally disable/suppress a warning, this is the point
+    "Locally disabling",  # shows up when you locally disable a warning, this is the point
+    "Useless suppression",  # shows up when you locally disable/suppress a warning, this is the point
     "Redefining built-in 'reduce'",  # allow importing reduce from functools, required for Python 3 compatibility
-    'c-extension-no-member', # run-time inspection of c extensions is disabled by default and gives warnings
+    "c-extension-no-member",  # run-time inspection of c extensions is disabled by default and gives warnings
 ]
 # to disable any of these warnings in a block, you can do things like add a comment # pylint: disable=C0321
 PROSPECTOR_WHITELIST = [
     #'protected-access',
-    'E101',  # mixing tabs and spaces
-    'E111',  # pep8: E111 / indentation is not a multiple of four
-    'E501',  # 'line too long'when a line is longer then 120 chars
-    'E713',  # not 'c' in d: -> 'c' not in d:
-    'F811',  # redefinition of unused name
-    'W291',  # pep8: W291 / trailing whitespace
-    'arguments-differ',
-    'assignment-from-no-return', # Assigning result of a function call, where the function has no return
-    'backtick',  # don't use `variable` to turn a variable in a string, use the str() function
-    'bad-indentation',
-    'bad-whitespace',
-    'bare-except',
-    'consider-using-dict-comprehension',
-    'consider-using-f-string',
-    'consider-using-set-comprehension',
-    'consider-using-with', # By using 'with' the release of the allocated res is ensured in the case of an exception.
-    'dangerous-default-value',
-    'duplicate-key',  # when a key appears twice in a dict definition
-    'implicit-str-concat',
-    'import-star-module-level',  # Import * only allowed at module level
-    'inconsistent-return-statements', # Either all or no return statements in a function should return an expression.
-    'indexing-exception',  # indexing exceptions doesn't work in python3, use Exc.args[index] instead (but why?)
-    'line-too-long', # use fail using pylint as well (not only pep8 above)
-    'logging-not-lazy',
-    'logging-too-few-args',
-    'logging-too-many-args',
-    'metaclass-assignment',  # __metaclass__ doesn't exist anymore in python3
-    'no-member',
-    'no-value-for-parameter',
-    'old-ne-operator',  # don't use <> as not equal operator, use !=
-    'old-octal-literal',  # use 0o700 instead of 0700
-    'old-raise-syntax',  # sed when the alternate raise syntax raise foo, bar is used instead of raise foo(bar) .
-    'print-statement',  # use print()
-    'raising-bad-type',  # don't raise strings, raise objects extending Exception (python3)
-    'redefine-in-handler',  # except A, B -> except (A, B)
-    'redefined-builtin',
-    'reimported',
-    'super-with-arguments',
-    'syntax-error',
-    'trailing-whitespace',
-    'undefined',
-    'unidiomatic-typecheck',
-    'unnecessary-pass',
-    'unnecessary-semicolon',
-    'unpacking-in-except', # will stop working in python3
-    'unused-argument',
-    'unused-import',
-    'unused-variable',
-    'useless-object-inheritance',
+    "E101",  # mixing tabs and spaces
+    "E111",  # pep8: E111 / indentation is not a multiple of four
+    "E501",  # 'line too long'when a line is longer then 120 chars
+    "E713",  # not 'c' in d: -> 'c' not in d:
+    "F811",  # redefinition of unused name
+    "W291",  # pep8: W291 / trailing whitespace
+    "arguments-differ",
+    "assignment-from-no-return",  # Assigning result of a function call, where the function has no return
+    "backtick",  # don't use `variable` to turn a variable in a string, use the str() function
+    "bad-indentation",
+    "bad-whitespace",
+    "bare-except",
+    "consider-using-dict-comprehension",
+    "consider-using-f-string",
+    "consider-using-set-comprehension",
+    "consider-using-with",  # By using 'with' the release of the allocated res is ensured in the case of an exception.
+    "dangerous-default-value",
+    "duplicate-key",  # when a key appears twice in a dict definition
+    "implicit-str-concat",
+    "import-star-module-level",  # Import * only allowed at module level
+    "inconsistent-return-statements",  # Either all or no return statements in a function should return an expression.
+    "indexing-exception",  # indexing exceptions doesn't work in python3, use Exc.args[index] instead (but why?)
+    "line-too-long",  # use fail using pylint as well (not only pep8 above)
+    "logging-not-lazy",
+    "logging-too-few-args",
+    "logging-too-many-args",
+    "metaclass-assignment",  # __metaclass__ doesn't exist anymore in python3
+    "no-member",
+    "no-value-for-parameter",
+    "old-ne-operator",  # don't use <> as not equal operator, use !=
+    "old-octal-literal",  # use 0o700 instead of 0700
+    "old-raise-syntax",  # sed when the alternate raise syntax raise foo, bar is used instead of raise foo(bar) .
+    "print-statement",  # use print()
+    "raising-bad-type",  # don't raise strings, raise objects extending Exception (python3)
+    "redefine-in-handler",  # except A, B -> except (A, B)
+    "redefined-builtin",
+    "reimported",
+    "super-with-arguments",
+    "syntax-error",
+    "trailing-whitespace",
+    "undefined",
+    "unidiomatic-typecheck",
+    "unnecessary-pass",
+    "unnecessary-semicolon",
+    "unpacking-in-except",  # will stop working in python3
+    "unused-argument",
+    "unused-import",
+    "unused-variable",
+    "useless-object-inheritance",
 ]
 
 # Prospector commandline options (positional path is added automatically)
 PROSPECTOR_OPTIONS = [
-    '--profile', 'strictness_none.yaml',
-    '--max-line-length', '120',
-    '--absolute-paths',
+    "--profile",
+    "strictness_none.yaml",
+    "--max-line-length",
+    "120",
+    "--absolute-paths",
     # We want to get messages from different tools even if they mean the same.
-    '--no-blending',
+    "--no-blending",
     # Do not pick up any config for the tools
-    '--no-external-config',
+    "--no-external-config",
     # If pylint dies, prospector will carry on, so seemingly all pylint tests will pass.
     # pylint py3 checker might get into some kind of recursive import so either
     # it might need higher recursion depth (sys.setrecursionlimit(x>1000),
     # or the problem should be solved in another way.
-    '--die-on-tool-error',
+    "--die-on-tool-error",
 ]
 
 # prospector ignore paths
 PROSPECTOR_IGNORE_PATHS = []
 
 # prospector ignore paths defaults
-PROSPECTOR_IGNORE_PATHS_DEFAULTS = [
-    'build'
-]
+PROSPECTOR_IGNORE_PATHS_DEFAULTS = ["build"]
 
 
 def prospector_ignore_paths_add(path):
@@ -158,9 +167,9 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
 
     log.info("Using prosector version %s", prospector_version)
 
-    ignore_dirs = ','.join(PROSPECTOR_IGNORE_PATHS + PROSPECTOR_IGNORE_PATHS_DEFAULTS)
-    sys.argv = ['fakename']
-    sys.argv.extend(PROSPECTOR_OPTIONS + ['--ignore-paths', ignore_dirs])
+    ignore_dirs = ",".join(PROSPECTOR_IGNORE_PATHS + PROSPECTOR_IGNORE_PATHS_DEFAULTS)
+    sys.argv = ["fakename"]
+    sys.argv.extend(PROSPECTOR_OPTIONS + ["--ignore-paths", ignore_dirs])
     log.debug("Prospector ignoring paths: %s", ignore_dirs)
 
     if PROSPECTOR_USE_LIBS:
@@ -181,15 +190,15 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
     config.profile.autodetect = True
     config.profile.member_warnings = False
     if clear_ignore_patterns:
-        config.profile.ignore_patterns = [r'.^']
+        config.profile.ignore_patterns = [r".^"]
         config.ignores = []
     else:
-        append_pattern = r'(^|/)\..+'
+        append_pattern = r"(^|/)\..+"
         config.profile.ignore_patterns.append(append_pattern)
         config.ignores.append(re.compile(append_pattern))
 
     # Enable pylint Python3 compatibility tests:
-    config.profile.pylint['options']['enable'] = 'python3'
+    config.profile.pylint["options"]["enable"] = "python3"
     log.debug("prospector argv = %s", sys.argv)
     log.debug("prospector profile from config = %s", vars(config.profile))
 
@@ -247,7 +256,7 @@ def run_prospector(base_dir, clear_ignore_patterns=False):
     #     (or logilab if no recent enough pylint is installed)
     # Make sure the original is restored
     # (before any errors are reported; no need to put this in setUp/tearDown)
-    if sys.version_info < (3,9):
+    if sys.version_info < (3, 9):
         optparse.HelpFormatter.expand_default = orig_expand_default
 
     return failures
@@ -257,11 +266,11 @@ def check_autogenerated_ci_config_file(testcase_instance, ci_cfg_fn, expected_co
     """Test whether specified CI configuration file is in place, and was auto-generated by vsc-install."""
 
     testcase_instance.assertTrue(os.path.exists(ci_cfg_fn))
-    current_contents = Path(ci_cfg_fn).read_text(encoding='utf8')
+    current_contents = Path(ci_cfg_fn).read_text(encoding="utf8")
 
     # allow differing Jenkinsfile if Jenkinsfile.NOT_AUTOGENERATED_YET exists (and likewise for tox.ini)
     # if contents are equal to what's generated, purposely fail the check
-    ci_cfg_ignore_fn = ci_cfg_fn + '.NOT_AUTOGENERATED_YET'
+    ci_cfg_ignore_fn = ci_cfg_fn + ".NOT_AUTOGENERATED_YET"
 
     if os.path.exists(ci_cfg_ignore_fn):
         error_msg = f"Found {ci_cfg_ignore_fn}, so contents of {ci_cfg_fn} is expected to be different "
@@ -269,8 +278,8 @@ def check_autogenerated_ci_config_file(testcase_instance, ci_cfg_fn, expected_co
         testcase_instance.assertNotEqual(current_contents, expected_contents, error_msg)
 
         # if the ignore file exists, it should contain the URL of a vsc-install issue
-        txt = Path(ci_cfg_ignore_fn).read_text(encoding='utf8')
-        regex = re.compile(r'https://github.com/hpcugent/vsc-install/issues/[0-9]+')
+        txt = Path(ci_cfg_ignore_fn).read_text(encoding="utf8")
+        regex = re.compile(r"https://github.com/hpcugent/vsc-install/issues/[0-9]+")
         error_msg = f"Pattern '{regex.pattern}' does not match in contents of {ci_cfg_ignore_fn}: {txt}"
         testcase_instance.assertTrue(bool(regex.search(txt)), error_msg)
     else:
@@ -312,11 +321,12 @@ class CommonTest(TestCase):
         try:
             __import__(pkg)
         except ImportError as err:
-            log.debug("__path__ %s",
-                      [f"{name} = {getattr(mod, '__path__', 'None')}" for name, mod in sys.modules.items()])
+            log.debug(
+                "__path__ %s", [f"{name} = {getattr(mod, '__path__', 'None')}" for name, mod in sys.modules.items()]
+            )
             self.assertFalse(err, msg=f"import {pkg} failed sys.path {sys.path} exception {err}")
 
-        self.assertTrue(pkg in sys.modules, msg=f'{pkg} in sys.modules after import')
+        self.assertTrue(pkg in sys.modules, msg=f"{pkg} in sys.modules after import")
 
     def test_import_packages(self):
         """Try to import each namespace"""
@@ -324,10 +334,11 @@ class CommonTest(TestCase):
             self._import(pkg)
 
             if self.CHECK_HEADER:
-                for fun in self.setup.files_in_packages()['packages'][pkg]:
-                    self.assertFalse(check_header(os.path.join(self.setup.REPO_BASE_DIR, fun),
-                                     script=False, write=False),
-                                     msg=f'check_header of {fun}')
+                for fun in self.setup.files_in_packages()["packages"][pkg]:
+                    self.assertFalse(
+                        check_header(os.path.join(self.setup.REPO_BASE_DIR, fun), script=False, write=False),
+                        msg=f"check_header of {fun}",
+                    )
 
     def test_import_modules(self):
         """Try to import each module"""
@@ -338,13 +349,15 @@ class CommonTest(TestCase):
         """Try to import each python script as a module"""
         # sys.path is already setup correctly
         for scr in self.setup.generate_scripts(extra=self.EXTRA_SCRIPTS, exclude=self.EXCLUDE_SCRIPTS):
-            if not scr.endswith('.py'):
+            if not scr.endswith(".py"):
                 continue
-            self._import(os.path.basename(scr)[:-len('.py')])
+            self._import(os.path.basename(scr)[: -len(".py")])
 
             if self.CHECK_HEADER:
-                self.assertFalse(check_header(os.path.join(self.setup.REPO_BASE_DIR, scr), script=True, write=False),
-                                 msg=f'check_header of {scr}')
+                self.assertFalse(
+                    check_header(os.path.join(self.setup.REPO_BASE_DIR, scr), script=True, write=False),
+                    msg=f"check_header of {scr}",
+                )
 
     def test_prospector(self):
         """Test prospector failures"""
