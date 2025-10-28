@@ -492,7 +492,7 @@ def gen_jenkinsfile():
 
     lines = header + [
         "",
-        "node {",
+        "pipeline { stages {",
         indent("stage('checkout git') {"),
         indent("checkout scm", level=2),
         indent("// remove untracked files (*.pyc for example)", level=2),
@@ -566,7 +566,7 @@ def gen_jenkinsfile():
     lines.append(indent("}", level=2))
     lines.append(indent("}"))
 
-    lines.append("}")
+    lines.append("}}")
 
     return "\n".join(lines) + "\n"
 

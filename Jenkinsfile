@@ -2,7 +2,7 @@
 // This file was automatically generated using 'python -m vsc.install.ci'
 // DO NOT EDIT MANUALLY
 
-node {
+pipeline { stages {
     stage('checkout git') {
         checkout scm
         // remove untracked files (*.pyc for example)
@@ -35,4 +35,4 @@ node {
             }
         }
     }
-}
+}}
