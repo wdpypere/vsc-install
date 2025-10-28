@@ -2,11 +2,15 @@
 // This file was automatically generated using 'python -m vsc.install.ci'
 // DO NOT EDIT MANUALLY
 
-pipeline { stages {
+pipeline {
+agent any
+stages {
     stage('checkout git') {
-        checkout scm
-        // remove untracked files (*.pyc for example)
-        sh 'git clean -fxd'
+        steps {
+            checkout scm
+            // remove untracked files (*.pyc for example)
+            sh 'git clean -fxd'
+        }
     }
     stage('test pipeline') {
         parallel {
