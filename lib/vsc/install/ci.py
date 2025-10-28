@@ -508,48 +508,55 @@ def gen_jenkinsfile():
         shellcheck_url += "shellcheck-latest.linux.x86_64.tar.xz"
         lines.extend([
             indent("stage ('shellcheck') {", level=3),
-            indent(f"sh 'curl -L --silent {shellcheck_url} --output - | tar -xJv'", level=4),
-            indent("sh 'cp shellcheck-latest/shellcheck .'", level=4),
-            indent("sh 'rm -r shellcheck-latest'", level=4),
-            indent("sh './shellcheck --version'", level=4),
-            indent("sh './shellcheck bin/*.sh'", level=4),
+            indent("steps {", level=4),
+            indent(f"sh 'curl -L --silent {shellcheck_url} --output - | tar -xJv'", level=5),
+            indent("sh 'cp shellcheck-latest/shellcheck .'", level=5),
+            indent("sh 'rm -r shellcheck-latest'", level=5),
+            indent("sh './shellcheck --version'", level=5),
+            indent("sh './shellcheck bin/*.sh'", level=5),
+            indent("}", level=4),
             indent("}", level=3),
         ])
 
     r_url = f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
     ruff_install_lines = [
-        indent(f"sh 'curl -L --silent {r_url} --output - | tar -xzv'", level=4),
-        indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'", level=4),
-        indent("sh './ruff --version'", level=4),
+        indent("steps {", level=4),
+        indent(f"sh 'curl -L --silent {r_url} --output - | tar -xzv'", level=5),
+        indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'", level=5),
+        indent("sh './ruff --version'", level=5),
     ]
     if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
         lines.extend([indent("stage ('ruff format') {", level=3)])
         lines.extend(ruff_install_lines)
-        lines.extend([indent("sh './ruff format --check .'", level=4), indent("}", level=3)])
+        lines.extend([indent("sh './ruff format --check .'", level=5), indent("}", level=4), indent("}", level=3)])
 
     if vsc_ci_cfg[RUN_RUFF_CHECK]:
         lines.extend([indent("stage ('ruff check') {", level=3)])
         lines.extend(ruff_install_lines)
-        lines.extend([indent("sh './ruff check .'", level=4), indent("}", level=3)])
+        lines.extend([indent("sh './ruff check .'", level=5), indent("}", level=4), indent("}", level=3)])
 
     lines.append(indent("stage('test') {", level=3))
+    lines.append(indent("steps {", level=4))
     for test_cmd in test_cmds:
         # be careful with test commands that include single quotes!
         if "'" in test_cmd:
-            lines.append(indent(f'sh """{test_cmd}"""', level=4))
+            lines.append(indent(f'sh """{test_cmd}"""', level=5))
         else:
-            lines.append(indent(f"sh '{test_cmd}'", level=4))
+            lines.append(indent(f"sh '{test_cmd}'", level=5))
+    lines.append(indent("}", level=4))
     lines.append(indent("}", level=3))
 
     if vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE]:
         lines.extend([
             indent("stage('PR title JIRA link') {", level=3),
-            indent("if (env.CHANGE_ID) {", level=4),
-            indent(r"if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?/) {", level=5),
-            indent('echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."', level=6),
-            indent("} else {", level=5),
-            indent("echo \"ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'.\"", level=6),
-            indent('error("malformed PR title ${env.CHANGE_TITLE}.")', level=6),
+            indent("steps {", level=4),
+            indent("if (env.CHANGE_ID) {", level=5),
+            indent(r"if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?/) {", level=6),
+            indent('echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."', level=7),
+            indent("} else {", level=6),
+            indent("echo \"ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'.\"", level=7),
+            indent('error("malformed PR title ${env.CHANGE_TITLE}.")', level=7),
+            indent("}", level=6),
             indent("}", level=5),
             indent("}", level=4),
             indent("}", level=3),
