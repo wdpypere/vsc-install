@@ -500,11 +500,24 @@ def gen_jenkinsfile():
         indent("checkout scm", level=3),
         indent("// remove untracked files (*.pyc for example)", level=3),
         indent("sh 'git clean -fxd'", level=3),
+    ]
+
+    if vsc_ci_cfg[RUN_RUFF_CHECK] or vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
+        r_url = f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
+        ruff_install_lines = [
+            indent(f"sh 'curl -L --silent {r_url} --output - | tar -xzv'", level=3),
+            indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'", level=3),
+            indent("sh './ruff --version'", level=3),
+        ]
+        lines.extend(ruff_install_lines)
+
+
+    lines.extend([
         indent("}", level=2),
         indent("}"),
         indent("stage('test pipeline') {"),
         indent("parallel {", level=2),
-    ]
+    ])
 
     if vsc_ci_cfg[RUN_SHELLCHECK]:
         # see https://github.com/koalaman/shellcheck#installing-a-pre-compiled-binary
@@ -522,22 +535,23 @@ def gen_jenkinsfile():
             indent("}", level=3),
         ])
 
-    r_url = f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
-    ruff_install_lines = [
-        indent("steps {", level=4),
-        indent(f"sh 'curl -L --silent {r_url} --output - | tar -xzv'", level=5),
-        indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'", level=5),
-        indent("sh './ruff --version'", level=5),
-    ]
     if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
-        lines.extend([indent("stage ('ruff format') {", level=3)])
-        lines.extend(ruff_install_lines)
-        lines.extend([indent("sh './ruff format --check .'", level=5), indent("}", level=4), indent("}", level=3)])
+        lines.extend([
+            indent("stage ('ruff format') {", level=3),
+            indent("steps {", level=4),
+            indent("sh './ruff format --check .'", level=5),
+            indent("}", level=4),
+            indent("}", level=3),
+        ])
 
     if vsc_ci_cfg[RUN_RUFF_CHECK]:
-        lines.extend([indent("stage ('ruff check') {", level=3)])
-        lines.extend(ruff_install_lines)
-        lines.extend([indent("sh './ruff check .'", level=5), indent("}", level=4), indent("}", level=3)])
+        lines.extend([
+            indent("stage ('ruff check') {", level=3),
+            indent("steps {", level=4),
+            indent("sh './ruff check .'", level=5),
+            indent("}", level=4),
+            indent("}", level=3),
+        ])
 
     lines.append(indent("stage('test') {", level=3))
     lines.append(indent("steps {", level=4))
