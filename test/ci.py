@@ -40,11 +40,15 @@ JENKINSFILE_INIT = """// Jenkinsfile: scripted Jenkins pipefile
 // This file was automatically generated using 'python -m vsc.install.ci'
 // DO NOT EDIT MANUALLY
 
-node {
+pipeline {
+agent any
+stages {
     stage('checkout git') {
-        checkout scm
-        // remove untracked files (*.pyc for example)
-        sh 'git clean -fxd'
+        steps {
+            checkout scm
+            // remove untracked files (*.pyc for example)
+            sh 'git clean -fxd'
+        }
     }
 """
 
@@ -56,7 +60,7 @@ TOX_RUN_PY3 = """        sh 'export PATH=$PWD/.vsc-tox/bin:$PATH && export PYTHO
 
 JENKINSFILE_TEST_START = """    stage('test') {
 """
-JENKINSFILE_END_STAGE = "    }\n"
+JENKINSFILE_END_STAGE = "    }}\n"
 
 JENKINSFILE_TEST_STAGE_EASY_INSTALL = JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN_PY3 + JENKINSFILE_END_STAGE
 JENKINSFILE_TEST_STAGE_PIP3 = JENKINSFILE_TEST_START + PIP3_INSTALL_TOX + TOX_RUN_PY3 + JENKINSFILE_END_STAGE
