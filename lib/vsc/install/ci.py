@@ -509,7 +509,7 @@ def gen_jenkinsfile():
             f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
         )
         ruff_install_lines = [
-            indent("stage('install  ruff')"),
+            indent("stage('install  ruff') {"),
             indent("steps {", level=2),
             indent(f"sh 'curl -L --silent {r_url} --output - | tar -xzv'", level=3),
             indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'", level=3),

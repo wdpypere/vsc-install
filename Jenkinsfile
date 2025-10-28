@@ -12,7 +12,7 @@ stages {
             sh 'git clean -fxd'
         }
     }
-    stage('install  ruff')
+    stage('install  ruff') {
         steps {
             sh 'curl -L --silent https://github.com/astral-sh/ruff/releases/download/0.13.1/ruff-x86_64-unknown-linux-gnu.tar.gz --output - | tar -xzv'
             sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'
