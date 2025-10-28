@@ -502,7 +502,6 @@ def gen_jenkinsfile():
         indent("parallel {"),
     ]
 
-
     if vsc_ci_cfg[RUN_SHELLCHECK]:
         # see https://github.com/koalaman/shellcheck#installing-a-pre-compiled-binary
         shellcheck_url = "https://github.com/koalaman/shellcheck/releases/download/latest/"
@@ -541,7 +540,6 @@ def gen_jenkinsfile():
         else:
             lines.append(indent(f"sh '{test_cmd}'", level=3))
     lines.append(indent("}", level=2))
-
 
     if vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE]:
         lines.extend([
