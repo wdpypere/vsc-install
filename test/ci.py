@@ -79,12 +79,13 @@ EXPECTED_JENKINSFILE_JIRA = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE_PIP3 + r""
 """
 
 JENKINSFILE_SHELLCHECK_STAGE = """    stage ('shellcheck') {
-        sh 'curl -L --silent https://github.com/koalaman/shellcheck/releases/download/latest/shellcheck-latest.linux.x86_64.tar.xz --output - | tar -xJv'
-        sh 'cp shellcheck-latest/shellcheck .'
-        sh 'rm -r shellcheck-latest'
-        sh './shellcheck --version'
-        sh './shellcheck bin/*.sh'
-    }
+        steps {
+            sh 'curl -L --silent https://github.com/koalaman/shellcheck/releases/download/latest/shellcheck-latest.linux.x86_64.tar.xz --output - | tar -xJv'
+            sh 'cp shellcheck-latest/shellcheck .'
+            sh 'rm -r shellcheck-latest'
+            sh './shellcheck --version'
+            sh './shellcheck bin/*.sh'
+        }
 """
 
 EXPECTED_JENKINSFILE_SHELLCHECK = JENKINSFILE_INIT + JENKINSFILE_SHELLCHECK_STAGE + JENKINSFILE_TEST_STAGE_PIP3 + '}\n'

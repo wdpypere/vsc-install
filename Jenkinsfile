@@ -10,6 +10,10 @@ stages {
             checkout scm
             // remove untracked files (*.pyc for example)
             sh 'git clean -fxd'
+        }
+    }
+    stage('install  ruff')
+        steps {
             sh 'curl -L --silent https://github.com/astral-sh/ruff/releases/download/0.13.1/ruff-x86_64-unknown-linux-gnu.tar.gz --output - | tar -xzv'
             sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'
             sh './ruff --version'
