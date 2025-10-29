@@ -92,10 +92,6 @@ PIP3_INSTALL_TOX = "                    sh 'pip3 install --ignore-installed --pr
 TOX_RUN_PY3 = """                    sh 'export PATH=$PWD/.vsc-tox/bin:$PATH && export PYTHONPATH=$PWD/.vsc-tox/lib/python$(python3 -c "import sys; print(\\\\"%s.%s\\\\" % sys.version_info[:2])")/site-packages:$PYTHONPATH && tox -v -c tox.ini'
                     sh 'rm -r $PWD/.vsc-tox'"""
 
-JENKINSFILE_TEST_START = """    stage('test') {
-"""
-JENKINSFILE_END_STAGE = "    }\n"
-
 JENKINSFILE_TEST_STAGE_EASY_INSTALL = f"""            stage('test') {{
                 steps {{
 {EASY_INSTALL_TOX}
