@@ -43,7 +43,9 @@ JENKINSFILE_INIT = """// Jenkinsfile: scripted Jenkins pipefile
 pipeline {
 agent any
 stages {
-    stage('checkout git') {
+"""
+
+JENKINSFILE_CHECKOUT_INIT = """    stage('checkout git') {
         steps {
             checkout scm
             // remove untracked files (*.pyc for example)
@@ -52,47 +54,98 @@ stages {
     }
 """
 
-EASY_INSTALL_TOX = "        sh 'python -m easy_install -U --user tox'\n"
-PIP3_INSTALL_TOX = "        sh 'pip3 install --ignore-installed --prefix $PWD/.vsc-tox tox'\n"
+JENKINSFILE_PARALLEL_INIT = """    stage('test pipeline') {
+        parallel {
+"""
 
-TOX_RUN_PY3 = """        sh 'export PATH=$PWD/.vsc-tox/bin:$PATH && export PYTHONPATH=$PWD/.vsc-tox/lib/python$(python3 -c "import sys; print(\\\\"%s.%s\\\\" % sys.version_info[:2])")/site-packages:$PYTHONPATH && tox -v -c tox.ini'
-        sh 'rm -r $PWD/.vsc-tox'\n"""
+JENKINSFILE_FINI = """        }
+    }
+}}
+"""
+
+JENKINSFILE_RUFF_INSTALL = """    stage('install  ruff') {
+        steps {
+            sh 'curl -L --silent https://github.com/astral-sh/ruff/releases/download/0.13.1/ruff-x86_64-unknown-linux-gnu.tar.gz --output - | tar -xzv'
+            sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'
+        }
+    }
+"""
+
+JENKINSFILE_RUFF_CHECK = """             stage('ruff check') {
+                steps {
+                    sh './ruff check .'
+                }
+            }
+"""
+
+JENKINSFILE_RUFF_FORMAT = """            stage('ruff format') {
+                steps {
+                    sh './ruff format --check .'
+                }
+            }
+"""
+
+
+EASY_INSTALL_TOX = "                    sh 'python -m easy_install -U --user tox'"
+PIP3_INSTALL_TOX = "                    sh 'pip3 install --ignore-installed --prefix $PWD/.vsc-tox tox'"
+
+TOX_RUN_PY3 = """                    sh 'export PATH=$PWD/.vsc-tox/bin:$PATH && export PYTHONPATH=$PWD/.vsc-tox/lib/python$(python3 -c "import sys; print(\\\\"%s.%s\\\\" % sys.version_info[:2])")/site-packages:$PYTHONPATH && tox -v -c tox.ini'
+                    sh 'rm -r $PWD/.vsc-tox'"""
 
 JENKINSFILE_TEST_START = """    stage('test') {
 """
-JENKINSFILE_END_STAGE = "    }}\n"
+JENKINSFILE_END_STAGE = "    }\n"
 
-JENKINSFILE_TEST_STAGE_EASY_INSTALL = JENKINSFILE_TEST_START + EASY_INSTALL_TOX + TOX_RUN_PY3 + JENKINSFILE_END_STAGE
-JENKINSFILE_TEST_STAGE_PIP3 = JENKINSFILE_TEST_START + PIP3_INSTALL_TOX + TOX_RUN_PY3 + JENKINSFILE_END_STAGE
+JENKINSFILE_TEST_STAGE_EASY_INSTALL = f"""            stage('test') {{
+                steps {{
+{EASY_INSTALL_TOX}
+{TOX_RUN_PY3}
+                }}
+            }}
+"""
 
-EXPECTED_JENKINSFILE_EASY_INSTALL = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE_EASY_INSTALL + '}\n'
-EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE_PIP3 + '}\n'
-EXPECTED_JENKINSFILE_DEFAULT = EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX
 
-EXPECTED_JENKINSFILE_JIRA = JENKINSFILE_INIT + JENKINSFILE_TEST_STAGE_PIP3 + r"""    stage('PR title JIRA link') {
-        if (env.CHANGE_ID) {
-            if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?/) {
-                echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."
-            } else {
-                echo "ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'."
-                error("malformed PR title ${env.CHANGE_TITLE}.")
+JENKINSFILE_PIP3_INSTALL_TOX = f"""            stage('test') {{
+                steps {{
+{PIP3_INSTALL_TOX}
+{TOX_RUN_PY3}
+                }}
+            }}
+"""
+
+EXPECTED_JENKINSFILE_EASY_INSTALL = JENKINSFILE_INIT + JENKINSFILE_CHECKOUT_INIT +  JENKINSFILE_PARALLEL_INIT + JENKINSFILE_TEST_STAGE_EASY_INSTALL + JENKINSFILE_FINI
+EXPECTED_JENKINSFILE_PIP3_INSTALL_TOX = JENKINSFILE_INIT + JENKINSFILE_CHECKOUT_INIT +  JENKINSFILE_PARALLEL_INIT + JENKINSFILE_PIP3_INSTALL_TOX + JENKINSFILE_FINI
+EXPECTED_JENKINSFILE_DEFAULT = JENKINSFILE_INIT + JENKINSFILE_CHECKOUT_INIT +  JENKINSFILE_PARALLEL_INIT + JENKINSFILE_PIP3_INSTALL_TOX + JENKINSFILE_FINI
+
+
+JENKINSFILE_JIRA_TICKET_ID = r"""            stage('PR title JIRA link') {
+                steps {
+                    if (env.CHANGE_ID) {
+                        if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?/) {
+                            echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."
+                        } else {
+                            echo "ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'."
+                            error("malformed PR title ${env.CHANGE_TITLE}.")
+                        }
+                    }
+                }
             }
-        }
-    }
-}
 """
 
-JENKINSFILE_SHELLCHECK_STAGE = """    stage ('shellcheck') {
-        steps {
-            sh 'curl -L --silent https://github.com/koalaman/shellcheck/releases/download/latest/shellcheck-latest.linux.x86_64.tar.xz --output - | tar -xJv'
-            sh 'cp shellcheck-latest/shellcheck .'
-            sh 'rm -r shellcheck-latest'
-            sh './shellcheck --version'
-            sh './shellcheck bin/*.sh'
-        }
+EXPECTED_JENKINSFILE_JIRA = JENKINSFILE_INIT + JENKINSFILE_CHECKOUT_INIT +  JENKINSFILE_PARALLEL_INIT + JENKINSFILE_PIP3_INSTALL_TOX + JENKINSFILE_JIRA_TICKET_ID + JENKINSFILE_FINI
+
+JENKINSFILE_SHELLCHECK_STAGE = """            stage ('shellcheck') {
+                steps {
+                    sh 'curl -L --silent https://github.com/koalaman/shellcheck/releases/download/latest/shellcheck-latest.linux.x86_64.tar.xz --output - | tar -xJv'
+                    sh 'cp shellcheck-latest/shellcheck .'
+                    sh 'rm -r shellcheck-latest'
+                    sh './shellcheck --version'
+                    sh './shellcheck bin/*.sh'
+                }
+            }
 """
 
-EXPECTED_JENKINSFILE_SHELLCHECK = JENKINSFILE_INIT + JENKINSFILE_SHELLCHECK_STAGE + JENKINSFILE_TEST_STAGE_PIP3 + '}\n'
+EXPECTED_JENKINSFILE_SHELLCHECK = JENKINSFILE_INIT + JENKINSFILE_CHECKOUT_INIT + JENKINSFILE_PARALLEL_INIT + JENKINSFILE_SHELLCHECK_STAGE + JENKINSFILE_PIP3_INSTALL_TOX + JENKINSFILE_FINI
 
 EXPECTED_TOX_INI = """# tox.ini: configuration file for tox
 # This file was automatically generated using 'python -m vsc.install.ci'
@@ -365,12 +418,13 @@ class CITest(TestCase):
         """Test use of 'additional_test_commands' in vsc-ci.ini."""
 
         self.write_vsc_ci_ini('additional_test_commands=./more_tests.sh')
-        expected = JENKINSFILE_INIT + JENKINSFILE_TEST_START + PIP3_INSTALL_TOX + TOX_RUN_PY3 + '\n'.join([
-            "        sh './more_tests.sh'",
-            "    }",
-            "}",
-            '',
-        ])
+
+        JENKINSFILE_PIP3_INSTALL_MORE = JENKINSFILE_PIP3_INSTALL_TOX.split("\n")
+        JENKINSFILE_PIP3_INSTALL_MORE.insert(-3, "                    sh './more_tests.sh'")
+        JENKINSFILE_PIP3_INSTALL_MORE = "\n".join(list(JENKINSFILE_PIP3_INSTALL_MORE))
+
+        expected = JENKINSFILE_INIT + JENKINSFILE_CHECKOUT_INIT + JENKINSFILE_PARALLEL_INIT + JENKINSFILE_PIP3_INSTALL_MORE + JENKINSFILE_FINI
+
         self.assertEqual(gen_jenkinsfile(), expected)
 
         self.write_vsc_ci_ini('\n'.join([
@@ -380,15 +434,16 @@ class CITest(TestCase):
             '    test -f foo.txt',
             "    echo 'this command uses single quotes'",
         ]))
-        expected = JENKINSFILE_INIT + JENKINSFILE_TEST_START + PIP3_INSTALL_TOX + TOX_RUN_PY3 + '\n'.join([
-            "        sh './more_tests.sh'",
-            "        sh 'another-command'",
-            "        sh 'test -f foo.txt'",
-            '        sh """echo \'this command uses single quotes\'"""',
-            "    }",
-            "}",
-            '',
-        ])
+
+        JENKINSFILE_PIP3_INSTALL_MORE = JENKINSFILE_PIP3_INSTALL_TOX.split("\n")
+        JENKINSFILE_PIP3_INSTALL_MORE.insert(-3, "                    sh './more_tests.sh'")
+        JENKINSFILE_PIP3_INSTALL_MORE.insert(-3, "                    sh 'another-command'")
+        JENKINSFILE_PIP3_INSTALL_MORE.insert(-3, "                    sh 'test -f foo.txt'")
+        JENKINSFILE_PIP3_INSTALL_MORE.insert(-3, '                    sh """echo \'this command uses single quotes\'"""')
+        JENKINSFILE_PIP3_INSTALL_MORE = "\n".join(list(JENKINSFILE_PIP3_INSTALL_MORE))
+
+        expected = JENKINSFILE_INIT + JENKINSFILE_CHECKOUT_INIT + JENKINSFILE_PARALLEL_INIT + JENKINSFILE_PIP3_INSTALL_MORE + JENKINSFILE_FINI
+
         self.assertEqual(gen_jenkinsfile(), expected)
 
     def test_tox_ini(self):
