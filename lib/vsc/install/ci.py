@@ -492,68 +492,104 @@ def gen_jenkinsfile():
 
     lines = header + [
         "",
-        "node {",
+        "pipeline {",
+        "agent any",
+        "stages {",
         indent("stage('checkout git') {"),
-        indent("checkout scm", level=2),
-        indent("// remove untracked files (*.pyc for example)", level=2),
-        indent("sh 'git clean -fxd'", level=2),
+        indent("steps {", level=2),
+        indent("checkout scm", level=3),
+        indent("// remove untracked files (*.pyc for example)", level=3),
+        indent("sh 'git clean -fxd'", level=3),
+        indent("}", level=2),
         indent("}"),
     ]
+
+    if vsc_ci_cfg[RUN_RUFF_CHECK] or vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
+        r_url = (
+            f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
+        )
+        ruff_install_lines = [
+            indent("stage('install  ruff') {"),
+            indent("steps {", level=2),
+            indent(f"sh 'curl -L --silent {r_url} --output - | tar -xzv'", level=3),
+            indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'", level=3),
+            indent("sh './ruff --version'", level=3),
+            indent("}", level=2),
+            indent("}"),
+        ]
+        lines.extend(ruff_install_lines)
+
+    lines.extend([
+        indent("stage('test pipeline') {"),
+        indent("parallel {", level=2),
+    ])
 
     if vsc_ci_cfg[RUN_SHELLCHECK]:
         # see https://github.com/koalaman/shellcheck#installing-a-pre-compiled-binary
         shellcheck_url = "https://github.com/koalaman/shellcheck/releases/download/latest/"
         shellcheck_url += "shellcheck-latest.linux.x86_64.tar.xz"
         lines.extend([
-            indent("stage ('shellcheck') {"),
-            indent(f"sh 'curl -L --silent {shellcheck_url} --output - | tar -xJv'", level=2),
-            indent("sh 'cp shellcheck-latest/shellcheck .'", level=2),
-            indent("sh 'rm -r shellcheck-latest'", level=2),
-            indent("sh './shellcheck --version'", level=2),
-            indent("sh './shellcheck bin/*.sh'", level=2),
-            indent("}"),
+            indent("stage ('shellcheck') {", level=3),
+            indent("steps {", level=4),
+            indent(f"sh 'curl -L --silent {shellcheck_url} --output - | tar -xJv'", level=5),
+            indent("sh 'cp shellcheck-latest/shellcheck .'", level=5),
+            indent("sh 'rm -r shellcheck-latest'", level=5),
+            indent("sh './shellcheck --version'", level=5),
+            indent("sh './shellcheck bin/*.sh'", level=5),
+            indent("}", level=4),
+            indent("}", level=3),
         ])
 
-    r_url = f"https://github.com/astral-sh/ruff/releases/download/{RUFF_VERSION}/ruff-x86_64-unknown-linux-gnu.tar.gz"
-    ruff_install_lines = [
-        indent(f"sh 'curl -L --silent {r_url} --output - | tar -xzv'", level=2),
-        indent("sh 'cp ruff-x86_64-unknown-linux-gnu/ruff .'", level=2),
-        indent("sh './ruff --version'", level=2),
-    ]
     if vsc_ci_cfg[RUN_RUFF_FORMAT_CHECK]:
-        lines.extend([indent("stage ('ruff format') {")])
-        lines.extend(ruff_install_lines)
-        lines.extend([indent("sh './ruff format --check .'", level=2), indent("}")])
+        lines.extend([
+            indent("stage ('ruff format') {", level=3),
+            indent("steps {", level=4),
+            indent("sh './ruff format --check .'", level=5),
+            indent("}", level=4),
+            indent("}", level=3),
+        ])
 
     if vsc_ci_cfg[RUN_RUFF_CHECK]:
-        lines.extend([indent("stage ('ruff check') {")])
-        lines.extend(ruff_install_lines)
-        lines.extend([indent("sh './ruff check .'", level=2), indent("}")])
+        lines.extend([
+            indent("stage ('ruff check') {", level=3),
+            indent("steps {", level=4),
+            indent("sh './ruff check .'", level=5),
+            indent("}", level=4),
+            indent("}", level=3),
+        ])
 
-    lines.append(indent("stage('test') {"))
+    lines.append(indent("stage('test') {", level=3))
+    lines.append(indent("steps {", level=4))
     for test_cmd in test_cmds:
         # be careful with test commands that include single quotes!
         if "'" in test_cmd:
-            lines.append(indent(f'sh """{test_cmd}"""', level=2))
+            lines.append(indent(f'sh """{test_cmd}"""', level=5))
         else:
-            lines.append(indent(f"sh '{test_cmd}'", level=2))
-    lines.append(indent("}"))
+            lines.append(indent(f"sh '{test_cmd}'", level=5))
+    lines.append(indent("}", level=4))
+    lines.append(indent("}", level=3))
 
     if vsc_ci_cfg[JIRA_ISSUE_ID_IN_PR_TITLE]:
         lines.extend([
-            indent("stage('PR title JIRA link') {"),
-            indent("if (env.CHANGE_ID) {", level=2),
-            indent(r"if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?/) {", level=3),
-            indent('echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."', level=4),
-            indent("} else {", level=3),
-            indent("echo \"ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'.\"", level=4),
-            indent('error("malformed PR title ${env.CHANGE_TITLE}.")', level=4),
+            indent("stage('PR title JIRA link') {", level=3),
+            indent("steps {", level=4),
+            indent("if (env.CHANGE_ID) {", level=5),
+            indent(r"if (env.CHANGE_TITLE =~ /\s+\(?HPC-\d+\)?/) {", level=6),
+            indent('echo "title ${env.CHANGE_TITLE} seems to contain JIRA ticket number."', level=7),
+            indent("} else {", level=6),
+            indent("echo \"ERROR: title ${env.CHANGE_TITLE} does not end in 'HPC-number'.\"", level=7),
+            indent('error("malformed PR title ${env.CHANGE_TITLE}.")', level=7),
+            indent("}", level=6),
+            indent("}", level=5),
+            indent("}", level=4),
             indent("}", level=3),
-            indent("}", level=2),
-            indent("}"),
         ])
 
-    lines.append("}")
+    # close parallel stages
+    lines.append(indent("}", level=2))
+    lines.append(indent("}"))
+
+    lines.append("}}")
 
     return "\n".join(lines) + "\n"
 
